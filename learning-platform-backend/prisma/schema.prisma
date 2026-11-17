@@ -1,0 +1,333 @@
+// =============================================================================
+// Learning Platform (REST API + FSRS) - Prisma Schema
+// Catatan: ditulis untuk Prisma 5/6. Pada Prisma 7, `url` dipindah ke prisma.config.ts.
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum ItemType {
+  FLASHCARD
+  MULTIPLE_CHOICE
+}
+
+/// Rating FSRS (sesuai konvensi FSRS: 1..4)
+enum Rating {
+  AGAIN // 1
+  HARD  // 2
+  GOOD  // 3
+  EASY  // 4
+}
+
+/// State kartu pada FSRS
+enum CardStateType {
+  NEW
+  LEARNING
+  REVIEW
+  RELEARNING
+}
+
+enum ContentSource {
+  MANUAL
+  AI_GENERATED
+}
+
+// -----------------------------------------------------------------------------
+// DEVELOPER & APP (Multi-client, API Key isolation)
+// -----------------------------------------------------------------------------
+
+/// Pengguna Developer Dashboard (autentikasi JWT)
+model Developer {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  apps App[]
+
+  @@map("developers")
+}
+
+/// Aplikasi client (mis. Pet Battle, Baking Chef). Satu App = satu tenant terisolasi.
+model App {
+  id          String  @id @default(uuid())
+  developerId String
+  name        String
+  description String?
+
+  /// Hanya hash (SHA-256) API key yang disimpan; key asli ditampilkan sekali saat dibuat.
+  apiKeyHash   String    @unique
+  /// Beberapa karakter awal untuk identifikasi di dashboard, mis. "lp_live_ab12"
+  apiKeyPrefix String
+  isActive     Boolean   @default(true)
+  lastUsedAt   DateTime?
+  revokedAt    DateTime?
+
+  /// Target retensi FSRS per aplikasi (default 90%)
+  requestRetention Float @default(0.9)
+  /// Override bobot FSRS (w0..w20) bila diperlukan; null = default FSRS
+  fsrsParams       Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  developer     Developer      @relation(fields: [developerId], references: [id], onDelete: Cascade)
+  decks         Deck[]
+  learningItems LearningItem[]
+  users         User[]
+
+  @@index([developerId])
+  @@map("apps")
+}
+
+// -----------------------------------------------------------------------------
+// CONTENT (Bank Soal)
+// -----------------------------------------------------------------------------
+
+/// Pengelompokan materi (deck/topik). Dipakai untuk analitik per deck.
+model Deck {
+  id          String   @id @default(uuid())
+  appId       String
+  title       String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  app           App            @relation(fields: [appId], references: [id], onDelete: Cascade)
+  learningItems LearningItem[]
+  progresses    Progress[]
+
+  @@index([appId])
+  @@map("decks")
+}
+
+/// Flashcard maupun Multiple Choice dalam satu tabel (dibedakan oleh `type`).
+model LearningItem {
+  id     String   @id @default(uuid())
+  appId  String
+  deckId String
+  type   ItemType
+
+  // --- Flashcard ---
+  front String? // kata / pertanyaan
+  back  String? // arti / jawaban
+
+  // --- Multiple Choice ---
+  question     String?
+  /// Array pilihan jawaban termasuk distractor, mis. ["Apple","Banana","Cherry","Grape"]
+  choices      Json?
+  correctIndex Int?
+  explanation  String?
+  /// MC yang bersumber dari flashcard tertentu (untuk korelasi akurasi kuis -> FSRS)
+  sourceFlashcardId String?
+
+  // --- Media & Resource Caching ---
+  imageUrl     String?
+  audioUrl     String?
+  /// Naik setiap konten/media berubah; dipakai client untuk invalidasi cache & ETag
+  contentVersion Int    @default(1)
+  contentHash    String?
+
+  // --- Metadata ---
+  tags      String[]
+  source    ContentSource @default(MANUAL)
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  app             App            @relation(fields: [appId], references: [id], onDelete: Cascade)
+  deck            Deck           @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  sourceFlashcard LearningItem?  @relation("FlashcardQuizzes", fields: [sourceFlashcardId], references: [id], onDelete: SetNull)
+  quizzes         LearningItem[] @relation("FlashcardQuizzes")
+
+  cardStates   CardState[]
+  reviewLogs   ReviewLog[]
+  quizAttempts QuizAttempt[]
+
+  @@index([appId, deckId, type])
+  @@index([sourceFlashcardId])
+  @@map("learning_items")
+}
+
+// -----------------------------------------------------------------------------
+// END USER (per App - terisolasi antar client)
+// -----------------------------------------------------------------------------
+
+/// End-user dari aplikasi client (anak/pemain). Tidak punya akses dashboard.
+model User {
+  id           String   @id @default(uuid())
+  appId        String
+  /// ID user di sisi aplikasi client
+  externalId   String
+  email        String?
+  displayName  String?
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  app          App           @relation(fields: [appId], references: [id], onDelete: Cascade)
+  progresses   Progress[]
+  cardStates   CardState[]
+  reviewLogs   ReviewLog[]
+  quizAttempts QuizAttempt[]
+
+  @@unique([appId, externalId])
+  @@map("users")
+}
+
+// -----------------------------------------------------------------------------
+// PROGRESS (gamifikasi & statistik agregat per user per deck)
+// -----------------------------------------------------------------------------
+
+model Progress {
+  id     String @id @default(uuid())
+  userId String
+  deckId String
+
+  points Int @default(0)
+  exp    Int @default(0)
+  level  Int @default(1)
+
+  totalReviews    Int @default(0)
+  totalQuizzes    Int @default(0)
+  correctAnswers  Int @default(0)
+  wrongAnswers    Int @default(0)
+  currentStreak   Int @default(0)
+  longestStreak   Int @default(0)
+  lastStudiedAt   DateTime?
+
+  /// Data bebas dari client (mis. evolusi pet, inventori) - disinkronkan via /api/progress
+  clientState Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck Deck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deckId])
+  @@index([deckId])
+  @@map("progress")
+}
+
+// -----------------------------------------------------------------------------
+// FSRS (state terkini per kartu per user + log historis)
+// -----------------------------------------------------------------------------
+
+/// Memory state FSRS terkini: D, S, due. R dihitung saat query: R(t,S).
+model CardState {
+  id     String @id @default(uuid())
+  userId String
+  itemId String
+
+  state      CardStateType @default(NEW)
+  /// Difficulty D (1..10)
+  difficulty Float         @default(0)
+  /// Stability S (hari)
+  stability  Float         @default(0)
+  /// Jadwal review berikutnya
+  due        DateTime      @default(now())
+  lastReview DateTime?
+
+  reps           Int @default(0)
+  lapses         Int @default(0) // jumlah Again pada fase review (dipakai Difficult Topics)
+  hardCount      Int @default(0)
+  elapsedDays    Int @default(0)
+  scheduledDays  Int @default(0)
+  /// Penalti difficulty sementara dari Dynamic FSRS Adjustment
+  difficultyPenalty Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item LearningItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@index([userId, due])
+  @@index([itemId])
+  @@map("card_states")
+}
+
+/// Log setiap review flashcard (immutable) - basis learning analytics & optimasi parameter.
+model ReviewLog {
+  id     String @id @default(uuid())
+  userId String
+  itemId String
+
+  rating Rating
+
+  // Snapshot sebelum review
+  stateBefore      CardStateType
+  stabilityBefore  Float
+  difficultyBefore Float
+  /// Retrievability R saat review dilakukan
+  retrievability   Float?
+
+  // Hasil setelah review
+  stateAfter      CardStateType
+  stabilityAfter  Float
+  difficultyAfter Float
+  scheduledDays   Int
+  elapsedDays     Int
+  due             DateTime
+
+  // Input Dynamic FSRS Adjustment
+  responseTimeMs    Int?
+  quizAccuracy      Float? // 0..1 akurasi kuis terkait
+  /// Rating efektif setelah penyesuaian (jika berbeda dari rating input client)
+  effectiveRating   Rating?
+  difficultyPenalty Float   @default(0)
+
+  /// Idempotensi: client dapat mengirim ulang request tanpa duplikasi
+  clientEventId String?
+
+  reviewedAt DateTime @default(now())
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item LearningItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientEventId])
+  @@index([userId, reviewedAt])
+  @@index([itemId, rating])
+  @@map("review_logs")
+}
+
+/// Hasil menjawab soal Multiple Choice (sumber akurasi kuis & error rate).
+model QuizAttempt {
+  id     String @id @default(uuid())
+  userId String
+  itemId String // item bertipe MULTIPLE_CHOICE
+
+  selectedIndex  Int?
+  isCorrect      Boolean
+  responseTimeMs Int?
+  score          Int     @default(0)
+  /// Identifier sesi battle/quiz dari client untuk pengelompokan
+  sessionId      String?
+  clientEventId  String?
+
+  answeredAt DateTime @default(now())
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item LearningItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clientEventId])
+  @@index([userId, answeredAt])
+  @@index([itemId, isCorrect])
+  @@map("quiz_attempts")
+}

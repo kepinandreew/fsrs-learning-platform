@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/((?!pet-battle\\.html|baking-chef\\.html|api-config\\.js|assets/|favicon\\.).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

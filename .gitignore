@@ -1,0 +1,19 @@
+# Dependencies & Build Artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+*.tsbuildinfo
+
+# Environment & Secrets (Jangan pernah di-push ke GitHub)
+.env
+**/.env
+.env.local
+**/.env.local
+.vercel
+**/.vercel
+
+# OS & Logs
+.DS_Store
+Thumbs.db
+*.log
