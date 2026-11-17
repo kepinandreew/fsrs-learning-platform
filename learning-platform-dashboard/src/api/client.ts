@@ -25,7 +25,16 @@ import type {
 // Otomatis menyisipkan header Authorization: Bearer <JWT> dan memparsing JSON.
 // =============================================================================
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '';
+const DEFAULT_CLOUD_API = 'https://fsrs-learning-platform.vercel.app';
+const rawEnvBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+const API_BASE = (
+  rawEnvBase ||
+  (typeof window !== 'undefined' &&
+  window.location.hostname !== 'localhost' &&
+  window.location.hostname !== '127.0.0.1'
+    ? DEFAULT_CLOUD_API
+    : '')
+).replace(/\/+$/, '');
 const TOKEN_STORAGE_KEY = 'lp_dev_jwt_token';
 
 // Ambil dan simpan token JWT di localStorage.

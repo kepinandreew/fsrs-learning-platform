@@ -6,7 +6,10 @@ import react from '@vitejs/plugin-react';
 // Konfigurasi Vite untuk Developer Dashboard + injeksi otomatis URL API Cloud ke game HTML statis.
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const apiBaseUrl = (process.env.VITE_API_BASE_URL || env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '');
+  const defaultProdApi = mode === 'production' ? 'https://fsrs-learning-platform.vercel.app' : '';
+  const apiBaseUrl = (process.env.VITE_API_BASE_URL || env.VITE_API_BASE_URL || defaultProdApi)
+    .trim()
+    .replace(/\/+$/, '');
   const configScript = `window.__FSRS_API_BASE_URL__ = ${JSON.stringify(apiBaseUrl)};\n`;
 
   return {
