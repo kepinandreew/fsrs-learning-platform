@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../../config/prisma';
+import { clearAppKeyCache } from '../../middlewares/apiKeyAuth';
 import { jwtAuth } from '../../middlewares/jwtAuth';
 import { validate } from '../../middlewares/validate';
 import { ApiError } from '../../utils/ApiError';
@@ -72,6 +73,7 @@ router.patch(
       data,
       select: appSelect,
     });
+    clearAppKeyCache();
     res.json({ success: true, data: app });
   }),
 );
@@ -89,6 +91,7 @@ router.post(
       data: { apiKeyHash: key.hash, apiKeyPrefix: key.prefix, revokedAt: null, isActive: true },
       select: appSelect,
     });
+    clearAppKeyCache();
     res.json({ success: true, data: { app, apiKey: key.plain } });
   }),
 );
@@ -105,6 +108,7 @@ router.post(
       data: { isActive: false, revokedAt: new Date() },
       select: appSelect,
     });
+    clearAppKeyCache();
     res.json({ success: true, data: app });
   }),
 );

@@ -214,12 +214,34 @@ export async function getSummary(developerId: string, q: AnalyticsQuery) {
   const completion = computeCompletion(rows, total, now);
   const difficult = computeDifficultTopics(scope.flashcards, reviews, quizzes, rows, q.limit);
 
+  // Resolusi userId -> externalUserId + displayName cukup 1 query DB untuk ketiga metrik sekaligus.
+  const uniqueUserIds = [
+    ...new Set([
+      ...retention.perUser.map((u) => u.userId),
+      ...mastery.perUser.map((u) => u.userId),
+      ...completion.perUser.map((u) => u.userId),
+    ]),
+  ];
+  const users =
+    uniqueUserIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: uniqueUserIds } },
+          select: { id: true, externalId: true, displayName: true },
+        })
+      : [];
+  const userMap = new Map(users.map((u) => [u.id, u]));
+  const mapList = <T extends { userId: string }>(list: T[]) =>
+    list.map(({ userId, ...rest }) => {
+      const u = userMap.get(userId);
+      return { ...rest, externalUserId: u?.externalId ?? 'unknown', displayName: u?.displayName ?? null };
+    });
+
   return {
     meta: metaOf(scope, now),
-    retention: { ...retention, perUser: await labelUsers(retention.perUser) },
-    mastery: { ...mastery, perUser: await labelUsers(mastery.perUser) },
+    retention: { ...retention, perUser: mapList(retention.perUser) },
+    mastery: { ...mastery, perUser: mapList(mastery.perUser) },
     difficultTopics: { cards: difficult.cards, tags: difficult.tags },
-    completionTime: { ...completion, perUser: await labelUsers(completion.perUser) },
+    completionTime: { ...completion, perUser: mapList(completion.perUser) },
   };
 }
 
