@@ -46,8 +46,23 @@ export function createApp() {
   app.use(express.json({ limit: '1mb' }));
   if (env.NODE_ENV !== 'test') app.use(morgan('dev'));
 
+  app.get('/', (_req, res) => {
+    res.json({
+      success: true,
+      data: {
+        service: 'FSRS-5 Learning Platform Backend API',
+        status: 'ok',
+        endpoints: ['/health', '/api/decks', '/api/dashboard/analytics/summary'],
+      },
+    });
+  });
+
   app.get('/health', (_req, res) => {
     res.json({ success: true, data: { status: 'ok', uptime: process.uptime() } });
+  });
+
+  app.get('/api', (_req, res) => {
+    res.json({ success: true, data: { service: 'FSRS-5 Learning Platform API', status: 'ok' } });
   });
 
   app.use('/api', apiLimiter);
