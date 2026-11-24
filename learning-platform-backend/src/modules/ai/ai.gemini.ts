@@ -17,7 +17,7 @@ function getClient(): GoogleGenAI {
   if (!env.GEMINI_API_KEY) {
     throw new ApiError(503, 'AI Generator belum dikonfigurasi (GEMINI_API_KEY kosong)', 'AI_NOT_CONFIGURED');
   }
-  client ??= new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
+  client ??= new GoogleGenAI({ apiKey: env.GEMINI_API_KEY, httpOptions: { timeout: 22_000 } });
   return client;
 }
 
@@ -34,18 +34,24 @@ interface CallOptions<T> {
   validator: z.ZodType<T>;
 }
 
+// Urutan model hemat & cepat; otomatis fallback bila model utama sedang 503/rate-limited.
+function getCandidateModels(): string[] {
+  return [...new Set([env.GEMINI_MODEL, 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-4-hydrogen'])];
+}
+
 /**
  * Panggil Gemini dan kembalikan objek terstruktur yang sudah tervalidasi.
- * Mencoba maksimum 2 kali bila gagal/keluaran bukan JSON valid.
+ * Mencoba model utama lalu fallback otomatis ke model ringan berikutnya bila 503/gagal.
  */
 export async function generateJson<T>(opts: CallOptions<T>): Promise<T> {
   const ai = getClient();
+  const candidates = getCandidateModels();
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  for (const modelName of candidates) {
     try {
       const interaction = await ai.interactions.create({
-        model: env.GEMINI_MODEL,
+        model: modelName,
         system_instruction: opts.systemInstruction,
         input: opts.input,
         response_format: { type: 'text', mime_type: 'application/json', schema: opts.jsonSchema },
@@ -58,10 +64,11 @@ export async function generateJson<T>(opts: CallOptions<T>): Promise<T> {
       return opts.validator.parse(JSON.parse(text));
     } catch (err) {
       lastError = err;
+      console.warn(`[AI] Model ${modelName} gagal, mencoba fallback bila ada:`, err instanceof Error ? err.message : err);
     }
   }
 
   // Detail error hanya dicatat di server; client menerima pesan generik.
-  console.error('[AI] Gagal memanggil Gemini:', lastError instanceof Error ? lastError.message : lastError);
+  console.error('[AI] Seluruh model kandidat gagal:', lastError instanceof Error ? lastError.message : lastError);
   throw new ApiError(502, 'Layanan AI gagal menghasilkan konten, silakan coba lagi', 'AI_UPSTREAM_ERROR');
 }

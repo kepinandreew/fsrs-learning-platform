@@ -13,7 +13,7 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((v) => v?.trim() || undefined), // string kosong di .env dianggap tidak diisi
-  GEMINI_MODEL: z.string().default('gemini-3.8-flash'),
+  GEMINI_MODEL: z.string().default('gemini-3.5-flash-lite'),
 });
 
 const parsed = envSchema.safeParse(process.env);
