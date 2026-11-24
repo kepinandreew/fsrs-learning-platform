@@ -12,6 +12,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../api/client';
 
 const navItems = [
   {
@@ -138,14 +139,9 @@ export function Layout() {
             </div>
 
             <a
-              href="http://localhost:5174"
+              href="/pet-battle.html"
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => {
-                if (window.location.port !== '5173') return;
-                e.preventDefault();
-                window.open('/pet-battle.html', '_blank', 'noopener,noreferrer');
-              }}
               className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium bg-indigo-950/50 hover:bg-indigo-900/60 text-indigo-200 border border-indigo-500/25 transition-all group"
             >
               <span className="flex items-center gap-2.5">
@@ -163,14 +159,9 @@ export function Layout() {
             </a>
 
             <a
-              href="http://localhost:5175"
+              href="/baking-chef.html"
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => {
-                if (window.location.port !== '5173') return;
-                e.preventDefault();
-                window.open('/baking-chef.html', '_blank', 'noopener,noreferrer');
-              }}
               className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium bg-amber-950/40 hover:bg-amber-900/50 text-amber-200 border border-amber-500/25 transition-all group"
             >
               <span className="flex items-center gap-2.5">
@@ -226,8 +217,11 @@ export function Layout() {
               <Activity className="w-3.5 h-3.5 text-emerald-500" />
               FSRS-5 Engine Ready
             </span>
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono text-slate-600 bg-slate-100 border border-slate-200/80">
-              API v1 · :3000
+            <span
+              title={API_BASE_URL}
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono text-slate-600 bg-slate-100 border border-slate-200/80 max-w-[240px] truncate"
+            >
+              API v1 · {API_BASE_URL.replace(/^https?:\/\//, '')}
             </span>
           </div>
         </header>

@@ -60,6 +60,13 @@ export const shiftDueSchema = z.object({
     .refine((n) => n !== 0, 'days tidak boleh 0'),
 });
 
+export const deleteUserParamsSchema = z.object({
+  externalUserId: z.string().trim().min(1).max(100),
+});
+export const deleteUserQuerySchema = z.object({
+  appId: z.string().uuid(),
+});
+
 export type AnalyticsQuery = z.infer<typeof analyticsQuerySchema>;
 export type MonitoringQuery = z.infer<typeof monitoringQuerySchema>;
 export type FsrsSimulateInput = z.infer<typeof fsrsSimulateSchema>;

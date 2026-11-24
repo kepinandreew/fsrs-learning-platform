@@ -4,6 +4,8 @@ import { validate } from '../../middlewares/validate';
 import { asyncHandler } from '../../utils/asyncHandler';
 import {
   analyticsQuerySchema,
+  deleteUserParamsSchema,
+  deleteUserQuerySchema,
   fsrsSimulateSchema,
   monitoringQuerySchema,
   shiftDueSchema,
@@ -104,6 +106,16 @@ router.get(
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="laporan-evaluasi-fsrs-${stamp}.csv"`);
     res.send(csv);
+  }),
+);
+
+// DELETE /users/:externalUserId - hapus akun siswa uji coba (beserta seluruh progres & riwayatnya) milik app developer.
+router.delete(
+  '/users/:externalUserId',
+  validate({ params: deleteUserParamsSchema, query: deleteUserQuerySchema }),
+  asyncHandler(async (req, res) => {
+    await service.deleteStudent(req.developer!.id, req.query.appId as string, req.params.externalUserId!);
+    res.status(204).send();
   }),
 );
 

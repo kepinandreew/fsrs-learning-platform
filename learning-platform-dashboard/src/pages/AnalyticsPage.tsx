@@ -17,8 +17,9 @@ import {
   Search,
   Download,
   FastForward,
+  Trash2,
 } from 'lucide-react';
-import { analyticsApi, decksApi } from '../api/client';
+import { analyticsApi, clearApiCache, decksApi } from '../api/client';
 import type {
   AnalyticsSummaryResponse,
   Deck,
@@ -193,6 +194,27 @@ export function AnalyticsPage() {
       setError(err instanceof Error ? err.message : 'Gagal mengunduh CSV');
     } finally {
       setCsvLoading(false);
+    }
+  }
+
+  async function handleDeleteStudent(externalId: string, displayName: string | null) {
+    const appId = monitoring?.app?.id;
+    if (!appId) return;
+    if (
+      !confirm(
+        `Hapus akun siswa "${displayName || externalId}" beserta SELURUH progres & riwayat belajarnya? Tindakan ini tidak bisa dibatalkan.`,
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    try {
+      await analyticsApi.deleteUser({ appId, externalUserId: externalId });
+      const nextFilter = externalUserId === externalId ? '' : externalUserId;
+      setExternalUserId(nextFilter);
+      await loadAll(selectedDeckId, nextFilter);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menghapus siswa');
     }
   }
 
@@ -394,7 +416,10 @@ export function AnalyticsPage() {
             </div>
 
             <button
-              onClick={() => loadAll(selectedDeckId, externalUserId)}
+              onClick={() => {
+                clearApiCache();
+                loadAll(selectedDeckId, externalUserId);
+              }}
               disabled={loading}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold transition-all shadow-sm"
             >
@@ -1055,7 +1080,8 @@ export function AnalyticsPage() {
                       <th className="text-center px-3 py-3">Kartu Aktif / Due</th>
                       <th className="text-center px-3 py-3">Review</th>
                       <th className="text-center px-3 py-3">Akurasi Kuis</th>
-                      <th className="text-right px-6 py-3">Terakhir Belajar</th>
+                      <th className="text-right px-3 py-3">Terakhir Belajar</th>
+                      <th className="text-right px-6 py-3">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -1116,10 +1142,24 @@ export function AnalyticsPage() {
                               ({u.correctAnswers}/{u.totalQuizzes})
                             </span>
                           </td>
-                          <td className="px-6 py-3.5 text-right text-slate-500">
+                          <td className="px-3 py-3.5 text-right text-slate-500">
                             {u.lastStudiedAt
                               ? new Date(u.lastStudiedAt).toLocaleString('id-ID')
                               : 'Belum mulai'}
+                          </td>
+                          <td className="px-6 py-3.5 text-right">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteStudent(u.externalUserId, u.displayName);
+                              }}
+                              title="Hapus akun siswa uji coba ini"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-[11px] font-semibold text-rose-700"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Hapus
+                            </button>
                           </td>
                         </tr>
                       );

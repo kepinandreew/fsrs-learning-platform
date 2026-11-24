@@ -1,4 +1,5 @@
 import { useEffect, useState, FormEvent } from 'react';
+import QRCode from 'qrcode';
 import {
   Plus,
   RefreshCw,
@@ -11,9 +12,92 @@ import {
   Layers,
   Users,
   ShieldCheck,
+  Trash2,
+  Gamepad2,
+  ChefHat,
+  Share2,
 } from 'lucide-react';
-import { appsApi } from '../api/client';
+import { API_BASE_URL, appsApi, clearApiCache } from '../api/client';
 import type { ClientApp } from '../api/types';
+
+// Kartu "Bagikan Game ke Anak-Anak": link siap salin + QR Code yang bisa langsung di-scan dari HP/tablet.
+function ShareGamesCard() {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const games = [
+    { key: 'pet', title: 'Pet Battle RPG', path: '/pet-battle.html', icon: Gamepad2, tone: 'indigo' },
+    { key: 'chef', title: 'Baking Chef', path: '/baking-chef.html', icon: ChefHat, tone: 'amber' },
+  ] as const;
+  const [qr, setQr] = useState<Record<string, string>>({});
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    games.forEach((g) => {
+      QRCode.toDataURL(`${origin}${g.path}`, { margin: 1, width: 220 })
+        .then((url) => setQr((prev) => ({ ...prev, [g.key]: url })))
+        .catch(() => undefined);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [origin]);
+
+  async function copyLink(key: string, url: string) {
+    await navigator.clipboard.writeText(url);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
+      <div className="flex items-center gap-2">
+        <Share2 className="w-4 h-4 text-indigo-600" />
+        <h2 className="text-sm font-bold text-slate-900">Bagikan Game ke Anak-Anak</h2>
+        <span className="text-[11px] text-slate-400">Scan QR dari HP/tablet atau kirim link lewat WhatsApp</span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {games.map((g) => {
+          const url = `${origin}${g.path}`;
+          const Icon = g.icon;
+          return (
+            <div
+              key={g.key}
+              className={`flex items-center gap-4 p-4 rounded-2xl border ${
+                g.tone === 'indigo' ? 'bg-indigo-50/60 border-indigo-200' : 'bg-amber-50/60 border-amber-200'
+              }`}
+            >
+              {qr[g.key] ? (
+                <img src={qr[g.key]} alt={`QR ${g.title}`} className="w-28 h-28 rounded-xl bg-white p-1 shrink-0" />
+              ) : (
+                <div className="w-28 h-28 rounded-xl bg-white shrink-0" />
+              )}
+              <div className="min-w-0 space-y-2">
+                <p className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
+                  <Icon className="w-4 h-4" /> {g.title}
+                </p>
+                <p className="text-[11px] font-mono text-slate-500 break-all">{url}</p>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => copyLink(g.key, url)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700"
+                  >
+                    {copiedKey === g.key ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedKey === g.key ? 'Tersalin' : 'Salin Link'}
+                  </button>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white"
+                  >
+                    Buka
+                  </a>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function AppsPage() {
   const [apps, setApps] = useState<ClientApp[]>([]);
@@ -89,6 +173,16 @@ export function AppsPage() {
     }
   }
 
+  async function handleDelete(app: ClientApp) {
+    if (!confirm(`Hapus permanen aplikasi kosong "${app.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+    try {
+      await appsApi.remove(app.id);
+      await loadApps();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Gagal menghapus aplikasi');
+    }
+  }
+
   async function copyKey(text: string) {
     await navigator.clipboard.writeText(text);
     setCopied(true);
@@ -96,7 +190,7 @@ export function AppsPage() {
   }
 
   async function copyCurlSnippet(app: ClientApp) {
-    const snippet = `curl -H "X-API-Key: ${app.apiKeyPrefix}YOUR_KEY" http://localhost:3000/api/evaluation/due`;
+    const snippet = `curl -H "X-API-Key: ${app.apiKeyPrefix}YOUR_KEY" ${API_BASE_URL}/api/evaluation/due`;
     await navigator.clipboard.writeText(snippet);
     setCopiedAppId(app.id);
     setTimeout(() => setCopiedAppId(null), 2000);
@@ -123,7 +217,10 @@ export function AppsPage() {
           </p>
         </div>
         <button
-          onClick={loadApps}
+          onClick={() => {
+            clearApiCache();
+            loadApps();
+          }}
           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-sm transition-colors self-start"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -175,6 +272,9 @@ export function AppsPage() {
           </div>
         </div>
       </div>
+
+      {/* Bagikan Game ke Anak-Anak (link + QR Code) */}
+      <ShareGamesCard />
 
       {/* Banner API Key Baru */}
       {revealedKey && (
@@ -384,6 +484,16 @@ export function AppsPage() {
                           >
                             <Ban className="w-3.5 h-3.5" />
                             Cabut
+                          </button>
+                        )}
+                        {(app._count?.learningItems ?? 0) === 0 && (
+                          <button
+                            onClick={() => handleDelete(app)}
+                            title="Hapus permanen (hanya untuk aplikasi kosong)"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-xs font-medium text-rose-700 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Hapus
                           </button>
                         )}
                       </div>

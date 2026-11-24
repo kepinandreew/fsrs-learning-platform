@@ -113,4 +113,33 @@ router.post(
   }),
 );
 
+// Hapus permanen aplikasi. Pengaman: hanya boleh bila aplikasi masih kosong (tanpa materi & tanpa riwayat belajar),
+// supaya data analitik yang menjadi dasar evaluasi tidak hilang tanpa sengaja.
+router.delete(
+  '/:id',
+  validate({ params: appIdParamSchema }),
+  asyncHandler(async (req, res) => {
+    const found = await prisma.app.findFirst({ where: { id: req.params.id!, developerId: req.developer!.id } });
+    if (!found) throw ApiError.notFound('Aplikasi tidak ditemukan');
+
+    const [items, cards, reviews, quizzes] = await Promise.all([
+      prisma.learningItem.count({ where: { appId: found.id } }),
+      prisma.cardState.count({ where: { user: { appId: found.id } } }),
+      prisma.reviewLog.count({ where: { user: { appId: found.id } } }),
+      prisma.quizAttempt.count({ where: { user: { appId: found.id } } }),
+    ]);
+    if (items + cards + reviews + quizzes > 0) {
+      throw new ApiError(
+        409,
+        'Aplikasi sudah memiliki materi atau riwayat belajar. Gunakan "Cabut" untuk menonaktifkan saja.',
+        'APP_NOT_EMPTY',
+      );
+    }
+
+    await prisma.app.delete({ where: { id: found.id } });
+    clearAppKeyCache();
+    res.status(204).send();
+  }),
+);
+
 export default router;

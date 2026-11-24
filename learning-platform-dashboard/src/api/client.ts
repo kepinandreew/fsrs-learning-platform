@@ -37,11 +37,22 @@ const API_BASE = (
 ).replace(/\/+$/, '');
 const TOKEN_STORAGE_KEY = 'lp_dev_jwt_token';
 
+// URL API yang tampil di UI (cURL, badge header): hasil resolusi nyata, bukan hardcode localhost.
+export const API_BASE_URL: string =
+  API_BASE || (typeof window !== 'undefined' ? window.location.origin : '');
+
+// Cache GET singkat (TTL 30 dtk) + dedup request paralel, agar pindah antar-menu terasa instan.
+// Seluruh cache dibuang saat ada mutasi (POST/PATCH/DELETE), ganti token, atau klik "Segarkan".
+const GET_CACHE_TTL_MS = 30_000;
+const getCache = new Map<string, { at: number; promise: Promise<{ data: unknown; meta?: unknown }> }>();
+export const clearApiCache = (): void => getCache.clear();
+
 // Ambil dan simpan token JWT di localStorage.
 export const getStoredToken = (): string | null => localStorage.getItem(TOKEN_STORAGE_KEY);
 export const setStoredToken = (token: string | null): void => {
   if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token);
   else localStorage.removeItem(TOKEN_STORAGE_KEY);
+  clearApiCache();
 };
 
 // Bentuk standar respons API dari backend Express.js.
@@ -56,8 +67,30 @@ interface ApiEnvelope<T> {
   };
 }
 
-// Fungsi dasar pemanggilan HTTP ke backend.
+// Fungsi dasar pemanggilan HTTP ke backend (GET di-cache singkat, mutasi membuang cache).
 async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<{ data: T; meta?: unknown }> {
+  const method = (options.method ?? 'GET').toUpperCase();
+  if (method !== 'GET') {
+    clearApiCache();
+    return rawRequest<T>(path, options);
+  }
+
+  const key = `${getStoredToken() ?? ''}|${path}`;
+  const hit = getCache.get(key);
+  if (hit && Date.now() - hit.at < GET_CACHE_TTL_MS) {
+    return hit.promise as Promise<{ data: T; meta?: unknown }>;
+  }
+  const promise = rawRequest<T>(path, options);
+  getCache.set(key, { at: Date.now(), promise });
+  // Jangan simpan respons gagal agar percobaan berikutnya langsung ke server.
+  promise.catch(() => getCache.delete(key));
+  return promise;
+}
+
+async function rawRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<{ data: T; meta?: unknown }> {
@@ -168,6 +201,11 @@ export const appsApi = {
       method: 'POST',
     });
     return data;
+  },
+
+  // Hapus permanen aplikasi yang masih kosong (backend menolak bila sudah punya materi/riwayat belajar).
+  async remove(appId: string): Promise<void> {
+    await request<void>(`/api/apps/${appId}`, { method: 'DELETE' });
   },
 };
 
@@ -422,6 +460,13 @@ export const analyticsApi = {
       body: JSON.stringify(payload),
     });
     return data;
+  },
+
+  async deleteUser(params: { appId: string; externalUserId: string }): Promise<void> {
+    await request<void>(
+      `/api/dashboard/analytics/users/${encodeURIComponent(params.externalUserId)}?appId=${encodeURIComponent(params.appId)}`,
+      { method: 'DELETE' },
+    );
   },
 
   async exportCsv(params: { deckId?: string; externalUserId?: string }): Promise<void> {

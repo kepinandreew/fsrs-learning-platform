@@ -783,6 +783,20 @@ export async function shiftDueDates(developerId: string, input: ShiftDueInput) {
 }
 
 // =============================================================================
+// Hapus akun siswa uji coba (Developer Dashboard) - cascade ke progres, CardState, ReviewLog, QuizAttempt.
+// =============================================================================
+
+export async function deleteStudent(developerId: string, appId: string, externalUserId: string) {
+  await getOwnedApp(developerId, appId);
+  const user = await prisma.user.findUnique({
+    where: { appId_externalId: { appId, externalId: externalUserId } },
+    select: { id: true },
+  });
+  if (!user) throw ApiError.notFound('Siswa tidak ditemukan');
+  await prisma.user.delete({ where: { id: user.id } });
+}
+
+// =============================================================================
 // Export CSV Data Evaluasi Uji Coba (Bab IV/V Skripsi - Microsoft Excel Ready)
 // =============================================================================
 
