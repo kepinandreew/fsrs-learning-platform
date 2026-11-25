@@ -5,7 +5,9 @@ import { z } from 'zod';
 // =============================================================================
 
 export const analyticsQuerySchema = z.object({
-  // Opsional: bila kosong, digabungkan untuk seluruh deck aktif pada aplikasi utama developer.
+  // Opsional: filter aplikasi client tertentu (isolasi multi-tenant).
+  appId: z.string().uuid().optional(),
+  // Opsional: bila kosong, digabungkan untuk seluruh deck aktif pada aplikasi terpilih / utama developer.
   deckId: z.string().uuid().optional(),
   // Opsional: bila diisi, analitik hanya untuk satu end-user; bila kosong, gabungan seluruh user deck.
   externalUserId: z.string().trim().min(1).max(100).optional(),
@@ -50,6 +52,7 @@ export const fsrsSimulateSchema = z.object({
 
 // Input simulasi pergeseran hari (Time-Travel Demo Jadwal Jatuh Tempo / Due).
 export const shiftDueSchema = z.object({
+  appId: z.string().uuid().optional(),
   deckId: z.string().uuid().optional(),
   externalUserId: z.string().trim().min(1).max(100).optional(),
   days: z

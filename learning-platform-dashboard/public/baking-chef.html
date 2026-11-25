@@ -602,21 +602,46 @@
       defaultDeckId: DEFAULT_BAKING_DECK_ID,
     };
 
+    const URL_CHEF_PARAMS = (() => {
+      try {
+        const p = new URLSearchParams(window.location.search);
+        return {
+          baseUrl: (p.get('baseUrl') || p.get('api') || '').trim().replace(/\/+$/, ''),
+          apiKey: (p.get('apiKey') || p.get('key') || '').trim(),
+          deckId: (p.get('deckId') || '').trim(),
+        };
+      } catch {
+        return { baseUrl: '', apiKey: '', deckId: '' };
+      }
+    })();
+
     function loadConfig() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY_CONFIG);
         const lastUser = localStorage.getItem('baking_chef_last_user');
         const cfg = raw ? { ...DEFAULT_CONFIG, ...JSON.parse(raw) } : { ...DEFAULT_CONFIG };
         if (
+          !URL_CHEF_PARAMS.baseUrl &&
           /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(cfg.baseUrl || '') &&
           DEFAULT_CONFIG.baseUrl !== 'http://localhost:3000'
         ) {
           cfg.baseUrl = DEFAULT_CONFIG.baseUrl;
         }
+        if (URL_CHEF_PARAMS.baseUrl) cfg.baseUrl = URL_CHEF_PARAMS.baseUrl;
+        if (URL_CHEF_PARAMS.apiKey) cfg.apiKey = URL_CHEF_PARAMS.apiKey;
+        if (URL_CHEF_PARAMS.deckId) cfg.defaultDeckId = URL_CHEF_PARAMS.deckId;
+        if (URL_CHEF_PARAMS.baseUrl || URL_CHEF_PARAMS.apiKey) {
+          try { localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(cfg)); } catch {}
+        }
         if (lastUser) cfg.externalUserId = lastUser;
         return cfg;
       } catch {
-        return { ...DEFAULT_CONFIG };
+        return {
+          ...DEFAULT_CONFIG,
+          ...(URL_CHEF_PARAMS.baseUrl ? { baseUrl: URL_CHEF_PARAMS.baseUrl } : {}),
+          ...(URL_CHEF_PARAMS.apiKey ? { apiKey: URL_CHEF_PARAMS.apiKey } : {}),
+          ...(URL_CHEF_PARAMS.deckId ? { defaultDeckId: URL_CHEF_PARAMS.deckId } : {}),
+        };
       }
     }
 
@@ -1128,6 +1153,56 @@
       return '🥣';
     }
 
+    const CHEF_OUTBOX_KEY = 'baking_chef_outbox_v1';
+    let flushingChefOutbox = false;
+
+    function loadChefOutbox() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(CHEF_OUTBOX_KEY) || '[]');
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function enqueueChefOutbox(path, payload) {
+      if (!payload?.clientEventId || appConfig.mode === 'fallback') return;
+      try {
+        const list = loadChefOutbox().filter((e) => e?.payload?.clientEventId !== payload.clientEventId);
+        list.push({ path, payload, queuedAt: Date.now() });
+        localStorage.setItem(CHEF_OUTBOX_KEY, JSON.stringify(list.slice(-150)));
+      } catch {}
+    }
+
+    async function flushChefOutbox() {
+      if (flushingChefOutbox || appConfig.mode === 'fallback') return 0;
+      const list = loadChefOutbox();
+      if (list.length === 0) return 0;
+      flushingChefOutbox = true;
+      const remaining = [];
+      let sent = 0;
+      try {
+        for (const entry of list) {
+          try {
+            await apiFetch(entry.path, { method: 'POST', body: JSON.stringify(entry.payload) }, 8000);
+            sent++;
+          } catch (err) {
+            if (!err?.status || err.status >= 500) remaining.push(entry);
+          }
+        }
+        try { localStorage.setItem(CHEF_OUTBOX_KEY, JSON.stringify(remaining)); } catch {}
+        if (sent > 0) showToast(`☁️ ${sent} data belajar offline tersinkronisasi ke FSRS!`);
+        return sent;
+      } finally {
+        flushingChefOutbox = false;
+      }
+    }
+
+    window.addEventListener('online', () => {
+      state.isOnline = true;
+      flushChefOutbox();
+    });
+
     function rankFromRating(rating, isDue = false, isNew = true) {
       if (rating === 'AGAIN') return 0;
       if (rating === 'HARD') return 1;
@@ -1156,7 +1231,7 @@
           }
         }
         let rawAll = Array.isArray(allRes?.data) ? allRes.data : [];
-        if (rawAll.length === 0 && appConfig.apiKey !== DEFAULT_CONFIG.apiKey) {
+        if (rawAll.length === 0 && !URL_CHEF_PARAMS.apiKey && appConfig.apiKey !== DEFAULT_CONFIG.apiKey) {
           appConfig.apiKey = DEFAULT_CONFIG.apiKey;
           try { localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(appConfig)); } catch {}
           allRes = await apiFetch('/api/items?limit=100');
@@ -1255,6 +1330,7 @@
           }
         }
 
+        await flushChefOutbox();
         await Promise.all([fetchServerLeaderboard(), refreshChefDueSummary()]);
         if (appConfig.externalUserId !== targetUserId) return;
         saveLocalProgress();
@@ -1406,29 +1482,38 @@
     async function submitFlashcardReview(ingObj, rating, responseTimeMs) {
       const apiCard = state.apiFlashcardsByFront[ingObj.en.toLowerCase()];
       const itemId = apiCard?.id || ingObj.flashcardId;
-      if (state.isOnline && itemId) {
+      const isUuid = typeof itemId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(itemId);
+      const reviewPayload = isUuid
+        ? {
+            externalUserId: appConfig.externalUserId,
+            displayName: getStudentDisplayName(appConfig.externalUserId),
+            itemId,
+            rating,
+            responseTimeMs: Math.max(150, Math.min(300000, Math.round(responseTimeMs || 1500))),
+            clientEventId: crypto.randomUUID ? crypto.randomUUID() : `bc-rev-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          }
+        : null;
+      if (state.isOnline && reviewPayload) {
         try {
           const res = await apiFetch('/api/evaluation/review', {
             method: 'POST',
-            body: JSON.stringify({
-              externalUserId: appConfig.externalUserId,
-              displayName: getStudentDisplayName(appConfig.externalUserId),
-              itemId,
-              rating,
-              responseTimeMs: Math.max(150, Math.min(300000, Math.round(responseTimeMs || 1500))),
-              clientEventId: crypto.randomUUID ? crypto.randomUUID() : `bc-rev-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            }),
+            body: JSON.stringify(reviewPayload),
           });
           const c = res.data?.card;
           const days = c?.scheduledDays ?? 0;
           const mins = c?.scheduledMinutes ?? (days === 0 && c?.due ? Math.max(1, Math.round((new Date(c.due).getTime() - Date.now()) / 60000)) : 0);
+          flushChefOutbox();
           return {
             online: true,
             days,
             mins,
             priorityRank: c?.priorityRank ?? rankFromRating(rating, false, false),
           };
-        } catch {}
+        } catch (err) {
+          if (!err?.status || err.status >= 500) enqueueChefOutbox('/api/evaluation/review', reviewPayload);
+        }
+      } else if (reviewPayload) {
+        enqueueChefOutbox('/api/evaluation/review', reviewPayload);
       }
       const fb = ({ AGAIN: { days: 0, mins: 1 }, HARD: { days: 0, mins: 5 }, GOOD: { days: 1, mins: 0 }, EASY: { days: 3, mins: 0 } })[rating] || { days: 1, mins: 0 };
       return { online: false, ...fb, priorityRank: rankFromRating(rating, false, false) };
@@ -1436,7 +1521,6 @@
 
     // Mengirim evaluasi kuis ke POST /api/evaluation/quiz dengan mencocokkan indeks pilihan asli di server
     async function recordStepQuizToBackend(targetIng, isCorrect, responseTimeMs) {
-      if (!state.isOnline) return;
       const apiCard = state.apiFlashcardsByFront[targetIng.en.toLowerCase()];
       const apiQuiz = apiCard ? state.apiQuizzesBySourceId[apiCard.id] : null;
       if (!apiQuiz || !Array.isArray(apiQuiz.choices) || apiQuiz.choices.length < 2) return;
@@ -1450,20 +1534,28 @@
       if (rightIdx < 0) rightIdx = 0;
 
       const selectedIndex = isCorrect ? rightIdx : (rightIdx + 1) % apiQuiz.choices.length;
+      const quizPayload = {
+        externalUserId: appConfig.externalUserId,
+        displayName: getStudentDisplayName(appConfig.externalUserId),
+        itemId: apiQuiz.id,
+        selectedIndex,
+        responseTimeMs: Math.max(150, Math.min(300000, Math.round(responseTimeMs || 1800))),
+        sessionId: `baking-${Date.now()}`,
+        clientEventId: crypto.randomUUID ? crypto.randomUUID() : `bc-qz-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      };
+      if (!state.isOnline) {
+        enqueueChefOutbox('/api/evaluation/quiz', quizPayload);
+        return;
+      }
       try {
         await apiFetch('/api/evaluation/quiz', {
           method: 'POST',
-          body: JSON.stringify({
-            externalUserId: appConfig.externalUserId,
-            displayName: getStudentDisplayName(appConfig.externalUserId),
-            itemId: apiQuiz.id,
-            selectedIndex,
-            responseTimeMs: Math.max(150, Math.min(300000, Math.round(responseTimeMs || 1800))),
-            sessionId: `baking-${Date.now()}`,
-            clientEventId: crypto.randomUUID ? crypto.randomUUID() : `bc-qz-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          }),
+          body: JSON.stringify(quizPayload),
         });
-      } catch {}
+        flushChefOutbox();
+      } catch (err) {
+        if (!err?.status || err.status >= 500) enqueueChefOutbox('/api/evaluation/quiz', quizPayload);
+      }
     }
 
     async function syncProgressToBackend() {
@@ -2953,8 +3045,11 @@
           btnEl.classList.add('is-wrong');
         }
 
+        const linkedFc = state.apiFlashcardsByFront[targetIng.en.toLowerCase()];
+        const linkedQz = linkedFc ? state.apiQuizzesBySourceId[linkedFc.id] : null;
+        const expNote = linkedQz?.explanation ? ` • 💡 ${linkedQz.explanation}` : ` • 💡 Ingat: "${targetIng.en}" = ${targetIng.id}!`;
         fb.className = 'rounded-2xl p-2.5 sm:p-3 text-xs sm:text-sm font-bold text-center bg-rose-500/25 border border-rose-400/50 text-rose-100';
-        fb.textContent = `❌ Ups! "${chosenIng.en}" itu ${chosenIng.id}. Cari Bahasa Inggris untuk "${targetIng.id}"! (-1 ❤️)`;
+        fb.textContent = `❌ Ups! "${chosenIng.en}" itu ${chosenIng.id}. Cari Bahasa Inggris untuk "${targetIng.id}"! (-1 ❤️)${expNote}`;
 
         updateCookingTopBar();
         if (kitchenSceneRef) kitchenSceneRef.playWrongEffect(`❌ ${chosenIng.en} (-1 ❤️)`);

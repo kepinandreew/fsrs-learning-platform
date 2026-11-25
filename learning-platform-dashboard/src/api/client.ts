@@ -405,11 +405,13 @@ export const aiApi = {
 
 export const analyticsApi = {
   async summary(params: {
+    appId?: string;
     deckId?: string;
     externalUserId?: string;
     limit?: number;
   }): Promise<AnalyticsSummaryResponse> {
     const qs = new URLSearchParams();
+    if (params.appId) qs.set('appId', params.appId);
     if (params.deckId) qs.set('deckId', params.deckId);
     if (params.externalUserId?.trim()) qs.set('externalUserId', params.externalUserId.trim());
     if (params.limit) qs.set('limit', String(params.limit));
@@ -451,6 +453,7 @@ export const analyticsApi = {
   },
 
   async shiftDue(payload: {
+    appId?: string;
     deckId?: string;
     externalUserId?: string;
     days: number;
@@ -469,8 +472,9 @@ export const analyticsApi = {
     );
   },
 
-  async exportCsv(params: { deckId?: string; externalUserId?: string }): Promise<void> {
+  async exportCsv(params: { appId?: string; deckId?: string; externalUserId?: string }): Promise<void> {
     const qs = new URLSearchParams();
+    if (params.appId) qs.set('appId', params.appId);
     if (params.deckId) qs.set('deckId', params.deckId);
     if (params.externalUserId?.trim()) qs.set('externalUserId', params.externalUserId.trim());
 

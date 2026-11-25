@@ -26,6 +26,9 @@ async function loadScope(developerId: string, q: AnalyticsQuery) {
   if (q.deckId) {
     const owned = await getOwnedDeck(developerId, q.deckId);
     deck = { id: owned.id, title: owned.title, appId: owned.appId, isAllDecks: false };
+  } else if (q.appId) {
+    const ownedApp = await getOwnedApp(developerId, q.appId);
+    deck = { id: 'all', title: 'Semua Materi Pembelajaran', appId: ownedApp.id, isAllDecks: true };
   } else {
     const primaryApp = await prisma.app.findFirst({
       where: { developerId },
@@ -445,8 +448,9 @@ export async function getMonitoring(developerId: string, q: MonitoringQuery) {
     .filter((u) => Boolean(u.email) || u.progresses.length > 0 || (trackedMap.get(u.id) ?? 0) > 0)
     .map((u) => {
       const progs = u.progresses;
-      const points = progs.reduce((sum, p) => sum + p.points, 0);
-      const experience = progs.reduce((sum, p) => sum + p.exp, 0);
+      // Poin & EXP bersifat kumulatif pada profil pemain (konsisten dengan rankLeaderboardUsers), sedangkan counter review/kuis per-deck.
+      const points = progs.reduce((max, p) => Math.max(max, p.points), 0);
+      const experience = progs.reduce((max, p) => Math.max(max, p.exp), 0);
       const level = progs.reduce((max, p) => Math.max(max, p.level), 1);
       const totalReviews = progs.reduce((sum, p) => sum + p.totalReviews, 0);
       const totalQuizzes = progs.reduce((sum, p) => sum + p.totalQuizzes, 0);
@@ -741,6 +745,7 @@ export function simulateFsrs(input: FsrsSimulateInput) {
 
 export async function shiftDueDates(developerId: string, input: ShiftDueInput) {
   const scope = await loadScope(developerId, {
+    appId: input.appId,
     deckId: input.deckId,
     externalUserId: input.externalUserId,
     limit: 10,
@@ -815,7 +820,7 @@ function csvRow(cols: unknown[]): string {
 
 export async function exportAnalyticsCsv(developerId: string, q: MonitoringQuery): Promise<string> {
   const [summary, monitoring] = await Promise.all([
-    getSummary(developerId, { deckId: q.deckId, externalUserId: q.externalUserId, limit: 25 }),
+    getSummary(developerId, { appId: q.appId, deckId: q.deckId, externalUserId: q.externalUserId, limit: 25 }),
     getMonitoring(developerId, { ...q, limit: 100 }),
   ]);
 

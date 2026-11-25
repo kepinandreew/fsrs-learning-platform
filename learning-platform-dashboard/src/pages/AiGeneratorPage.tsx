@@ -393,9 +393,42 @@ export function AiGeneratorPage() {
 
           {/* Draft Flashcard */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Draft Flashcard ({draftCards.length})
-            </h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Draft Flashcard ({draftCards.filter((c) => c.selected).length}/{draftCards.length} dipilih — klik teks untuk edit langsung)
+              </h3>
+              <div className="flex items-center gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allSelected = draftCards.every((c) => c.selected) && draftQuizzes.every((q) => q.selected);
+                    setDraftCards(draftCards.map((c) => ({ ...c, selected: !allSelected })));
+                    setDraftQuizzes(draftQuizzes.map((q) => ({ ...q, selected: !allSelected })));
+                  }}
+                  className="px-2.5 py-1 rounded-lg border border-slate-300 hover:bg-slate-50 font-semibold text-slate-700"
+                >
+                  Pilih / Batal Semua
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDraftCards([
+                      ...draftCards,
+                      {
+                        tempId: `manual_${Date.now()}`,
+                        front: '',
+                        back: '',
+                        tags: [],
+                        selected: true,
+                      },
+                    ])
+                  }
+                  className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 font-semibold text-indigo-700"
+                >
+                  + Tambah Kartu Draft
+                </button>
+              </div>
+            </div>
             {draftCards.map((fc, idx) => (
               <div
                 key={fc.tempId}
@@ -413,7 +446,7 @@ export function AiGeneratorPage() {
                   }}
                   className="mt-1"
                 />
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-500 mb-1">
                       Depan (Pertanyaan/Istilah)
@@ -421,6 +454,7 @@ export function AiGeneratorPage() {
                     <input
                       type="text"
                       value={fc.front}
+                      placeholder="Contoh: Flour"
                       onChange={(e) => {
                         const next = [...draftCards];
                         next[idx] = { ...fc, front: e.target.value };
@@ -436,12 +470,35 @@ export function AiGeneratorPage() {
                     <input
                       type="text"
                       value={fc.back}
+                      placeholder="Contoh: Tepung Terigu"
                       onChange={(e) => {
                         const next = [...draftCards];
                         next[idx] = { ...fc, back: e.target.value };
                         setDraftCards(next);
                       }}
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      Tag Sub-Topik (Pisahkan koma)
+                    </label>
+                    <input
+                      type="text"
+                      value={(fc.tags ?? []).join(', ')}
+                      placeholder="bahan-kue, kata-benda"
+                      onChange={(e) => {
+                        const next = [...draftCards];
+                        next[idx] = {
+                          ...fc,
+                          tags: e.target.value
+                            .split(',')
+                            .map((t) => t.trim())
+                            .filter(Boolean),
+                        };
+                        setDraftCards(next);
+                      }}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
                     />
                   </div>
                 </div>
@@ -460,7 +517,7 @@ export function AiGeneratorPage() {
           {draftQuizzes.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Draft Pilihan Ganda ({draftQuizzes.length})
+                Draft Pilihan Ganda ({draftQuizzes.filter((q) => q.selected).length}/{draftQuizzes.length} dipilih — radio = kunci jawaban benar)
               </h3>
               {draftQuizzes.map((qz, idx) => (
                 <div
@@ -519,6 +576,22 @@ export function AiGeneratorPage() {
                             />
                           </div>
                         ))}
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                          💡 Pembahasan Singkat (Ditampilkan di Game saat Siswa Salah Menjawab)
+                        </label>
+                        <input
+                          type="text"
+                          value={qz.explanation ?? ''}
+                          placeholder="Contoh: Flour adalah tepung terigu, sedangkan Sugar adalah gula pasir."
+                          onChange={(e) => {
+                            const next = [...draftQuizzes];
+                            next[idx] = { ...qz, explanation: e.target.value || null };
+                            setDraftQuizzes(next);
+                          }}
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-700"
+                        />
                       </div>
                     </div>
                     <button

@@ -1278,20 +1278,33 @@
       };
     })();
 
-    function loadApiConfig() {
-      let qApi = '', qKey = '';
+    const URL_BOOT_PARAMS = (() => {
       try {
         const p = new URLSearchParams(window.location.search);
-        qApi = (p.get('api') || '').trim().replace(/\/+$/, '');
-        qKey = (p.get('key') || '').trim();
-      } catch {}
+        return {
+          baseUrl: (p.get('baseUrl') || p.get('api') || '').trim().replace(/\/+$/, ''),
+          apiKey: (p.get('apiKey') || p.get('key') || '').trim(),
+          deckId: (p.get('deckId') || '').trim(),
+        };
+      } catch {
+        return { baseUrl: '', apiKey: '', deckId: '' };
+      }
+    })();
+
+    function loadApiConfig() {
+      const qApi = URL_BOOT_PARAMS.baseUrl;
+      const qKey = URL_BOOT_PARAMS.apiKey;
       try {
         const parsed = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}_api_config`) || '{}');
         let url = (qApi || parsed.baseUrl || DEFAULT_API_CONFIG.baseUrl).replace(/\/+$/, '');
         if (!qApi && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url) && DEFAULT_API_CONFIG.baseUrl !== 'http://localhost:3000') {
           url = DEFAULT_API_CONFIG.baseUrl;
         }
-        return { baseUrl: url, apiKey: qKey || parsed.apiKey || DEFAULT_API_CONFIG.apiKey, mode: parsed.mode === 'fallback' ? 'fallback' : 'auto' };
+        const cfg = { baseUrl: url, apiKey: qKey || parsed.apiKey || DEFAULT_API_CONFIG.apiKey, mode: parsed.mode === 'fallback' ? 'fallback' : 'auto' };
+        if (qApi || qKey) {
+          try { localStorage.setItem(`${STORAGE_PREFIX}_api_config`, JSON.stringify(cfg)); } catch {}
+        }
+        return cfg;
       } catch {
         return { ...DEFAULT_API_CONFIG, baseUrl: qApi || DEFAULT_API_CONFIG.baseUrl, apiKey: qKey || DEFAULT_API_CONFIG.apiKey };
       }
@@ -1307,7 +1320,7 @@
       serverLeaderboard: [],
       serverNames: {},
       decks: [...FALLBACK_DECKS, { id: ALL_DECKS_ID, title: '🌟 Semua Topik (Campuran)' }],
-      selectedDeckId: FALLBACK_DECKS[0].id,
+      selectedDeckId: URL_BOOT_PARAMS.deckId || FALLBACK_DECKS[0].id,
       selectedBossTier: 0,
       deckItemsCache: {},
       lastStudiedWords: [],
@@ -1492,12 +1505,65 @@
       }
     }
 
+    const OUTBOX_STORAGE_KEY = `${STORAGE_PREFIX}_offline_outbox_v1`;
+    let flushingOutbox = false;
+
+    function loadOfflineOutbox() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(OUTBOX_STORAGE_KEY) || '[]');
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function enqueueOfflineEvent(path, payload) {
+      if (!payload?.clientEventId) return;
+      try {
+        const list = loadOfflineOutbox().filter((e) => e?.payload?.clientEventId !== payload.clientEventId);
+        list.push({ path, payload, queuedAt: Date.now() });
+        localStorage.setItem(OUTBOX_STORAGE_KEY, JSON.stringify(list.slice(-150)));
+      } catch {}
+    }
+
+    async function flushOfflineOutbox() {
+      if (flushingOutbox || state.apiConfig.mode === 'fallback') return 0;
+      const list = loadOfflineOutbox();
+      if (list.length === 0) return 0;
+      flushingOutbox = true;
+      const remaining = [];
+      let sent = 0;
+      try {
+        for (const entry of list) {
+          try {
+            await apiFetch(entry.path, { method: 'POST', body: JSON.stringify(entry.payload), timeoutMs: 8000 });
+            sent++;
+          } catch (err) {
+            // Simpan kembali bila gagal jaringan atau 5xx; buang bila 4xx (item tidak valid) agar antrean tidak macet.
+            if (!err?.status || err.status >= 500) remaining.push(entry);
+          }
+        }
+        try { localStorage.setItem(OUTBOX_STORAGE_KEY, JSON.stringify(remaining)); } catch {}
+        if (sent > 0) showToast(`☁️ ${sent} riwayat belajar offline berhasil disinkronkan ke FSRS!`);
+        return sent;
+      } finally {
+        flushingOutbox = false;
+      }
+    }
+
+    window.addEventListener('online', () => { flushOfflineOutbox(); });
+
     function setApiStatus(isOnline) {
+      const pendingCount = loadOfflineOutbox().length;
       state.apiOnline = Boolean(isOnline) && state.apiConfig.mode !== 'fallback';
       const dot = document.getElementById('api-status-dot');
       const txt = document.getElementById('api-status-text');
       if (dot) dot.className = state.apiOnline ? 'absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse' : 'absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-amber-400';
-      if (txt) txt.textContent = state.apiOnline ? `🟢 Live FSRS Terhubung (${state.apiConfig.baseUrl})` : '🟡 Mode Offline Aktif';
+      if (txt) txt.textContent = state.apiOnline
+        ? `🟢 Live FSRS Terhubung (${state.apiConfig.baseUrl})`
+        : pendingCount > 0
+          ? `🟡 Mode Offline (${pendingCount} antrean siap sinkron)`
+          : '🟡 Mode Offline Aktif';
     }
 
     function normalizeApiOrLocalItem(raw, isServerOrigin = false) {
@@ -1568,8 +1634,8 @@
         } catch {
           allServerItems = [];
         }
-        // Pulihkan otomatis bila key lama di localStorage mengarah ke aplikasi kosong (0 soal) atau dicabut.
-        if (allServerItems.length === 0 && state.apiConfig.apiKey !== DEFAULT_API_CONFIG.apiKey) {
+        // Pulihkan otomatis bila key lama di localStorage mengarah ke aplikasi kosong (0 soal) dan bukan key dari QR URL.
+        if (allServerItems.length === 0 && !URL_BOOT_PARAMS.apiKey && state.apiConfig.apiKey !== DEFAULT_API_CONFIG.apiKey) {
           saveApiConfig({ ...state.apiConfig, apiKey: DEFAULT_API_CONFIG.apiKey });
           allServerItems = await fetchRawServerItems();
         }
@@ -1766,17 +1832,18 @@
       };
       saveStudentProfile(state.profile);
       if (!cardItem.isServerItem || state.apiConfig.mode === 'fallback') return fallbackCfg;
+      const reviewPayload = {
+        externalUserId: state.profile.externalUserId,
+        displayName: state.profile.displayName,
+        itemId: cardItem.id,
+        rating,
+        responseTimeMs: Math.max(150, Math.min(300000, Math.round(responseTimeMs || 1500))),
+        clientEventId: makeUuidV4(),
+      };
       try {
         const res = await apiFetch('/api/evaluation/review', {
           method: 'POST',
-          body: JSON.stringify({
-            externalUserId: state.profile.externalUserId,
-            displayName: state.profile.displayName,
-            itemId: cardItem.id,
-            rating,
-            responseTimeMs: Math.max(150, Math.min(300000, Math.round(responseTimeMs || 1500))),
-            clientEventId: makeUuidV4(),
-          }),
+          body: JSON.stringify(reviewPayload),
         });
         const c = res?.data?.card;
         if (c) {
@@ -1792,9 +1859,12 @@
             due: c.due,
           };
           saveStudentProfile(state.profile);
+          flushOfflineOutbox();
           return { days: c.scheduledDays, mins, online: true };
         }
-      } catch {}
+      } catch (err) {
+        if (!err?.status || err.status >= 500) enqueueOfflineEvent('/api/evaluation/review', reviewPayload);
+      }
       return fallbackCfg;
     }
 
@@ -1830,6 +1900,7 @@
           linkedFcId: it.sourceFlashcardId || null,
           hasKnownKey: typeof it.content.correctIndex === 'number' || typeof loc?.content?.correctIndex === 'number' || inferred !== null,
           question: qText, choices: it.content.choices,
+          explanation: it.content.explanation || (linkedFc ? `"${linkedFc.content.front}" artinya "${linkedFc.content.back}".` : null),
           correctIndex: Math.max(0, Math.min(it.content.choices.length - 1, resolvedIdx)),
         });
         seenQ.add(qText.toLowerCase());
@@ -1848,7 +1919,7 @@
           if (!seenQ.has(q1.toLowerCase())) {
             const dist = shuffleArray(pool.map((o) => o.content.back.split('(')[0].trim()).filter((v) => v && v.toLowerCase() !== back.toLowerCase())).slice(0, 3);
             if (dist.length === 3) {
-              allCandidates.push({ id: `${fc.id}_g1_${idx}`, linkedFcId: fc.id, isServerMc: false, hasKnownKey: true, question: q1, choices: [back, ...dist], correctIndex: 0 });
+              allCandidates.push({ id: `${fc.id}_g1_${idx}`, linkedFcId: fc.id, isServerMc: false, hasKnownKey: true, question: q1, choices: [back, ...dist], explanation: `Ingat: "${front}" artinya "${fc.content.back}".`, correctIndex: 0 });
               seenQ.add(q1.toLowerCase());
             }
           }
@@ -1856,7 +1927,7 @@
           if (!seenQ.has(q2.toLowerCase())) {
             const dist2 = shuffleArray(pool.map((o) => o.content.front.trim()).filter((v) => v && v.toLowerCase() !== front.toLowerCase())).slice(0, 3);
             if (dist2.length === 3) {
-              allCandidates.push({ id: `${fc.id}_g2_${idx}`, linkedFcId: fc.id, isServerMc: false, hasKnownKey: true, question: q2, choices: [front, ...dist2], correctIndex: 0 });
+              allCandidates.push({ id: `${fc.id}_g2_${idx}`, linkedFcId: fc.id, isServerMc: false, hasKnownKey: true, question: q2, choices: [front, ...dist2], explanation: `Ingat: "${back}" adalah "${front}".`, correctIndex: 0 });
               seenQ.add(q2.toLowerCase());
             }
           }
@@ -1881,25 +1952,37 @@
 
     async function evaluateBattleAnswer(questionObj, selectedIndex, responseTimeMs) {
       if (questionObj.isServerMc && state.profile && state.apiConfig.mode !== 'fallback') {
+        const quizPayload = {
+          externalUserId: state.profile.externalUserId,
+          displayName: state.profile.displayName,
+          itemId: questionObj.id,
+          selectedIndex,
+          responseTimeMs: Math.max(150, Math.min(300000, Math.round(responseTimeMs || 1800))),
+          sessionId: state.battleSessionId,
+          clientEventId: makeUuidV4(),
+        };
         try {
           const res = await apiFetch('/api/evaluation/quiz', {
             method: 'POST',
-            body: JSON.stringify({
-              externalUserId: state.profile.externalUserId,
-              displayName: state.profile.displayName,
-              itemId: questionObj.id,
-              selectedIndex,
-              responseTimeMs: Math.max(150, Math.min(300000, Math.round(responseTimeMs || 1800))),
-              sessionId: state.battleSessionId,
-              clientEventId: makeUuidV4(),
-            }),
+            body: JSON.stringify(quizPayload),
           });
           if (res?.data && typeof res.data.isCorrect === 'boolean') {
-            return { isCorrect: res.data.isCorrect, correctIndex: typeof res.data.correctIndex === 'number' ? res.data.correctIndex : questionObj.correctIndex };
+            flushOfflineOutbox();
+            return {
+              isCorrect: res.data.isCorrect,
+              correctIndex: typeof res.data.correctIndex === 'number' ? res.data.correctIndex : questionObj.correctIndex,
+              explanation: res.data.explanation || questionObj.explanation || null,
+            };
           }
-        } catch {}
+        } catch (err) {
+          if (!err?.status || err.status >= 500) enqueueOfflineEvent('/api/evaluation/quiz', quizPayload);
+        }
       }
-      return { isCorrect: selectedIndex === questionObj.correctIndex, correctIndex: questionObj.correctIndex };
+      return {
+        isCorrect: selectedIndex === questionObj.correctIndex,
+        correctIndex: questionObj.correctIndex,
+        explanation: questionObj.explanation || null,
+      };
     }
 
     function getPetBattleDeckIds() {
@@ -3733,6 +3816,7 @@
       if (!state.profile) { showView('view-login'); return; }
       renderMainMenuProfile();
       showView('view-menu');
+      await flushOfflineOutbox();
       await Promise.all([loadDeckItems(state.selectedDeckId), fetchServerLeaderboard(), refreshMenuDueSummary()]);
       renderMainMenuProfile();
     }
@@ -4226,8 +4310,9 @@
         saveStudentProfile(state.profile);
         updateBattleTopBar();
 
+        const expText = (result.explanation || qObj.explanation) ? ` • 💡 ${result.explanation || qObj.explanation}` : '';
         fb.className = 'rounded-2xl p-2.5 sm:p-3 text-xs sm:text-sm font-bold text-center bg-rose-500/25 border border-rose-400/55 text-rose-100';
-        fb.textContent = `❌ Ups! Jawaban benarnya "${qObj.choices[result.correctIndex]}" (-1 ❤️)`;
+        fb.textContent = `❌ Ups! Jawaban benarnya "${qObj.choices[result.correctIndex]}" (-1 ❤️)${expText}`;
 
         if (state.arenaScene) state.arenaScene.playEnemyCounterAttack(() => revealNextTurnControls(1800));
         else revealNextTurnControls(1800);

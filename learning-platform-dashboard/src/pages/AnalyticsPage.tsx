@@ -19,9 +19,10 @@ import {
   FastForward,
   Trash2,
 } from 'lucide-react';
-import { analyticsApi, clearApiCache, decksApi } from '../api/client';
+import { analyticsApi, appsApi, clearApiCache, decksApi } from '../api/client';
 import type {
   AnalyticsSummaryResponse,
+  ClientApp,
   Deck,
   FsrsRating,
   FsrsSimulateInitialCard,
@@ -95,6 +96,8 @@ function formatCardSchedule(cs: MonitoringCardState): string {
 
 export function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState<TabMode>('monitoring');
+  const [apps, setApps] = useState<ClientApp[]>([]);
+  const [selectedAppId, setSelectedAppId] = useState('');
   const [decks, setDecks] = useState<Deck[]>([]);
   const [selectedDeckId, setSelectedDeckId] = useState('');
   const [externalUserId, setExternalUserId] = useState('');
@@ -131,21 +134,32 @@ export function AnalyticsPage() {
   const [simLoading, setSimLoading] = useState(false);
 
   useEffect(() => {
-    decksApi
-      .list()
-      .then((list) => {
-        setDecks(list);
+    Promise.all([appsApi.list(), decksApi.list()])
+      .then(([appList, deckList]) => {
+        setApps(appList);
+        setDecks(deckList);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Gagal memuat deck'));
   }, []);
 
-  async function loadAll(deckId: string, userFilter?: string) {
+  async function loadAll(deckId: string, userFilter?: string, appFilter?: string) {
+    const resolvedAppId = appFilter !== undefined ? appFilter : selectedAppId;
     setLoading(true);
     setError(null);
     try {
       const [sumRes, monRes] = await Promise.all([
-        analyticsApi.summary({ deckId: deckId || undefined, externalUserId: userFilter, limit: 25 }),
-        analyticsApi.monitoring({ deckId: deckId || undefined, externalUserId: userFilter, limit: 25 }),
+        analyticsApi.summary({
+          appId: resolvedAppId || undefined,
+          deckId: deckId || undefined,
+          externalUserId: userFilter,
+          limit: 25,
+        }),
+        analyticsApi.monitoring({
+          appId: resolvedAppId || undefined,
+          deckId: deckId || undefined,
+          externalUserId: userFilter,
+          limit: 25,
+        }),
       ]);
       setData(sumRes);
       setMonitoring(monRes);
@@ -187,6 +201,7 @@ export function AnalyticsPage() {
     setError(null);
     try {
       await analyticsApi.exportCsv({
+        appId: selectedAppId || undefined,
         deckId: selectedDeckId || undefined,
         externalUserId: externalUserId || undefined,
       });
@@ -212,7 +227,7 @@ export function AnalyticsPage() {
       await analyticsApi.deleteUser({ appId, externalUserId: externalId });
       const nextFilter = externalUserId === externalId ? '' : externalUserId;
       setExternalUserId(nextFilter);
-      await loadAll(selectedDeckId, nextFilter);
+      await loadAll(selectedDeckId, nextFilter, selectedAppId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menghapus siswa');
     }
@@ -224,6 +239,7 @@ export function AnalyticsPage() {
     setError(null);
     try {
       const res = await analyticsApi.shiftDue({
+        appId: selectedAppId || undefined,
         deckId: selectedDeckId || undefined,
         externalUserId: externalUserId || undefined,
         days,
@@ -235,7 +251,7 @@ export function AnalyticsPage() {
           ? `Jadwal ${res.updatedCards} kartu telah dikembalikan 100% ke waktu semula.`
           : `Simulasi Waktu Aktif (${nextTotal > 0 ? `+${nextTotal}` : nextTotal} hari): ${res.dueNowCount} dari ${res.updatedCards} kartu kini berstatus Jatuh Tempo (Due).`,
       );
-      await loadAll(selectedDeckId, externalUserId);
+      await loadAll(selectedDeckId, externalUserId, selectedAppId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menggeser jadwal kartu');
     } finally {
@@ -372,6 +388,32 @@ export function AnalyticsPage() {
       {activeTab !== 'simulator' && (
         <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3">
           <div className="flex flex-wrap items-end gap-3">
+            {apps.length > 0 && (
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  Aplikasi Klien (Multi-Tenant)
+                </label>
+                <select
+                  value={selectedAppId}
+                  onChange={(e) => {
+                    const nextApp = e.target.value;
+                    setSelectedAppId(nextApp);
+                    setSelectedDeckId('');
+                    setExternalUserId('');
+                    loadAll('', '', nextApp);
+                  }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold bg-white"
+                >
+                  <option value="">🏢 Aplikasi Utama ({monitoring?.app?.name ?? 'Default'})</option>
+                  {apps.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      🔑 {a.name} (Retensi {Math.round(a.requestRetention * 100)}%)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="flex-1 min-w-[220px]">
               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                 Deck Pembelajaran
@@ -382,11 +424,13 @@ export function AnalyticsPage() {
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold bg-white"
               >
                 <option value="">🌟 Semua Materi / Semua Deck (Gabungan Real-Time)</option>
-                {decks.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    📘 {d.title}
-                  </option>
-                ))}
+                {decks
+                  .filter((d) => !selectedAppId || d.appId === selectedAppId)
+                  .map((d) => (
+                    <option key={d.id} value={d.id}>
+                      📘 {d.title}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -1952,6 +1996,188 @@ export function AnalyticsPage() {
                   </table>
                 </div>
               </div>
+
+              {/* Grafik Multi-Review Spaced Repetition Sawtooth Trajectory (Efek Pengulangan Berjarak FSRS-5) */}
+              {simData.trace.length > 0 && (
+                <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">
+                        Lintasan Efek Pengulangan Berjarak (Multi-Review Spaced Repetition Curve)
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        Memperlihatkan bagaimana setiap pengulangan menaikkan kembali daya ingat ke 100% dan melandaikan kemiringan kurva lupa seiring bertambahnya Stability (S).
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">
+                      {simData.trace.length}x Review · Total Rentang{' '}
+                      {Math.max(
+                        1,
+                        Math.round(
+                          simData.trace.reduce(
+                            (acc, r, i) =>
+                              acc +
+                              (i < simData.trace.length - 1
+                                ? Math.max(0.2, simData.trace[i + 1]?.elapsedDays || r.scheduledDays || 0.2)
+                                : Math.max(0.5, r.scheduledDays || 0.5)),
+                            0,
+                          ),
+                        ),
+                      )}{' '}
+                      Hari
+                    </span>
+                  </div>
+
+                  <div className="pt-1">
+                    <svg viewBox="0 0 680 205" className="w-full h-56 overflow-visible">
+                      <defs>
+                        <linearGradient id="sawtoothFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" stopOpacity="0.24" />
+                          <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.02" />
+                        </linearGradient>
+                      </defs>
+                      {(() => {
+                        const segments: Array<{
+                          step: number;
+                          rating: FsrsRating;
+                          startDay: number;
+                          endDay: number;
+                          stability: number;
+                          pts: Array<{ d: number; r: number }>;
+                        }> = [];
+                        let cursorDay = 0;
+                        simData.trace.forEach((tr, idx) => {
+                          const dur =
+                            idx < simData.trace.length - 1
+                              ? Math.max(0.25, simData.trace[idx + 1]?.elapsedDays || tr.scheduledDays || 0.25)
+                              : Math.max(0.5, tr.scheduledDays || 0.5);
+                          const s = Math.max(0.08, tr.stabilityAfter);
+                          const segPts: Array<{ d: number; r: number }> = [];
+                          const samples = 10;
+                          for (let k = 0; k <= samples; k++) {
+                            const dt = (dur * k) / samples;
+                            const rVal = Math.pow(1 + (19 / 81) * (dt / s), -0.5);
+                            segPts.push({ d: cursorDay + dt, r: rVal });
+                          }
+                          segments.push({
+                            step: tr.step,
+                            rating: tr.rating,
+                            startDay: cursorDay,
+                            endDay: cursorDay + dur,
+                            stability: tr.stabilityAfter,
+                            pts: segPts,
+                          });
+                          cursorDay += dur;
+                        });
+
+                        const totalDays = Math.max(cursorDay, 1);
+                        const allR = segments.flatMap((sg) => sg.pts.map((p) => p.r));
+                        const minR = Math.max(
+                          0,
+                          Math.min(0.65, Math.floor((Math.min(...allR, simData.requestRetention) - 0.06) * 10) / 10),
+                        );
+                        const spanR = Math.max(1 - minR, 0.2);
+                        const toX = (d: number) => 48 + (d / totalDays) * 612;
+                        const toY = (r: number) => 24 + ((1 - r) / spanR) * 142;
+                        const yBase = 166;
+                        const yThresh = toY(simData.requestRetention);
+
+                        const polyPts: string[] = [];
+                        segments.forEach((sg) => {
+                          sg.pts.forEach((p) => {
+                            polyPts.push(`${toX(p.d).toFixed(1)},${toY(p.r).toFixed(1)}`);
+                          });
+                        });
+                        const areaPts = `48,${yBase} ${polyPts.join(' ')} ${toX(totalDays).toFixed(1)},${yBase}`;
+                        const dotColor: Record<FsrsRating, string> = {
+                          AGAIN: '#e11d48',
+                          HARD: '#d97706',
+                          GOOD: '#059669',
+                          EASY: '#0284c7',
+                        };
+
+                        return (
+                          <g>
+                            {[1, 0.9, 0.8, 0.7]
+                              .filter((g) => g >= minR)
+                              .map((g) => {
+                                const gy = toY(g);
+                                return (
+                                  <g key={g}>
+                                    <line x1={48} y1={gy} x2={660} y2={gy} stroke="#e2e8f0" strokeWidth={1} />
+                                    <text x={42} y={gy + 3} textAnchor="end" className="fill-slate-400 text-[9px] font-mono">
+                                      {Math.round(g * 100)}%
+                                    </text>
+                                  </g>
+                                );
+                              })}
+
+                            <line
+                              x1={48}
+                              y1={yThresh}
+                              x2={660}
+                              y2={yThresh}
+                              stroke="#f59e0b"
+                              strokeDasharray="5 4"
+                              strokeWidth={1.5}
+                            />
+                            <text
+                              x={658}
+                              y={yThresh - 4}
+                              textAnchor="end"
+                              className="fill-amber-600 text-[9px] font-mono font-semibold"
+                            >
+                              Target Retensi {Math.round(simData.requestRetention * 100)}%
+                            </text>
+
+                            <polygon points={areaPts} fill="url(#sawtoothFill)" />
+                            <polyline
+                              fill="none"
+                              stroke="#4f46e5"
+                              strokeWidth={2.4}
+                              strokeLinejoin="round"
+                              points={polyPts.join(' ')}
+                            />
+
+                            {segments.map((sg) => {
+                              const cx = toX(sg.startDay);
+                              const cy = toY(1);
+                              return (
+                                <g key={sg.step}>
+                                  <circle
+                                    cx={cx}
+                                    cy={cy}
+                                    r={4.5}
+                                    fill={dotColor[sg.rating]}
+                                    stroke="#ffffff"
+                                    strokeWidth={1.8}
+                                  />
+                                  <text
+                                    x={cx}
+                                    y={14}
+                                    textAnchor="middle"
+                                    className="fill-slate-700 text-[9px] font-mono font-bold"
+                                  >
+                                    #{sg.step} {sg.rating[0]}
+                                  </text>
+                                  <text
+                                    x={toX(sg.endDay)}
+                                    y={184}
+                                    textAnchor="middle"
+                                    className="fill-slate-500 text-[9px] font-mono"
+                                  >
+                                    H+{Math.round(sg.endDay)}
+                                  </text>
+                                </g>
+                              );
+                            })}
+                          </g>
+                        );
+                      })()}
+                    </svg>
+                  </div>
+                </div>
+              )}
 
               {/* Pratinjau 4 Pilihan & Grafik Kurva Lupa */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

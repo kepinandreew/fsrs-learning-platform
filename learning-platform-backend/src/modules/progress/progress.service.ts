@@ -140,6 +140,23 @@ export async function getProgress(appId: string, q: GetProgressQuery) {
 // PUT /api/progress
 // =============================================================================
 
+function isPlainObject(val: unknown): val is Record<string, unknown> {
+  return typeof val === 'object' && val !== null && !Array.isArray(val);
+}
+
+// Gabungkan clientState baru ke clientState lama secara dangkal (shallow-merge) agar atribut lintas-game
+// (mis. speciesId/petName/wins di Pet Battle & chefRank/completedRecipes di Baking Chef) tidak saling menimpa.
+export function mergeClientState(
+  existing: Prisma.JsonValue | null | undefined,
+  incoming: unknown,
+): Prisma.InputJsonValue | undefined {
+  if (incoming === undefined) return undefined;
+  if (isPlainObject(existing) && isPlainObject(incoming)) {
+    return { ...existing, ...incoming } as Prisma.InputJsonValue;
+  }
+  return incoming as Prisma.InputJsonValue;
+}
+
 export async function putProgress(appId: string, input: PutProgressInput) {
   // Deck harus milik aplikasi ini (isolasi multi-client).
   const deck = await prisma.deck.findFirst({ where: { id: input.deckId, appId }, select: { id: true } });
@@ -156,11 +173,12 @@ export async function putProgress(appId: string, input: PutProgressInput) {
 
   // Hanya field yang dikirim yang diubah. Counter & streak TIDAK bisa diubah lewat endpoint ini
   // (dikelola server dari review/kuis) supaya data analitik tidak dapat dimanipulasi client.
+  const mergedState = mergeClientState(current?.clientState, input.clientState);
   const data = {
     ...(input.points !== undefined ? { points: input.points } : {}),
     ...(input.exp !== undefined ? { exp: input.exp } : {}),
     ...(input.level !== undefined ? { level: input.level } : {}),
-    ...(input.clientState !== undefined ? { clientState: input.clientState as Prisma.InputJsonValue } : {}),
+    ...(mergedState !== undefined ? { clientState: mergedState } : {}),
   };
 
   const saved = await prisma.progress.upsert({
@@ -273,10 +291,14 @@ export function rankLeaderboardUsers(users: RawLeaderboardUser[], limit: number)
       let totalQuizzes = 0;
       let correctAnswers = 0;
       let wrongAnswers = 0;
-      let latestState: Prisma.JsonValue = null;
+      let mergedStateObj: Record<string, unknown> = {};
+      let hasStateObj = false;
+      let fallbackState: Prisma.JsonValue = null;
       let updatedAt: Date | null = null;
 
-      for (const p of u.progresses) {
+      // Urutkan dari terlama ke terbaru agar atribut clientState tergabung utuh tanpa kehilangan data game sebelumnya.
+      const chronological = [...u.progresses].sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime());
+      for (const p of chronological) {
         if (p.points > points) points = p.points;
         if (p.exp > exp) exp = p.exp;
         if (p.level > level) level = p.level;
@@ -288,15 +310,17 @@ export function rankLeaderboardUsers(users: RawLeaderboardUser[], limit: number)
         wrongAnswers += p.wrongAnswers;
         if (!updatedAt || p.updatedAt > updatedAt) {
           updatedAt = p.updatedAt;
-          if (p.clientState !== null) latestState = p.clientState;
-        } else if (latestState === null && p.clientState !== null) {
-          latestState = p.clientState;
+        }
+        if (isPlainObject(p.clientState)) {
+          mergedStateObj = { ...mergedStateObj, ...p.clientState };
+          hasStateObj = true;
+        } else if (p.clientState !== null) {
+          fallbackState = p.clientState;
         }
       }
 
-      const stateObj = latestState && typeof latestState === 'object' && !Array.isArray(latestState)
-        ? (latestState as Record<string, unknown>)
-        : {};
+      const latestState: Prisma.JsonValue = hasStateObj ? (mergedStateObj as Prisma.JsonObject) : fallbackState;
+      const stateObj = hasStateObj ? mergedStateObj : {};
       const wins = typeof stateObj.wins === 'number' ? stateObj.wins : 0;
       const totalAns = correctAnswers + wrongAnswers;
 

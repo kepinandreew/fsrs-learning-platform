@@ -20,8 +20,8 @@ import {
   Play,
   ShieldAlert,
 } from 'lucide-react';
-import { API_BASE_URL, appsApi, clearApiCache } from '../api/client';
-import type { ClientApp } from '../api/types';
+import { API_BASE_URL, appsApi, clearApiCache, decksApi } from '../api/client';
+import type { ClientApp, Deck } from '../api/types';
 
 const DEMO_SEEDED_API_KEY = 'lp_live_demo_pet_battle_sd_2026_secret_key';
 
@@ -194,24 +194,35 @@ function LiveApiInspector({ defaultKey }: { defaultKey: string }) {
   );
 }
 
-// Kartu "Bagikan Game ke Anak-Anak": link siap salin + QR Code yang bisa langsung di-scan dari HP/tablet.
-function ShareGamesCard() {
+// Kartu "Bagikan Game ke Anak-Anak": link siap salin + QR Code yang bisa langsung di-scan dari HP/tablet
+// (mendukung deep-link ?deckId= & ?apiKey= agar scan QR langsung mengikat tenant & topik materi tanpa setel manual).
+function ShareGamesCard({ decks, customApiKey }: { decks: Deck[]; customApiKey?: string }) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const games = [
     { key: 'pet', title: 'Pet Battle RPG', path: '/pet-battle.html', icon: Gamepad2, tone: 'indigo' },
     { key: 'chef', title: 'Baking Chef', path: '/baking-chef.html', icon: ChefHat, tone: 'amber' },
   ] as const;
+  const [selectedDeckId, setSelectedDeckId] = useState('');
+  const [useNewKeyInQr, setUseNewKeyInQr] = useState(true);
   const [qr, setQr] = useState<Record<string, string>>({});
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
+  function buildGameUrl(path: string) {
+    const qs = new URLSearchParams();
+    if (selectedDeckId) qs.set('deckId', selectedDeckId);
+    if (customApiKey && useNewKeyInQr) qs.set('apiKey', customApiKey);
+    const qStr = qs.toString();
+    return `${origin}${path}${qStr ? `?${qStr}` : ''}`;
+  }
+
   useEffect(() => {
     games.forEach((g) => {
-      QRCode.toDataURL(`${origin}${g.path}`, { margin: 1, width: 220 })
+      QRCode.toDataURL(buildGameUrl(g.path), { margin: 1, width: 220 })
         .then((url) => setQr((prev) => ({ ...prev, [g.key]: url })))
         .catch(() => undefined);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [origin]);
+  }, [origin, selectedDeckId, customApiKey, useNewKeyInQr]);
 
   async function copyLink(key: string, url: string) {
     await navigator.clipboard.writeText(url);
@@ -221,14 +232,41 @@ function ShareGamesCard() {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
-      <div className="flex items-center gap-2">
-        <Share2 className="w-4 h-4 text-indigo-600" />
-        <h2 className="text-sm font-bold text-slate-900">Bagikan Game ke Anak-Anak</h2>
-        <span className="text-[11px] text-slate-400">Scan QR dari HP/tablet atau kirim link lewat WhatsApp</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Share2 className="w-4 h-4 text-indigo-600" />
+          <h2 className="text-sm font-bold text-slate-900">Bagikan Game ke Anak-Anak (Deep-Link QR)</h2>
+          <span className="text-[11px] text-slate-400">Scan QR dari HP/tablet langsung membuka topik terpilih</span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={selectedDeckId}
+            onChange={(e) => setSelectedDeckId(e.target.value)}
+            className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold bg-white text-slate-700"
+          >
+            <option value="">🎯 Topik Default Otomatis</option>
+            {decks.map((d) => (
+              <option key={d.id} value={d.id}>
+                📘 Arahkan ke: {d.title}
+              </option>
+            ))}
+          </select>
+          {customApiKey && (
+            <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200">
+              <input
+                type="checkbox"
+                checked={useNewKeyInQr}
+                onChange={(e) => setUseNewKeyInQr(e.target.checked)}
+              />
+              Sertakan API Key Baru di QR
+            </label>
+          )}
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {games.map((g) => {
-          const url = `${origin}${g.path}`;
+          const url = buildGameUrl(g.path);
           const Icon = g.icon;
           return (
             <div
@@ -246,7 +284,7 @@ function ShareGamesCard() {
                 <p className="flex items-center gap-1.5 text-sm font-bold text-slate-900">
                   <Icon className="w-4 h-4" /> {g.title}
                 </p>
-                <p className="text-[11px] font-mono text-slate-500 break-all">{url}</p>
+                <p className="text-[11px] font-mono text-slate-500 break-all line-clamp-2">{url}</p>
                 <div className="flex gap-1.5">
                   <button
                     onClick={() => copyLink(g.key, url)}
@@ -275,6 +313,7 @@ function ShareGamesCard() {
 
 export function AppsPage() {
   const [apps, setApps] = useState<ClientApp[]>([]);
+  const [decks, setDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -328,8 +367,9 @@ export function AppsPage() {
     setLoading(true);
     setError(null);
     try {
-      const list = await appsApi.list();
+      const [list, deckList] = await Promise.all([appsApi.list(), decksApi.list().catch(() => [])]);
       setApps(list);
+      setDecks(deckList);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat aplikasi');
     } finally {
@@ -485,7 +525,7 @@ export function AppsPage() {
       </div>
 
       {/* Bagikan Game ke Anak-Anak (link + QR Code) */}
-      <ShareGamesCard />
+      <ShareGamesCard decks={decks} customApiKey={revealedKey?.apiKey} />
 
       {/* Banner API Key Baru */}
       {revealedKey && (
