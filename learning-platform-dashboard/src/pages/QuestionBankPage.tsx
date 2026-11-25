@@ -8,6 +8,8 @@ import {
   Sparkles,
   Wrench,
   Link2,
+  Pencil,
+  Search,
 } from 'lucide-react';
 import { appsApi, decksApi, itemsApi, aiApi } from '../api/client';
 import type { ClientApp, Deck, LearningItem, ItemType, AiVerifyDeckResponse } from '../api/types';
@@ -39,6 +41,13 @@ export function QuestionBankPage() {
 
   const [verifyingDeck, setVerifyingDeck] = useState(false);
   const [verifyReport, setVerifyReport] = useState<AiVerifyDeckResponse | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // State Edit Deck & Edit Soal (menaikkan contentVersion otomatis di server)
+  const [editingDeck, setEditingDeck] = useState(false);
+  const [editDeckTitle, setEditDeckTitle] = useState('');
+  const [editDeckDesc, setEditDeckDesc] = useState('');
+  const [editingItem, setEditingItem] = useState<LearningItem | null>(null);
 
   async function loadInitial() {
     setLoading(true);
@@ -139,15 +148,28 @@ export function QuestionBankPage() {
       .filter(Boolean);
 
     try {
-      if (itemType === 'FLASHCARD') {
+      if (editingItem) {
+        if (itemType === 'FLASHCARD') {
+          await itemsApi.update(editingItem.id, { front, back, tags });
+        } else {
+          const cleanChoices = choices.map((c) => c.trim()).filter(Boolean);
+          await itemsApi.update(editingItem.id, {
+            question,
+            choices: cleanChoices,
+            correctIndex,
+            explanation: explanation.trim() || null,
+            sourceFlashcardId: sourceFlashcardId || null,
+            tags,
+          });
+        }
+        setEditingItem(null);
+      } else if (itemType === 'FLASHCARD') {
         await itemsApi.createFlashcard({
           deckId: selectedDeckId,
           front,
           back,
           tags,
         });
-        setFront('');
-        setBack('');
       } else {
         const cleanChoices = choices.map((c) => c.trim()).filter(Boolean);
         await itemsApi.createMultipleChoice({
@@ -159,18 +181,66 @@ export function QuestionBankPage() {
           sourceFlashcardId: sourceFlashcardId || undefined,
           tags,
         });
-        setQuestion('');
-        setChoices(['', '', '', '']);
-        setCorrectIndex(0);
-        setExplanation('');
-        setSourceFlashcardId('');
       }
+      setFront('');
+      setBack('');
+      setQuestion('');
+      setChoices(['', '', '', '']);
+      setCorrectIndex(0);
+      setExplanation('');
+      setSourceFlashcardId('');
       setTagsInput('');
       await loadItems(selectedDeckId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menyimpan materi');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  function startEditItem(item: LearningItem) {
+    setEditingItem(item);
+    setItemType(item.type);
+    setTagsInput(item.tags.join(', '));
+    if (item.type === 'FLASHCARD') {
+      setFront(item.front ?? '');
+      setBack(item.back ?? '');
+    } else {
+      setQuestion(item.question ?? '');
+      const existing = item.choices ?? [];
+      setChoices([existing[0] ?? '', existing[1] ?? '', existing[2] ?? '', existing[3] ?? '']);
+      setCorrectIndex(item.correctIndex ?? 0);
+      setExplanation(item.explanation ?? '');
+      setSourceFlashcardId(item.sourceFlashcardId ?? '');
+    }
+    window.scrollTo({ top: 240, behavior: 'smooth' });
+  }
+
+  function cancelEditItem() {
+    setEditingItem(null);
+    setFront('');
+    setBack('');
+    setQuestion('');
+    setChoices(['', '', '', '']);
+    setCorrectIndex(0);
+    setExplanation('');
+    setSourceFlashcardId('');
+    setTagsInput('');
+  }
+
+  async function handleSaveDeckEdit(e: FormEvent) {
+    e.preventDefault();
+    if (!selectedDeckId) return;
+    setError(null);
+    try {
+      const updated = await decksApi.update(selectedDeckId, {
+        title: editDeckTitle.trim(),
+        description: editDeckDesc.trim() || null,
+      });
+      setDecks((prev) => prev.map((d) => (d.id === updated.id ? { ...d, ...updated } : d)));
+      setEditingDeck(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal memperbarui deck');
     }
   }
 
@@ -207,8 +277,19 @@ export function QuestionBankPage() {
   const flashcardsInDeck = items.filter((i) => i.type === 'FLASHCARD');
   const quizzesInDeck = items.filter((i) => i.type === 'MULTIPLE_CHOICE');
   const linkedQuizzes = quizzesInDeck.filter((q) => Boolean(q.sourceFlashcardId));
-  const filteredItems =
-    filterType === 'ALL' ? items : items.filter((i) => i.type === filterType);
+  const filteredItems = items.filter((i) => {
+    if (filterType !== 'ALL' && i.type !== filterType) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (
+        (i.front ?? '').toLowerCase().includes(q) ||
+        (i.back ?? '').toLowerCase().includes(q) ||
+        (i.question ?? '').toLowerCase().includes(q) ||
+        i.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return true;
+  });
   const currentDeck = decks.find((d) => d.id === selectedDeckId);
 
   return (
@@ -328,6 +409,18 @@ export function QuestionBankPage() {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
+                onClick={() => {
+                  setEditDeckTitle(currentDeck.title);
+                  setEditDeckDesc(currentDeck.description ?? '');
+                  setEditingDeck((v) => !v);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Edit Deck
+              </button>
+              <button
+                type="button"
                 disabled={verifyingDeck || items.length === 0}
                 onClick={() => handleVerifyDeck(true)}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 text-indigo-700 border border-indigo-200 text-xs font-semibold transition-colors"
@@ -345,6 +438,48 @@ export function QuestionBankPage() {
             </div>
           )}
         </div>
+
+        {editingDeck && currentDeck && (
+          <form
+            onSubmit={handleSaveDeckEdit}
+            className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 grid grid-cols-1 md:grid-cols-12 gap-3 items-end"
+          >
+            <div className="md:col-span-5">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Judul Deck *</label>
+              <input
+                type="text"
+                required
+                value={editDeckTitle}
+                onChange={(e) => setEditDeckTitle(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-sm"
+              />
+            </div>
+            <div className="md:col-span-5">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Deskripsi</label>
+              <input
+                type="text"
+                value={editDeckDesc}
+                onChange={(e) => setEditDeckDesc(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-sm"
+              />
+            </div>
+            <div className="md:col-span-2 flex gap-1.5">
+              <button
+                type="submit"
+                className="flex-1 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold"
+              >
+                Simpan
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingDeck(false)}
+                className="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* Strip Komposisi Deck */}
         {currentDeck && (
@@ -412,40 +547,63 @@ export function QuestionBankPage() {
 
       {selectedDeckId && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Kolom Kiri: Form Tambah Materi */}
+          {/* Kolom Kiri: Form Tambah / Edit Materi */}
           <form
             onSubmit={handleCreateItem}
-            className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4 self-start"
+            className={`lg:col-span-5 rounded-2xl border p-5 shadow-sm space-y-4 self-start ${
+              editingItem
+                ? 'bg-amber-50/40 border-amber-300'
+                : 'bg-white border-slate-200/90'
+            }`}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <Plus className="w-4 h-4 text-indigo-600" />
-                Tambah Materi
+                {editingItem ? (
+                  <>
+                    <Pencil className="w-4 h-4 text-amber-600" />
+                    Edit Materi (v{editingItem.contentVersion} → v{editingItem.contentVersion + 1})
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 text-indigo-600" />
+                    Tambah Materi
+                  </>
+                )}
               </h2>
-              <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-xl">
+              {editingItem ? (
                 <button
                   type="button"
-                  onClick={() => setItemType('FLASHCARD')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                    itemType === 'FLASHCARD'
-                      ? 'bg-white text-indigo-600 shadow-sm'
-                      : 'text-slate-600'
-                  }`}
+                  onClick={cancelEditItem}
+                  className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Flashcard
+                  Batal Edit ✕
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setItemType('MULTIPLE_CHOICE')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                    itemType === 'MULTIPLE_CHOICE'
-                      ? 'bg-white text-indigo-600 shadow-sm'
-                      : 'text-slate-600'
-                  }`}
-                >
-                  Pilihan Ganda
-                </button>
-              </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setItemType('FLASHCARD')}
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                      itemType === 'FLASHCARD'
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-slate-600'
+                    }`}
+                  >
+                    Flashcard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setItemType('MULTIPLE_CHOICE')}
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                      itemType === 'MULTIPLE_CHOICE'
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-slate-600'
+                    }`}
+                  >
+                    Pilihan Ganda
+                  </button>
+                </div>
+              )}
             </div>
 
             {itemType === 'FLASHCARD' ? (
@@ -571,9 +729,15 @@ export function QuestionBankPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold transition-all shadow-sm"
+              className={`w-full py-2.5 px-4 rounded-xl disabled:opacity-50 text-white text-xs font-semibold transition-all shadow-sm ${
+                editingItem ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
             >
-              {submitting ? 'Menyimpan...' : 'Simpan ke Deck'}
+              {submitting
+                ? 'Menyimpan...'
+                : editingItem
+                  ? 'Simpan Perubahan Materi'
+                  : 'Simpan ke Deck'}
             </button>
           </form>
 
@@ -583,7 +747,18 @@ export function QuestionBankPage() {
               <h2 className="text-sm font-bold text-slate-900">
                 Daftar Materi ({filteredItems.length})
               </h2>
-              <div className="flex gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari kata / soal..."
+                    className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="flex gap-1 bg-slate-100 p-1 rounded-xl text-xs">
                 {(['ALL', 'FLASHCARD', 'MULTIPLE_CHOICE'] as const).map((t) => (
                   <button
                     key={t}
@@ -599,8 +774,9 @@ export function QuestionBankPage() {
                       : t === 'FLASHCARD'
                         ? `Flashcard (${flashcardsInDeck.length})`
                         : `Kuis (${quizzesInDeck.length})`}
-                  </button>
-                ))}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -632,6 +808,12 @@ export function QuestionBankPage() {
                             }`}
                           >
                             {item.type === 'FLASHCARD' ? 'Flashcard' : 'Pilihan Ganda'}
+                          </span>
+                          <span
+                            title="Versi konten otomatis untuk invalidasi cache ETag klien"
+                            className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-mono text-[10px] font-semibold"
+                          >
+                            v{item.contentVersion}
                           </span>
                           {linkedFc && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/60 text-[10px] font-semibold">
@@ -707,6 +889,14 @@ export function QuestionBankPage() {
                             + Kuis
                           </button>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => startEditItem(item)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                          title="Edit materi ini"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleDeleteItem(item)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"

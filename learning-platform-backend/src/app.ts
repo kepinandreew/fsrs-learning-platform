@@ -40,7 +40,8 @@ export function createApp() {
   app.use(
     cors({
       origin: allowedOrigins.includes('*') ? true : allowedOrigins,
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'If-None-Match'],
+      exposedHeaders: ['ETag'],
     }),
   );
   app.use(express.json({ limit: '1mb' }));

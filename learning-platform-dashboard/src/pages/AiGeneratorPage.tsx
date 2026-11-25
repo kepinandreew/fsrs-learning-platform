@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from 'react';
-import { Sparkles, Upload, FileText, Check, Trash2, Save, Wand2 } from 'lucide-react';
+import { Sparkles, Upload, FileText, Check, Trash2, Save, Wand2, ShieldCheck } from 'lucide-react';
 import { aiApi, decksApi } from '../api/client';
 import type { AiStatus, Deck, DraftFlashcard, DraftQuiz } from '../api/types';
 
@@ -38,6 +38,13 @@ export function AiGeneratorPage() {
 
   const [draftCards, setDraftCards] = useState<(DraftFlashcard & { selected: boolean })[]>([]);
   const [draftQuizzes, setDraftQuizzes] = useState<(DraftQuiz & { selected: boolean })[]>([]);
+  const [genMeta, setGenMeta] = useState<{
+    model: string;
+    verified: boolean;
+    corrections: string[];
+    warnings: string[];
+    durationSec: string;
+  } | null>(null);
 
   useEffect(() => {
     Promise.all([aiApi.status(), decksApi.list()])
@@ -53,7 +60,9 @@ export function AiGeneratorPage() {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
+    setGenMeta(null);
     setGenerating(true);
+    const t0 = performance.now();
 
     try {
       const res = await aiApi.generate({
@@ -71,6 +80,13 @@ export function AiGeneratorPage() {
       const draft = res.draft;
       setDraftCards((draft?.flashcards ?? []).map((fc) => ({ ...fc, selected: true })));
       setDraftQuizzes((draft?.quizzes ?? []).map((qz) => ({ ...qz, selected: true })));
+      setGenMeta({
+        model: res.model,
+        verified: Boolean(res.verified),
+        corrections: res.corrections ?? [],
+        warnings: res.warnings ?? [],
+        durationSec: ((performance.now() - t0) / 1000).toFixed(1),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menghasilkan soal via AI');
     } finally {
@@ -330,6 +346,50 @@ export function AiGeneratorPage() {
               {saving ? 'Menyimpan...' : 'Simpan Materi Terpilih'}
             </button>
           </div>
+
+          {/* Banner Bukti Verifikasi AI 2nd-Pass (Rencana Uji Coba #3 Proposal TA) */}
+          {genMeta && (
+            <div className="p-4 rounded-xl bg-indigo-50/80 border border-indigo-200 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-indigo-950">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    {genMeta.verified
+                      ? 'Lolos Verifikasi Otomatis AI Lapis ke-2 (2nd-Pass Verifier)'
+                      : 'Draft Dihasilkan oleh AI Content Generator'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
+                  <span className="px-2 py-0.5 rounded bg-white border border-indigo-200 text-indigo-700 font-semibold">
+                    Model: {genMeta.model}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-white border border-emerald-200 text-emerald-700 font-semibold">
+                    Waktu: {genMeta.durationSec} dtk
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 font-semibold">
+                    Koreksi AI: {genMeta.corrections.length}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600">
+                Sesuai batasan arsitektur Proposal TA, AI hanya menghasilkan draf konten terstruktur dan tidak mengubah jadwal memori FSRS maupun database sebelum disetujui pengajar (<em>Human-in-the-Loop</em>).
+              </p>
+              {genMeta.corrections.length > 0 && (
+                <ul className="list-disc list-inside text-xs text-amber-800 space-y-0.5 pt-1">
+                  {genMeta.corrections.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
+              )}
+              {genMeta.warnings.length > 0 && (
+                <ul className="list-disc list-inside text-xs text-rose-700 space-y-0.5">
+                  {genMeta.warnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
           {/* Draft Flashcard */}
           <div className="space-y-3">

@@ -16,9 +16,183 @@ import {
   Gamepad2,
   ChefHat,
   Share2,
+  Pencil,
+  Play,
+  ShieldAlert,
 } from 'lucide-react';
 import { API_BASE_URL, appsApi, clearApiCache } from '../api/client';
 import type { ClientApp } from '../api/types';
+
+const DEMO_SEEDED_API_KEY = 'lp_live_demo_pet_battle_sd_2026_secret_key';
+
+const INSPECTOR_ENDPOINTS = [
+  { label: 'GET /health (Status Server)', path: '/health', needsKey: false },
+  { label: 'GET /api/decks (Daftar Deck Klien)', path: '/api/decks', needsKey: true },
+  {
+    label: 'GET /api/items (Kontrak Materi + ETag)',
+    path: '/api/items?type=FLASHCARD&pageSize=3',
+    needsKey: true,
+  },
+  {
+    label: 'GET /api/evaluation/due (Antrean Prioritas FSRS)',
+    path: '/api/evaluation/due?externalUserId=siswa_01',
+    needsKey: true,
+  },
+  {
+    label: 'GET /api/progress/leaderboard (Klasemen Siswa)',
+    path: '/api/progress/leaderboard',
+    needsKey: true,
+  },
+] as const;
+
+// Panel Interaktif Uji Kontrak REST API & Isolasi Multi-Client (Rencana Uji Coba #1 Proposal TA)
+function LiveApiInspector({ defaultKey }: { defaultKey: string }) {
+  const [selectedPath, setSelectedPath] = useState<string>(INSPECTOR_ENDPOINTS[1].path);
+  const [apiKeyInput, setApiKeyInput] = useState<string>(defaultKey);
+  const [testing, setTesting] = useState(false);
+  const [result, setResult] = useState<{
+    status: number;
+    ok: boolean;
+    ms: number;
+    etag: string | null;
+    body: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (defaultKey) setApiKeyInput(defaultKey);
+  }, [defaultKey]);
+
+  async function runProbe(overrideKey?: string, overridePath?: string) {
+    const pathToCall = overridePath ?? selectedPath;
+    const keyToUse = overrideKey !== undefined ? overrideKey : apiKeyInput.trim();
+    const ep = INSPECTOR_ENDPOINTS.find((e) => e.path === pathToCall);
+    setTesting(true);
+    const t0 = performance.now();
+    try {
+      const headers: Record<string, string> = {};
+      if (ep?.needsKey !== false && keyToUse) {
+        headers['X-API-Key'] = keyToUse;
+      }
+      const res = await fetch(`${API_BASE_URL}${pathToCall}`, { headers });
+      const ms = Math.round(performance.now() - t0);
+      const etag = res.headers.get('etag');
+      const json = await res.json().catch(() => null);
+      setResult({
+        status: res.status,
+        ok: res.ok,
+        ms,
+        etag,
+        body: json ? JSON.stringify(json, null, 2) : '(kosong)',
+      });
+    } catch (err) {
+      setResult({
+        status: 0,
+        ok: false,
+        ms: Math.round(performance.now() - t0),
+        etag: null,
+        body: err instanceof Error ? err.message : 'Gagal menghubungi server',
+      });
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  return (
+    <div className="bg-slate-900 text-slate-200 rounded-2xl p-5 sm:p-6 border border-slate-800 space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-400">
+            <Terminal className="w-4 h-4" />
+            Live REST API Contract &amp; Security Inspector
+          </div>
+          <p className="text-xs text-slate-400">
+            Uji langsung kontrak JSON, waktu respons (<code className="text-emerald-300">ms</code>), header{' '}
+            <code className="text-sky-300">ETag</code>, serta penolakan <code className="text-rose-300">401 Unauthorized</code> untuk demo arsitektur REST API.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={testing}
+            onClick={() => runProbe()}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold transition-colors"
+          >
+            <Play className="w-3.5 h-3.5" />
+            {testing ? 'Menguji...' : 'Kirim Request Valid'}
+          </button>
+          <button
+            type="button"
+            disabled={testing}
+            onClick={() => runProbe('lp_live_kunci_palsu_tidak_sah_000', '/api/decks')}
+            title="Buktikan server menolak X-API-Key tidak sah dengan HTTP 401"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-950/70 hover:bg-rose-900/80 border border-rose-500/40 text-rose-200 text-xs font-bold transition-colors"
+          >
+            <ShieldAlert className="w-3.5 h-3.5" />
+            Simulasi Key Palsu (401)
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+        <div className="md:col-span-6">
+          <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+            Pilih Endpoint Uji
+          </label>
+          <select
+            value={selectedPath}
+            onChange={(e) => setSelectedPath(e.target.value)}
+            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs font-mono text-slate-100"
+          >
+            {INSPECTOR_ENDPOINTS.map((ep) => (
+              <option key={ep.path} value={ep.path}>
+                {ep.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="md:col-span-6">
+          <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+            Header X-API-Key Klien
+          </label>
+          <input
+            type="text"
+            value={apiKeyInput}
+            onChange={(e) => setApiKeyInput(e.target.value)}
+            placeholder="Tempel X-API-Key aplikasi..."
+            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs font-mono text-amber-300"
+          />
+        </div>
+      </div>
+
+      {result && (
+        <div className="space-y-2 pt-1">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+            <span
+              className={`px-2.5 py-0.5 rounded-full font-bold ${
+                result.ok
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+              }`}
+            >
+              HTTP {result.status || 'ERR'}
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-sky-300 border border-slate-700">
+              Latensi: {result.ms} ms
+            </span>
+            {result.etag && (
+              <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-violet-300 border border-slate-700">
+                ETag: {result.etag}
+              </span>
+            )}
+          </div>
+          <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-emerald-300 overflow-x-auto max-h-64 overflow-y-auto">
+            {result.body}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Kartu "Bagikan Game ke Anak-Anak": link siap salin + QR Code yang bisa langsung di-scan dari HP/tablet.
 function ShareGamesCard() {
@@ -112,6 +286,43 @@ export function AppsPage() {
   const [revealedKey, setRevealedKey] = useState<{ appName: string; apiKey: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [copiedAppId, setCopiedAppId] = useState<string | null>(null);
+
+  // State Edit Aplikasi & Target Retensi FSRS
+  const [editingApp, setEditingApp] = useState<ClientApp | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editRetention, setEditRetention] = useState('0.9');
+  const [editActive, setEditActive] = useState(true);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  function startEditApp(app: ClientApp) {
+    setEditingApp(app);
+    setEditName(app.name);
+    setEditDesc(app.description ?? '');
+    setEditRetention(String(app.requestRetention));
+    setEditActive(app.isActive);
+  }
+
+  async function handleSaveEdit(e: FormEvent) {
+    e.preventDefault();
+    if (!editingApp) return;
+    setSavingEdit(true);
+    setError(null);
+    try {
+      await appsApi.update(editingApp.id, {
+        name: editName.trim(),
+        description: editDesc.trim() || null,
+        requestRetention: Number(editRetention),
+        isActive: editActive,
+      });
+      setEditingApp(null);
+      await loadApps();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal memperbarui aplikasi');
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   async function loadApps() {
     setLoading(true);
@@ -390,6 +601,103 @@ export function AppsPage() {
         </div>
       </form>
 
+      {/* Panel Edit Aplikasi & Target Retensi FSRS */}
+      {editingApp && (
+        <form
+          onSubmit={handleSaveEdit}
+          className="bg-indigo-50/70 rounded-2xl border border-indigo-200 p-5 shadow-sm space-y-4"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-bold text-indigo-950 flex items-center gap-2">
+              <Pencil className="w-4 h-4 text-indigo-600" />
+              Atur Profil &amp; Target Retensi FSRS — {editingApp.name}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setEditingApp(null)}
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+            >
+              Batal ✕
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Nama Aplikasi *
+              </label>
+              <input
+                type="text"
+                required
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm"
+              />
+            </div>
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Deskripsi
+              </label>
+              <input
+                type="text"
+                value={editDesc}
+                onChange={(e) => setEditDesc(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm"
+              />
+            </div>
+            <div className="md:col-span-4">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Target Retensi FSRS (0.70–0.97)
+              </label>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.7"
+                  max="0.97"
+                  required
+                  value={editRetention}
+                  onChange={(e) => setEditRetention(e.target.value)}
+                  className="w-24 px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-bold text-indigo-700"
+                />
+                {(['0.85', '0.9', '0.95'] as const).map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setEditRetention(preset)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border ${
+                      Number(editRetention) === Number(preset)
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {Math.round(Number(preset) * 100)}%
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between flex-wrap gap-3 pt-1">
+            <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+              <input
+                type="checkbox"
+                checked={editActive}
+                onChange={(e) => setEditActive(e.target.checked)}
+              />
+              Status Aplikasi Aktif (izinkan akses X-API-Key)
+            </label>
+            <button
+              type="submit"
+              disabled={savingEdit}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold shadow-sm"
+            >
+              {savingEdit ? 'Menyimpan...' : 'Simpan Perubahan'}
+            </button>
+          </div>
+        </form>
+      )}
+
       {/* Tabel Daftar Aplikasi */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200/80 flex items-center justify-between">
@@ -459,6 +767,14 @@ export function AppsPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-1.5">
                         <button
+                          onClick={() => startEditApp(app)}
+                          title="Ubah nama atau Target Retensi FSRS aplikasi"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-xs font-semibold text-indigo-700 transition-colors"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Atur
+                        </button>
+                        <button
                           onClick={() => copyCurlSnippet(app)}
                           title="Salin contoh perintah cURL"
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-xs font-medium text-slate-700 transition-colors"
@@ -506,29 +822,8 @@ export function AppsPage() {
         )}
       </div>
 
-      {/* Referensi Cepat Endpoint */}
-      <div className="bg-slate-900 text-slate-200 rounded-2xl p-5 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-400">
-            <Terminal className="w-4 h-4" />
-            Integrasi Client SDK / REST API
-          </div>
-          <p className="text-xs text-slate-400">
-            Sertakan header <code className="text-amber-300">X-API-Key</code> pada setiap request dari game atau aplikasi klien.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs font-mono">
-          <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-sky-300 border border-slate-700">
-            GET /api/evaluation/due
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 border border-slate-700">
-            POST /api/evaluation/review
-          </span>
-          <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-violet-300 border border-slate-700">
-            POST /api/evaluation/quiz
-          </span>
-        </div>
-      </div>
+      {/* Live REST API Contract & Security Inspector */}
+      <LiveApiInspector defaultKey={revealedKey?.apiKey ?? DEMO_SEEDED_API_KEY} />
     </div>
   );
 }

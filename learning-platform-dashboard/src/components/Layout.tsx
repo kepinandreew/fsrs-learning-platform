@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   KeyRound,
@@ -10,6 +11,8 @@ import {
   ChefHat,
   ExternalLink,
   Activity,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../api/client';
@@ -45,7 +48,12 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { developer, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const activeNav = navItems.find((n) => location.pathname.startsWith(n.to)) ?? navItems[0];
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   function handleLogout() {
     logout();
@@ -54,8 +62,20 @@ export function Layout() {
 
   return (
     <div className="min-h-screen flex bg-[#F8FAFC] text-slate-900">
-      {/* Sidebar Navigasi Modern */}
-      <aside className="w-72 h-screen sticky top-0 bg-gradient-to-b from-[#090D16] via-[#0F172A] to-[#0B1120] text-slate-100 flex flex-col shrink-0 border-r border-slate-800/80 shadow-2xl">
+      {/* Backdrop Mobile & Tablet */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-30 bg-slate-950/60 backdrop-blur-xs lg:hidden"
+        />
+      )}
+
+      {/* Sidebar Navigasi Modern (Responsif Drawer di Mobile/Tablet, Sticky di Desktop) */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-72 h-screen bg-gradient-to-b from-[#090D16] via-[#0F172A] to-[#0B1120] text-slate-100 flex flex-col shrink-0 border-r border-slate-800/80 shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         {/* Brand Header */}
         <div className="px-6 py-5 border-b border-slate-800/80 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -72,6 +92,14 @@ export function Layout() {
               <p className="text-[11px] text-slate-400 mt-0.5">Developer Console</p>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+            aria-label="Tutup menu"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Menu Utama */}
@@ -206,20 +234,28 @@ export function Layout() {
       {/* Area Konten Utama */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Utility Header */}
-        <header className="h-14 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-8 flex items-center justify-between shrink-0 sticky top-0 z-20">
-          <div className="flex items-center gap-2.5 text-sm">
-            <span className="text-slate-400 font-medium">Console</span>
-            <span className="text-slate-300">/</span>
-            <span className="font-semibold text-slate-800">{activeNav?.label}</span>
+        <header className="h-14 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 flex items-center justify-between shrink-0 sticky top-0 z-20">
+          <div className="flex items-center gap-2.5 text-sm min-w-0">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden p-2 -ml-1 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              aria-label="Buka navigasi"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+            <span className="hidden sm:inline text-slate-400 font-medium">Console</span>
+            <span className="hidden sm:inline text-slate-300">/</span>
+            <span className="font-semibold text-slate-800 truncate">{activeNav?.label}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/80">
               <Activity className="w-3.5 h-3.5 text-emerald-500" />
-              FSRS-5 Engine Ready
+              <span className="hidden xs:inline">FSRS-5</span> Ready
             </span>
             <span
               title={API_BASE_URL}
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono text-slate-600 bg-slate-100 border border-slate-200/80 max-w-[240px] truncate"
+              className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono text-slate-600 bg-slate-100 border border-slate-200/80 max-w-[240px] truncate"
             >
               API v1 · {API_BASE_URL.replace(/^https?:\/\//, '')}
             </span>
@@ -227,7 +263,7 @@ export function Layout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto p-8">
+          <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
             <Outlet />
           </div>
         </main>
