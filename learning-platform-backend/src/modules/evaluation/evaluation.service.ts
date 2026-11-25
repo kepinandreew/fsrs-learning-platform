@@ -358,6 +358,22 @@ export async function getDueQueue(app: ClientApp, q: DueQuery) {
   const stateByItem = new Map(stateRows.map((s) => [s.itemId, s]));
   const logByItem = new Map(latestLogs.map((l) => [l.itemId, l]));
 
+  const engine = await buildEngine(app.id, app.requestRetention);
+  const fmtPreviewLabel = (res: ReturnType<FSRS['review']>) =>
+    res.log.scheduledDays > 0
+      ? `${res.log.scheduledDays} hari`
+      : `${Math.max(1, res.log.scheduledMinutes)} mnt`;
+  const buildPreviewLabels = (c: Card) => {
+    const p = engine.preview(c, now);
+    return {
+      AGAIN: fmtPreviewLabel(p.again),
+      HARD: fmtPreviewLabel(p.hard),
+      GOOD: fmtPreviewLabel(p.good),
+      EASY: fmtPreviewLabel(p.easy),
+    };
+  };
+  const newCardPreview = buildPreviewLabels(createEmptyCard(now));
+
   const deckQueue = allItems
     .map((item, origIdx) => {
       const st = stateByItem.get(item.id);
@@ -366,6 +382,7 @@ export async function getDueQueue(app: ClientApp, q: DueQuery) {
         return {
           item: toClientItem(item),
           card: null,
+          preview: newCardPreview,
           priorityRank: 3,
           origIdx,
         };
@@ -373,6 +390,7 @@ export async function getDueQueue(app: ClientApp, q: DueQuery) {
       const isDue = st.due.getTime() <= now.getTime();
       const lastRating = lastLog?.rating ?? null;
       const priorityRank = computeDeckPriorityRank(lastRating, st.state, isDue);
+      const fsrsCard = rowToCard(st);
       return {
         item: toClientItem(item),
         card: {
@@ -386,8 +404,9 @@ export async function getDueQueue(app: ClientApp, q: DueQuery) {
           reps: st.reps,
           lapses: st.lapses,
           priorityRank,
-          retrievability: defaultEngine.getRetrievability(rowToCard(st), now),
+          retrievability: engine.getRetrievability(fsrsCard, now),
         },
+        preview: buildPreviewLabels(fsrsCard),
         priorityRank,
         origIdx,
       };
@@ -408,10 +427,10 @@ export async function getDueQueue(app: ClientApp, q: DueQuery) {
   const newSlice = q.newLimit > 0 ? deckQueue.filter((e) => e.card === null).slice(0, q.newLimit) : [];
 
   return {
-    due: dueSlice.map((e) => ({ item: e.item, card: e.card! })),
-    new: newSlice.map((e) => ({ item: e.item })),
+    due: dueSlice.map((e) => ({ item: e.item, card: e.card!, preview: e.preview })),
+    new: newSlice.map((e) => ({ item: e.item, preview: e.preview })),
     // Urutan deck lengkap: AGAIN (paling depan) -> HARD (agak depan) -> DUE -> NEW -> GOOD -> EASY (paling belakang).
-    deckQueue: deckQueue.map(({ item, card, priorityRank }) => ({ item, card, priorityRank })),
+    deckQueue: deckQueue.map(({ item, card, preview, priorityRank }) => ({ item, card, preview, priorityRank })),
     counts: { totalDue: urgentEntries.length, returnedDue: dueSlice.length, returnedNew: newSlice.length },
     serverTime: now.toISOString(),
   };

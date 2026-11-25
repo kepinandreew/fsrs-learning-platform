@@ -303,8 +303,11 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-auto pt-1">
             <button id="btn-start-study" type="button" class="touch-btn py-3.5 px-4 rounded-2xl text-left bg-gradient-to-r from-indigo-500 to-violet-600 hover:brightness-110 shadow-lg shadow-indigo-950/50 flex items-center justify-between gap-2">
               <div>
-                <div class="font-bold text-sm sm:text-base">📖 Hafal Bahan</div>
-                <div class="text-[11px] text-indigo-100/90">Kartu Suara + Bonus Resep</div>
+                <div class="font-bold text-sm sm:text-base flex flex-wrap items-center gap-1.5">
+                  <span>📖 Hafal Bahan</span>
+                  <span id="chef-due-badge" class="hidden text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">⏰ 0 Due</span>
+                </div>
+                <div id="chef-study-sub" class="text-[11px] text-indigo-100/90">Kartu Suara + Bonus Resep</div>
               </div>
               <span class="text-lg">→</span>
             </button>
@@ -375,10 +378,10 @@
         <div id="study-rating-group" class="hidden space-y-2">
           <p class="text-xs text-center font-semibold text-amber-100/80">Seberapa hafal kamu? (Menentukan urutan kartu di deck)</p>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button type="button" data-study-rating="AGAIN" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-rose-500/25 hover:bg-rose-500/35 border-2 border-rose-400/45 text-rose-100 text-sm">😵 Lupa<br><span class="text-[11px] font-normal text-rose-200/80">Paling Depan • 1m</span></button>
-            <button type="button" data-study-rating="HARD" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-amber-500/25 hover:bg-amber-500/35 border-2 border-amber-400/45 text-amber-100 text-sm">🤔 Ragu<br><span class="text-[11px] font-normal text-amber-200/80">Agak Depan • 5m</span></button>
-            <button type="button" data-study-rating="GOOD" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-emerald-500/25 hover:bg-emerald-500/35 border-2 border-emerald-400/45 text-emerald-100 text-sm">😊 Ingat!<br><span class="text-[11px] font-normal text-emerald-200/80">Urutan Tengah • 1h</span></button>
-            <button type="button" data-study-rating="EASY" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-sky-500/25 hover:bg-sky-500/35 border-2 border-sky-400/45 text-sky-100 text-sm">🤩 Hafal!<br><span class="text-[11px] font-normal text-sky-200/80">Paling Belakang • 3h</span></button>
+            <button type="button" data-study-rating="AGAIN" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-rose-500/25 hover:bg-rose-500/35 border-2 border-rose-400/45 text-rose-100 text-sm">😵 Lupa<br><span id="chef-sub-again" class="text-[11px] font-normal text-rose-200/80">Paling Depan • 1 mnt</span></button>
+            <button type="button" data-study-rating="HARD" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-amber-500/25 hover:bg-amber-500/35 border-2 border-amber-400/45 text-amber-100 text-sm">🤔 Ragu<br><span id="chef-sub-hard" class="text-[11px] font-normal text-amber-200/80">Agak Depan • 6 mnt</span></button>
+            <button type="button" data-study-rating="GOOD" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-emerald-500/25 hover:bg-emerald-500/35 border-2 border-emerald-400/45 text-emerald-100 text-sm">😊 Ingat!<br><span id="chef-sub-good" class="text-[11px] font-normal text-emerald-200/80">Urutan Tengah • 10 mnt</span></button>
+            <button type="button" data-study-rating="EASY" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-sky-500/25 hover:bg-sky-500/35 border-2 border-sky-400/45 text-sky-100 text-sm">🤩 Hafal!<br><span id="chef-sub-easy" class="text-[11px] font-normal text-sky-200/80">Paling Belakang • 4 hari</span></button>
           </div>
         </div>
       </div>
@@ -929,6 +932,8 @@
       dynamicIngredients: { ...BASE_INGREDIENTS },
       apiFlashcardsByFront: {},
       apiQuizzesBySourceId: {},
+      fsrsPriorityByKey: {},
+      dueNowCount: 0,
       serverLeaderboard: [],
       selectedRecipeId: RECIPES[0].id,
       rushModeId: 'chill',
@@ -1049,21 +1054,35 @@
       el._t = setTimeout(() => el.classList.add('hidden'), 3000);
     }
 
-    async function apiFetch(path, options = {}, timeoutMs = 4000) {
+    async function apiFetch(path, options = {}, timeoutMs = 10000, isRetry = false) {
       if (appConfig.mode === 'fallback') throw new Error('offline');
+      const method = String(options.method || 'GET').toUpperCase();
+      const isCacheableItems = method === 'GET' && path.startsWith('/api/items');
+      const cacheKey = isCacheableItems ? `baking_chef_etag_${path}` : '';
+      let cachedEntry = null;
+      if (cacheKey) {
+        try { cachedEntry = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch {}
+      }
+
       const ctrl = new AbortController();
       const tid = setTimeout(() => ctrl.abort(), timeoutMs);
       try {
         const base = appConfig.baseUrl.replace(/\/+$/, '');
+        const headers = {
+          'Content-Type': 'application/json',
+          'X-API-Key': appConfig.apiKey,
+          ...(options.headers || {}),
+        };
+        if (cachedEntry?.etag) headers['If-None-Match'] = cachedEntry.etag;
+
         const res = await fetch(`${base}${path}`, {
           ...options,
           signal: ctrl.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': appConfig.apiKey,
-            ...(options.headers || {}),
-          },
+          headers,
         });
+        if (res.status === 304 && cachedEntry?.body) {
+          return cachedEntry.body;
+        }
         if (!res.ok) {
           let errMsg = `HTTP ${res.status}`;
           try {
@@ -1076,7 +1095,18 @@
           throw httpErr;
         }
         if (res.status === 204) return { success: true };
-        return await res.json();
+        const json = await res.json();
+        const etag = res.headers.get('etag');
+        if (cacheKey && etag) {
+          try { localStorage.setItem(cacheKey, JSON.stringify({ etag, body: json })); } catch {}
+        }
+        return json;
+      } catch (err) {
+        if (!isRetry && !err?.status && method === 'GET') {
+          clearTimeout(tid);
+          return apiFetch(path, options, timeoutMs, true);
+        }
+        throw err;
       } finally {
         clearTimeout(tid);
       }
@@ -1107,7 +1137,8 @@
     }
 
     async function syncFromBackend() {
-      applyProfileToState(loadLocalProgress());
+      const targetUserId = appConfig.externalUserId;
+      applyProfileToState(loadLocalProgress(targetUserId));
       setApiStatus('checking', 'Menghubungkan Server...');
 
       try {
@@ -1156,7 +1187,7 @@
         const deckQuery = `deckId=${encodeURIComponent(state.activeDeckId)}`;
         const [itemsRes, progRes] = await Promise.all([
           apiFetch(`/api/items?${deckQuery}&limit=100`),
-          apiFetch(`/api/progress?externalUserId=${encodeURIComponent(appConfig.externalUserId)}&${deckQuery}`).catch(() => null),
+          apiFetch(`/api/progress?externalUserId=${encodeURIComponent(targetUserId)}`).catch(() => null),
         ]);
 
         const items = Array.isArray(itemsRes?.data) ? itemsRes.data : [];
@@ -1200,10 +1231,15 @@
               : { ...BASE_INGREDIENTS, ...serverIngredients };
 
         state.isOnline = true;
+        // Cegah race condition bila pemain berganti akun saat request jaringan sedang berjalan
+        if (appConfig.externalUserId !== targetUserId) return;
 
         const progRows = Array.isArray(progRes?.data?.progress) ? progRes.data.progress : [];
         if (progRows.length > 0) {
-          const srv = progRows[0];
+          const srv =
+            progRows.find((r) => (r.deck?.id || r.deckId) === state.activeDeckId) ||
+            progRows.find((r) => r.clientState?.game === 'baking-chef-rush') ||
+            progRows[0];
           state.points = Math.max(state.points, Number(srv.points) || 0);
           state.exp = Math.max(state.exp, Number(srv.exp) || 0);
           state.level = getChefRank(state.exp).level;
@@ -1214,22 +1250,69 @@
             state.totalCorrect = Number(srv.correctAnswers) || 0;
             state.totalAttempts = totAns;
           }
-          if (srv.user?.displayName && !localStorage.getItem(`baking_chef_name_${appConfig.externalUserId}`)) {
-            try { localStorage.setItem(`baking_chef_name_${appConfig.externalUserId}`, srv.user.displayName); } catch {}
+          if (srv.user?.displayName && !localStorage.getItem(`baking_chef_name_${targetUserId}`)) {
+            try { localStorage.setItem(`baking_chef_name_${targetUserId}`, srv.user.displayName); } catch {}
           }
         }
 
-        await fetchServerLeaderboard();
+        await Promise.all([fetchServerLeaderboard(), refreshChefDueSummary()]);
+        if (appConfig.externalUserId !== targetUserId) return;
         saveLocalProgress();
         updateAllHUD();
+        renderRecipesAndRushModes();
         const srvCount = Object.values(state.dynamicIngredients).filter((v) => v.isServerItem).length;
         const vocabCount = srvCount || Object.keys(state.dynamicIngredients).length;
         setApiStatus('online', `🟢 Live FSRS (${vocabCount} Bahan)`);
       } catch {
         state.isOnline = false;
+        if (appConfig.externalUserId !== targetUserId) return;
         updateAllHUD();
         setApiStatus('fallback', '🟡 Mode Offline');
       }
+    }
+
+    async function refreshChefDueSummary() {
+      const badgeEl = document.getElementById('chef-due-badge');
+      const subEl = document.getElementById('chef-study-sub');
+      if (!state.isOnline || appConfig.mode === 'fallback') return;
+      const targetUserId = appConfig.externalUserId;
+      try {
+        const q = new URLSearchParams({
+          externalUserId: targetUserId,
+          deckId: state.activeDeckId,
+          limit: '50',
+          newLimit: '50',
+        });
+        const res = await apiFetch(`/api/evaluation/due?${q.toString()}`);
+        if (appConfig.externalUserId !== targetUserId) return;
+        const dueCount = Number(res?.data?.counts?.totalDue) || 0;
+        const newCount = Number(res?.data?.counts?.returnedNew) || 0;
+        state.dueNowCount = dueCount;
+        const mapByKey = {};
+        const dq = Array.isArray(res?.data?.deckQueue) ? res.data.deckQueue : [];
+        const allIng = Object.values(state.dynamicIngredients);
+        dq.forEach((entry) => {
+          const itemObj = entry.item || entry;
+          const id = itemObj?.id;
+          const front = String(itemObj?.front || '').trim().toLowerCase();
+          const matched = allIng.find((ing) => ing.flashcardId === id || ing.en.toLowerCase() === front);
+          if (matched) {
+            mapByKey[matched.key] = typeof entry.priorityRank === 'number' ? entry.priorityRank : 3;
+          }
+        });
+        state.fsrsPriorityByKey = mapByKey;
+        if (badgeEl) {
+          if (dueCount > 0) {
+            badgeEl.textContent = `⏰ ${dueCount} Due!`;
+            badgeEl.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow animate-pulse';
+            if (subEl) subEl.textContent = `${dueCount} bahan perlu diulang hari ini!`;
+          } else {
+            badgeEl.textContent = newCount > 0 ? `✨ ${newCount} Baru` : '✅ Hafal';
+            badgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white';
+            if (subEl) subEl.textContent = 'Kartu Suara + Bonus Resep';
+          }
+        }
+      } catch {}
     }
 
     async function fetchServerLeaderboard() {
@@ -1281,6 +1364,8 @@
               lastRating,
               isDue,
               isNew,
+              stability: Number(c?.stability) || 0,
+              preview: entry.preview || null,
               dueMs: c?.due ? new Date(c.due).getTime() : 0,
               orderIdx,
             };
@@ -1300,6 +1385,8 @@
           lastRating: m.lastRating,
           isDue: m.isDue,
           isNew: m.isNew,
+          stability: m.stability || 0,
+          preview: m.preview || null,
           dueMs: m.dueMs,
           inRecipe: recipeKeySet.has(ing.key) ? 0 : 1,
           orderIdx: m.orderIdx,
@@ -2389,6 +2476,18 @@
       document.getElementById('study-card-front').textContent = item.en;
       document.getElementById('study-card-back').textContent = item.id;
 
+      // Tampilkan interval FSRS-5 asli per kartu pada keempat tombol penilaian
+      const pv = item.preview;
+      const stab = Number(item.stability) || 0;
+      const estGood = pv?.GOOD || (stab >= 1 ? `${Math.max(2, Math.round(stab * 2.4))} hari` : '10 mnt');
+      const estEasy = pv?.EASY || (stab >= 1 ? `${Math.max(4, Math.round(stab * 3.8))} hari` : '4 hari');
+      const estHard = pv?.HARD || (stab >= 2 ? `${Math.max(1, Math.round(stab * 1.2))} hari` : '6 mnt');
+      const estAgain = pv?.AGAIN || (item.isNew ? '1 mnt' : '10 mnt');
+      document.getElementById('chef-sub-again').textContent = `Paling Depan • ${estAgain}`;
+      document.getElementById('chef-sub-hard').textContent = `Agak Depan • ${estHard}`;
+      document.getElementById('chef-sub-good').textContent = `Urutan Tengah • ${estGood}`;
+      document.getElementById('chef-sub-easy').textContent = `Paling Belakang • ${estEasy}`;
+
       document.getElementById('study-card-back-wrap').classList.add('hidden');
       document.getElementById('study-fsrs-feedback').classList.add('hidden');
       document.getElementById('btn-study-reveal').classList.remove('hidden');
@@ -2480,10 +2579,14 @@
 
     function buildRecipeSteps(recipe) {
       const allKeys = Object.keys(state.dynamicIngredients);
+      const rankOf = (k) => (typeof state.fsrsPriorityByKey?.[k] === 'number' ? state.fsrsPriorityByKey[k] : 3);
+      const sortByFsrsWeakFirst = (keys) =>
+        shuffle(keys).sort((a, b) => rankOf(a) - rankOf(b));
+
       let targetKeys = recipe.keys.length > 0
-        ? shuffle(recipe.keys.filter((k) => state.dynamicIngredients[k]))
-        : shuffle(allKeys).slice(0, 5);
-      if (targetKeys.length < 4) targetKeys = shuffle(allKeys).slice(0, 5);
+        ? sortByFsrsWeakFirst(recipe.keys.filter((k) => state.dynamicIngredients[k]))
+        : sortByFsrsWeakFirst(allKeys).slice(0, 5);
+      if (targetKeys.length < 4) targetKeys = sortByFsrsWeakFirst(allKeys).slice(0, 5);
 
       return targetKeys.map((tKey, i) => {
         const distractors = shuffle(allKeys.filter((k) => k !== tKey)).slice(0, 3);
@@ -3337,6 +3440,13 @@
       BakerySFX.pop();
       showAuthError('');
       appConfig.externalUserId = cleanId;
+      state.dueNowCount = 0;
+      state.fsrsPriorityByKey = {};
+      const badgeEl = document.getElementById('chef-due-badge');
+      if (badgeEl) {
+        badgeEl.textContent = '⏳ Cek FSRS...';
+        badgeEl.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white';
+      }
       try {
         localStorage.setItem('baking_chef_last_user', cleanId);
         if (displayName && displayName.trim()) {
@@ -3440,6 +3550,7 @@
     }
 
     function switchView(viewName) {
+      const prevView = state.activeView;
       stopOrderTimer();
       clearTimeout(state.stepAdvanceTimer);
       if (viewName !== 'game') {
@@ -3454,6 +3565,10 @@
       document.getElementById('hud-chip')?.classList.toggle('hidden', !loggedIn);
       document.getElementById('hud-chip')?.classList.toggle('flex', loggedIn);
       document.getElementById('btn-header-switch-user')?.classList.toggle('hidden', !loggedIn);
+      if (viewName === 'menu' && prevView && prevView !== 'login' && state.isOnline) {
+        refreshChefDueSummary();
+        renderRecipesAndRushModes();
+      }
     }
 
     async function resetActiveStudentProgress() {

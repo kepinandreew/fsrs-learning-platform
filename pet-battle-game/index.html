@@ -378,8 +378,11 @@
           <div class="space-y-2.5 pt-1">
             <button id="btn-start-training" type="button" class="touch-btn w-full py-3.5 px-4 rounded-2xl text-left bg-gradient-to-r from-cyan-500 via-sky-500 to-indigo-500 hover:brightness-110 shadow-lg flex items-center justify-between gap-3 border border-cyan-200/40">
               <div>
-                <div class="font-bold text-base text-white">📖 Hafalkan Kartu Dulu</div>
-                <div class="text-xs text-cyan-50/95 font-medium">Dengar suara kata + tambah kekuatan serangan!</div>
+                <div class="font-bold text-base text-white flex flex-wrap items-center gap-2">
+                  <span>📖 Hafalkan Kartu Dulu</span>
+                  <span id="menu-due-badge" class="hidden text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">⏰ 0 Perlu Diulang</span>
+                </div>
+                <div id="menu-study-sub" class="text-xs text-cyan-50/95 font-medium">Dengar suara kata + tambah kekuatan serangan!</div>
               </div>
               <span class="text-xl font-bold">→</span>
             </button>
@@ -1430,17 +1433,35 @@
       });
     }
 
-    async function apiFetch(path, options = {}) {
+    async function apiFetch(path, options = {}, isRetry = false) {
       if (state.apiConfig.mode === 'fallback') throw new Error('Offline mode');
+      const method = String(options.method || 'GET').toUpperCase();
+      const isCacheableItems = method === 'GET' && path.startsWith('/api/items');
+      const cacheKey = isCacheableItems ? `${STORAGE_PREFIX}_etag_${path}` : '';
+      let cachedEntry = null;
+      if (cacheKey) {
+        try { cachedEntry = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch {}
+      }
+
       const controller = new AbortController();
-      const tid = setTimeout(() => controller.abort(), options.timeoutMs || 4500);
+      const tid = setTimeout(() => controller.abort(), options.timeoutMs || 10000);
       try {
+        const headers = {
+          'Content-Type': 'application/json',
+          'X-API-Key': state.apiConfig.apiKey,
+          ...(options.headers || {}),
+        };
+        if (cachedEntry?.etag) headers['If-None-Match'] = cachedEntry.etag;
+
         const res = await fetch(`${state.apiConfig.baseUrl}${path}`, {
           ...options,
           signal: controller.signal,
-          headers: { 'Content-Type': 'application/json', 'X-API-Key': state.apiConfig.apiKey, ...(options.headers || {}) },
+          headers,
         });
         setApiStatus(true);
+        if (res.status === 304 && cachedEntry?.body) {
+          return cachedEntry.body;
+        }
         if (!res.ok) {
           let errMsg = `HTTP ${res.status}`;
           try {
@@ -1453,8 +1474,17 @@
           throw httpErr;
         }
         if (res.status === 204) return { success: true };
-        return await res.json();
+        const json = await res.json();
+        const etag = res.headers.get('etag');
+        if (cacheKey && etag) {
+          try { localStorage.setItem(cacheKey, JSON.stringify({ etag, body: json })); } catch {}
+        }
+        return json;
       } catch (err) {
+        if (!isRetry && !err?.status && method === 'GET') {
+          clearTimeout(tid);
+          return apiFetch(path, options, true);
+        }
         if (!err?.status) setApiStatus(false);
         throw err;
       } finally {
@@ -1662,7 +1692,12 @@
           deckQueue.forEach((entry, idx) => {
             const id = entry?.item?.id;
             if (!id) return;
-            serverOrderMap.set(id, { idx, card: entry.card || null, priorityRank: typeof entry.priorityRank === 'number' ? entry.priorityRank : 3 });
+            serverOrderMap.set(id, {
+              idx,
+              card: entry.card || null,
+              preview: entry.preview || null,
+              priorityRank: typeof entry.priorityRank === 'number' ? entry.priorityRank : 3,
+            });
             if (entry.card && state.profile) {
               const prev = state.profile.fsrsCards[id] || {};
               state.profile.fsrsCards[id] = {
@@ -1690,6 +1725,7 @@
         return {
           ...fc,
           isNew: !srv?.card && !mem?.lastRating,
+          _preview: srv?.preview || null,
           _priorityRank: priorityRank,
           _lastRating: lastRating,
           _dueMs: dueMs,
@@ -3651,11 +3687,53 @@
       });
     }
 
+    async function refreshMenuDueSummary() {
+      const badgeEl = document.getElementById('menu-due-badge');
+      const subEl = document.getElementById('menu-study-sub');
+      if (!badgeEl || !state.profile) return;
+      let dueCount = 0;
+      let newCount = 0;
+      if (state.apiConfig.mode !== 'fallback') {
+        try {
+          const q = new URLSearchParams({ externalUserId: state.profile.externalUserId, limit: '100', newLimit: '50' });
+          if (state.selectedDeckId && state.selectedDeckId !== ALL_DECKS_ID) q.set('deckId', state.selectedDeckId);
+          const res = await apiFetch(`/api/evaluation/due?${q.toString()}`);
+          dueCount = Number(res?.data?.counts?.totalDue) || 0;
+          newCount = Number(res?.data?.counts?.returnedNew) || 0;
+          const dq = Array.isArray(res?.data?.deckQueue) ? res.data.deckQueue : [];
+          dq.forEach((entry) => {
+            const id = entry?.item?.id;
+            if (id && entry.card && state.profile) {
+              state.profile.fsrsCards[id] = {
+                ...(state.profile.fsrsCards[id] || {}),
+                reps: entry.card.reps ?? 1,
+                lastRating: entry.card.lastRating || null,
+                state: entry.card.state,
+                due: entry.card.due,
+                stability: entry.card.stability,
+                scheduledDays: entry.card.scheduledDays ?? 0,
+              };
+            }
+          });
+          if (dq.length > 0) saveStudentProfile(state.profile);
+        } catch {}
+      }
+      if (dueCount > 0) {
+        badgeEl.textContent = `⏰ ${dueCount} Perlu Diulang!`;
+        badgeEl.className = 'text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow animate-pulse';
+        if (subEl) subEl.textContent = `Ada ${dueCount} kosakata jatuh tempo FSRS — ulangi dulu biar Power naik!`;
+      } else {
+        badgeEl.textContent = newCount > 0 ? `✨ ${newCount} Kata Baru` : '✅ Ingatan Kuat';
+        badgeEl.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white';
+        if (subEl) subEl.textContent = 'Dengar suara kata + tambah kekuatan serangan!';
+      }
+    }
+
     async function openMainMenuView() {
       if (!state.profile) { showView('view-login'); return; }
       renderMainMenuProfile();
       showView('view-menu');
-      await Promise.all([loadDeckItems(state.selectedDeckId), fetchServerLeaderboard()]);
+      await Promise.all([loadDeckItems(state.selectedDeckId), fetchServerLeaderboard(), refreshMenuDueSummary()]);
       renderMainMenuProfile();
     }
 
@@ -3763,6 +3841,18 @@
       document.getElementById('study-card-tag').textContent = badgeLabel;
       document.getElementById('study-card-front').textContent = card.content?.front || '-';
       document.getElementById('study-card-back').textContent = card.content?.back || '-';
+
+      // Tampilkan interval FSRS-5 asli per kartu pada keempat tombol penilaian
+      const pv = card._preview;
+      const stab = Number(card._stability) || 0;
+      const estGood = pv?.GOOD || (stab >= 1 ? `${Math.max(2, Math.round(stab * 2.4))} hari` : '10 mnt');
+      const estEasy = pv?.EASY || (stab >= 1 ? `${Math.max(4, Math.round(stab * 3.8))} hari` : '4 hari');
+      const estHard = pv?.HARD || (stab >= 2 ? `${Math.max(1, Math.round(stab * 1.2))} hari` : '6 mnt');
+      const estAgain = pv?.AGAIN || (card.isNew ? '1 mnt' : '10 mnt');
+      document.getElementById('rate-sub-again').textContent = `Paling Depan • ${estAgain}`;
+      document.getElementById('rate-sub-hard').textContent = `Agak Depan • ${estHard}`;
+      document.getElementById('rate-sub-good').textContent = `Urutan Tengah • ${estGood}`;
+      document.getElementById('rate-sub-easy').textContent = `Paling Belakang • ${estEasy}`;
       document.getElementById('study-card-back-wrap').classList.add('hidden');
       document.getElementById('study-feedback').classList.add('hidden');
       document.getElementById('btn-study-reveal').classList.remove('hidden');
@@ -4287,7 +4377,7 @@
 
       document.getElementById('deck-select').addEventListener('change', async (e) => {
         state.selectedDeckId = e.target.value;
-        await loadDeckItems(state.selectedDeckId);
+        await Promise.all([loadDeckItems(state.selectedDeckId), refreshMenuDueSummary()]);
       });
 
       document.getElementById('btn-start-training').addEventListener('click', startTrainingPhase);
