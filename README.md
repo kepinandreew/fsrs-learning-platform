@@ -20,8 +20,9 @@ Arsitektur layanan terpusat (*multi-tenant backend*) yang menyediakan penjadwala
 │   │       ├── evaluation/         # Evaluasi review FSRS, antrean prioritas due, & skor kuis idempoten
 │   │       ├── progress/           # Sinkronisasi poin, EXP, streak, & klasemen lintas-gim
 │   │       └── analytics/          # 4 metrik analitik pembelajaran, simulator kurva lupa, & ekspor CSV
-│   ├── tests/                      # 38 pengujian unit otomatis (Vitest)
-│   └── docs/API.md                 # Dokumentasi kontrak seluruh endpoint REST API
+│   ├── scripts/benchmark-report.ts # Otomasi benchmark FSRS-5, latensi REST API, ETag, & keamanan
+│   ├── tests/                      # 39 pengujian unit otomatis (Vitest)
+│   └── docs/                       # Dokumentasi kontrak API.md & laporan BENCHMARK_REPORT.md
 │
 ├── learning-platform-dashboard/    # Konsol Pengajar / Pengembang (React 18, TypeScript, Tailwind CSS, Vite)
 │   ├── src/pages/
@@ -30,8 +31,9 @@ Arsitektur layanan terpusat (*multi-tenant backend*) yang menyediakan penjadwala
 │   │   ├── AiGeneratorPage.tsx     # Generator soal otomatis dari teks/PDF & penyuntingan draf langsung
 │   │   └── AnalyticsPage.tsx       # Pemantauan siswa real-time, 4 indikator analitik, & Simulator FSRS-5
 │   └── public/
-│       ├── pet-battle.html         # Gim Klien 1: Pet Battle Stadium (Turn-Based Monster RPG)
-│       └── baking-chef.html        # Gim Klien 2: Baking Chef Rush (Patisserie Vocabulary Simulation)
+│       ├── pet-battle.html         # Gim Klien 1: Pet Battle Stadium (PWA Turn-Based Monster RPG)
+│       ├── baking-chef.html        # Gim Klien 2: Baking Chef Rush (PWA Patisserie Simulation)
+│       └── sw-games.js             # Service Worker Network-First & manifest PWA layar penuh
 │
 ├── pet-battle-game/                # Salinan mandiri Gim Klien 1 (siap di-host terpisah)
 └── baking-chef-game/               # Salinan mandiri Gim Klien 2 (siap di-host terpisah)
@@ -57,7 +59,8 @@ Arsitektur layanan terpusat (*multi-tenant backend*) yang menyediakan penjadwala
 cd learning-platform-backend
 npm install
 npx prisma migrate deploy
-npm test          # Menjalankan 38 unit test FSRS, AI, Evaluasi, Progress, & Analitik
+npm test          # Menjalankan 39 unit test FSRS, AI, Evaluasi, Progress, & Analitik
+npm run benchmark # Menjalankan benchmark FSRS-5 & REST API live -> docs/BENCHMARK_REPORT.md
 npm run dev       # Berjalan di http://localhost:3000
 
 # 2. Developer Dashboard & Game Clients

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="berryBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9d174d"/>
+      <stop offset="55%" stop-color="#db2777"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+    <linearGradient id="creamGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fffdf9"/>
+      <stop offset="100%" stop-color="#fce7f3"/>
+    </linearGradient>
+    <linearGradient id="cupGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#berryBg)"/>
+  <rect x="20" y="20" width="472" height="472" rx="94" fill="none" stroke="#fff1f2" stroke-opacity="0.85" stroke-width="12" stroke-dasharray="28 16"/>
+  <!-- Chef Toque Hat Top -->
+  <circle cx="202" cy="144" r="48" fill="#ffffff" stroke="#831843" stroke-width="12"/>
+  <circle cx="310" cy="144" r="48" fill="#ffffff" stroke="#831843" stroke-width="12"/>
+  <circle cx="256" cy="122" r="58" fill="#ffffff" stroke="#831843" stroke-width="12"/>
+  <rect x="184" y="162" width="144" height="40" rx="14" fill="#fbcfe8" stroke="#831843" stroke-width="12"/>
+  <!-- Cupcake Wrapper -->
+  <path d="M148 316 L364 316 L334 432 C330 444 318 452 304 452 L208 452 C194 444 182 444 178 432 Z" fill="url(#cupGrad)" stroke="#831843" stroke-width="14" stroke-linejoin="round"/>
+  <line x1="204" y1="324" x2="216" y2="444" stroke="#b45309" stroke-width="8" stroke-linecap="round"/>
+  <line x1="256" y1="324" x2="256" y2="444" stroke="#b45309" stroke-width="8" stroke-linecap="round"/>
+  <line x1="308" y1="324" x2="296" y2="444" stroke="#b45309" stroke-width="8" stroke-linecap="round"/>
+  <!-- Whipped Frosting Swirl with Kawaii Face -->
+  <path d="M126 308 C116 258, 162 224, 202 232 C216 198, 296 198, 310 232 C350 224, 396 258, 386 308 C386 334, 352 344, 326 338 C298 350, 214 350, 186 338 C160 344, 126 334, 126 308 Z" fill="url(#creamGrad)" stroke="#831843" stroke-width="14" stroke-linejoin="round"/>
+  <!-- Strawberry Topper -->
+  <path d="M256 178 C282 178, 296 206, 282 232 C272 248, 240 248, 230 232 C216 206, 230 178, 256 178 Z" fill="#ef4444" stroke="#831843" stroke-width="10"/>
+  <path d="M240 180 L256 164 L272 180" fill="none" stroke="#22c55e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Cute Kawaii Eyes & Smile on Frosting -->
+  <circle cx="212" cy="286" r="16" fill="#500724"/>
+  <circle cx="300" cy="286" r="16" fill="#500724"/>
+  <circle cx="206" cy="280" r="6" fill="#ffffff"/>
+  <circle cx="294" cy="280" r="6" fill="#ffffff"/>
+  <ellipse cx="180" cy="304" rx="14" ry="8" fill="#f472b6" fill-opacity="0.7"/>
+  <ellipse cx="332" cy="304" rx="14" ry="8" fill="#f472b6" fill-opacity="0.7"/>
+  <path d="M238 298 Q256 318 274 298" fill="none" stroke="#500724" stroke-width="10" stroke-linecap="round"/>
+  <!-- Sprinkles & Star -->
+  <rect x="160" y="252" width="18" height="8" rx="4" transform="rotate(-24 160 252)" fill="#38bdf8"/>
+  <rect x="330" y="248" width="18" height="8" rx="4" transform="rotate(28 330 248)" fill="#facc15"/>
+  <path d="M412 96 L422 120 L446 130 L422 140 L412 164 L402 140 L378 130 L402 120 Z" fill="#fef08a"/>
+</svg>

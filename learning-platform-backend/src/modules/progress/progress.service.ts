@@ -149,15 +149,43 @@ function isPlainObject(val: unknown): val is Record<string, unknown> {
   return typeof val === 'object' && val !== null && !Array.isArray(val);
 }
 
-// Gabungkan clientState baru ke clientState lama secara dangkal (shallow-merge) agar atribut lintas-game
-// (mis. speciesId/petName/wins di Pet Battle & chefRank/completedRecipes di Baking Chef) tidak saling menimpa.
+function mergeStarMap(prev: unknown, next: unknown): Record<string, number> | undefined {
+  if (!isPlainObject(prev) && !isPlainObject(next)) return undefined;
+  const merged: Record<string, number> = {};
+  if (isPlainObject(prev)) {
+    for (const [k, v] of Object.entries(prev)) {
+      if (typeof v === 'number' && Number.isFinite(v)) merged[k] = v;
+    }
+  }
+  if (isPlainObject(next)) {
+    for (const [k, v] of Object.entries(next)) {
+      if (typeof v === 'number' && Number.isFinite(v)) {
+        merged[k] = Math.max(merged[k] ?? 0, v);
+      }
+    }
+  }
+  return merged;
+}
+
+// Gabungkan clientState baru ke clientState lama agar atribut lintas-game
+// (mis. speciesId/petName/wins di Pet Battle & chefRank/completedRecipes/recipeStars di Baking Chef)
+// tidak saling menimpa maupun mengalami regresi bintang lintas perangkat.
 export function mergeClientState(
   existing: Prisma.JsonValue | null | undefined,
   incoming: unknown,
 ): Prisma.InputJsonValue | undefined {
   if (incoming === undefined) return undefined;
   if (isPlainObject(existing) && isPlainObject(incoming)) {
-    return { ...existing, ...incoming } as Prisma.InputJsonValue;
+    const merged: Record<string, unknown> = { ...existing, ...incoming };
+    const stars = mergeStarMap(existing.recipeStars, incoming.recipeStars);
+    if (stars !== undefined) merged.recipeStars = stars;
+    if (typeof existing.wins === 'number' && typeof incoming.wins === 'number') {
+      merged.wins = Math.max(existing.wins, incoming.wins);
+    }
+    if (typeof existing.completedRecipes === 'number' && typeof incoming.completedRecipes === 'number') {
+      merged.completedRecipes = Math.max(existing.completedRecipes, incoming.completedRecipes);
+    }
+    return merged as Prisma.InputJsonValue;
   }
   return incoming as Prisma.InputJsonValue;
 }
@@ -317,7 +345,10 @@ export function rankLeaderboardUsers(users: RawLeaderboardUser[], limit: number)
           updatedAt = p.updatedAt;
         }
         if (isPlainObject(p.clientState)) {
-          mergedStateObj = { ...mergedStateObj, ...p.clientState };
+          mergedStateObj = mergeClientState(
+            mergedStateObj as Prisma.JsonObject,
+            p.clientState,
+          ) as Record<string, unknown>;
           hasStateObj = true;
         } else if (p.clientState !== null) {
           fallbackState = p.clientState;

@@ -16,6 +16,28 @@ describe('Progress Leaderboard Aggregation & Cross-Game State Merge', () => {
     expect(merged.chefRank).toBe('Head Patissier');
   });
 
+  it('menggabungkan recipeStars menggunakan nilai bintang tertinggi (Math.max) lintas perangkat', () => {
+    const merged = mergeClientState(
+      {
+        game: 'baking-chef-rush',
+        completedRecipes: 4,
+        recipeStars: { cupcake: 3, tart: 1 },
+      },
+      {
+        game: 'baking-chef-rush',
+        completedRecipes: 2,
+        recipeStars: { cupcake: 2, tart: 3, croissant: 2 },
+      },
+    ) as Record<string, unknown>;
+
+    expect(merged.completedRecipes).toBe(4);
+    expect(merged.recipeStars).toEqual({
+      cupcake: 3,
+      tart: 3,
+      croissant: 2,
+    });
+  });
+
   it('mempertahankan atribut monster Pet Battle dan resep Baking Chef dari dua baris deck berbeda pada leaderboard', () => {
     const res = rankLeaderboardUsers(
       [

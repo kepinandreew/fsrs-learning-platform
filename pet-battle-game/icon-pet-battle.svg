@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="skyBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1d4ed8"/>
+      <stop offset="55%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="goldRim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="drakeBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fb923c"/>
+      <stop offset="55%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </linearGradient>
+    <linearGradient id="bellyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fef9c3"/>
+      <stop offset="100%" stop-color="#fde047"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#skyBg)"/>
+  <rect x="18" y="18" width="476" height="476" rx="96" fill="none" stroke="url(#goldRim)" stroke-width="14"/>
+  <circle cx="110" cy="108" r="48" fill="#ffffff" fill-opacity="0.22"/>
+  <ellipse cx="256" cy="422" rx="176" ry="44" fill="#ffffff" fill-opacity="0.92"/>
+  <ellipse cx="148" cy="416" rx="68" ry="34" fill="#ffffff" fill-opacity="0.95"/>
+  <ellipse cx="364" cy="416" rx="68" ry="34" fill="#ffffff" fill-opacity="0.95"/>
+  <!-- Cute Wings -->
+  <path d="M148 258 C78 202, 68 286, 128 318 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M364 258 C434 202, 444 286, 384 318 Z" fill="#38bdf8" stroke="#1e293b" stroke-width="12" stroke-linejoin="round"/>
+  <!-- Flame Tail -->
+  <path d="M352 356 C416 352, 434 298, 404 268 C438 274, 456 232, 420 202 C392 224, 388 258, 372 288" fill="#fde047" stroke="#ea580c" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Chibi Body & Head -->
+  <ellipse cx="256" cy="336" rx="108" ry="88" fill="url(#drakeBody)" stroke="#1e293b" stroke-width="14"/>
+  <ellipse cx="256" cy="348" rx="68" ry="56" fill="url(#bellyGrad)"/>
+  <circle cx="256" cy="212" r="108" fill="url(#drakeBody)" stroke="#1e293b" stroke-width="14"/>
+  <!-- Horns & Crown Spark -->
+  <path d="M182 132 L156 76 L214 110 Z" fill="#fde047" stroke="#1e293b" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M330 132 L356 76 L298 110 Z" fill="#fde047" stroke="#1e293b" stroke-width="12" stroke-linejoin="round"/>
+  <!-- Big Glossy Eyes -->
+  <ellipse cx="210" cy="214" rx="24" ry="28" fill="#0f172a"/>
+  <ellipse cx="302" cy="214" rx="24" ry="28" fill="#0f172a"/>
+  <circle cx="202" cy="202" r="9" fill="#ffffff"/>
+  <circle cx="294" cy="202" r="9" fill="#ffffff"/>
+  <circle cx="218" cy="224" r="4.5" fill="#ffffff"/>
+  <circle cx="310" cy="224" r="4.5" fill="#ffffff"/>
+  <!-- Blush & Happy Smile -->
+  <ellipse cx="170" cy="242" rx="18" ry="10" fill="#fb7185" fill-opacity="0.75"/>
+  <ellipse cx="342" cy="242" rx="18" ry="10" fill="#fb7185" fill-opacity="0.75"/>
+  <path d="M226 248 Q256 278 286 248" fill="none" stroke="#1e293b" stroke-width="12" stroke-linecap="round"/>
+  <path d="M236 254 L242 266 L250 256" fill="#ffffff"/>
+  <path d="M276 254 L270 266 L262 256" fill="#ffffff"/>
+  <!-- Sparkle Star -->
+  <path d="M408 92 L418 118 L444 128 L418 138 L408 164 L398 138 L372 128 L398 118 Z" fill="#fef08a"/>
+</svg>

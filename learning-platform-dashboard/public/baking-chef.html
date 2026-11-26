@@ -3,7 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#2b1222">
+  <meta name="theme-color" content="#9d174d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Baking Chef">
+  <link rel="icon" type="image/svg+xml" href="./icon-baking-chef.svg">
+  <link rel="apple-touch-icon" href="./icon-baking-chef.svg">
+  <link rel="manifest" href="./manifest-baking-chef.json">
   <title>Baking Chef Rush — Patisserie Vocabulary</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -172,6 +179,7 @@
           </div>
         </div>
 
+        <button id="btn-install-pwa" type="button" class="hidden touch-btn px-2.5 sm:px-3 rounded-xl text-xs font-bold candy-btn-gold" title="Pasang Aplikasi Layar Penuh">📲 <span class="hidden sm:inline">Pasang</span></button>
         <button id="btn-open-leaderboard" type="button" class="touch-btn px-2.5 sm:px-3 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-400/25 to-pink-500/25 hover:from-amber-400/35 hover:to-pink-500/35 border border-amber-300/45 text-amber-200" title="Klasemen Master Chef">🏆 <span class="hidden sm:inline">Juara Koki</span></button>
         <button id="btn-toggle-sound" type="button" class="touch-btn px-2.5 rounded-xl bg-rose-950/80 hover:bg-rose-900/80 border border-amber-200/20 text-sm" aria-label="Suara Efek" title="Suara ON/OFF">🔊</button>
         <button id="btn-open-config" type="button" class="relative touch-btn px-2.5 rounded-xl bg-rose-950/80 hover:bg-rose-900/80 border border-amber-200/20" aria-label="Pengaturan Server">
@@ -1398,6 +1406,23 @@
           state.level = getChefRank(state.exp).level;
           const cs = srv.clientState && typeof srv.clientState === 'object' ? srv.clientState : null;
           if (cs?.completedRecipes) state.completedRecipes = Math.max(state.completedRecipes, Number(cs.completedRecipes) || 0);
+          const mergedStars = { ...loadRecipeStars(targetUserId) };
+          let starsChanged = false;
+          progRows.forEach((r) => {
+            const rStars = r?.clientState?.recipeStars;
+            if (rStars && typeof rStars === 'object' && !Array.isArray(rStars)) {
+              Object.entries(rStars).forEach(([k, v]) => {
+                const num = Math.min(3, Math.max(0, Number(v) || 0));
+                if (num > (Number(mergedStars[k]) || 0)) {
+                  mergedStars[k] = num;
+                  starsChanged = true;
+                }
+              });
+            }
+          });
+          if (starsChanged) {
+            try { localStorage.setItem(`baking_chef_stars_${targetUserId}`, JSON.stringify(mergedStars)); } catch {}
+          }
           const totAns = (Number(srv.correctAnswers) || 0) + (Number(srv.wrongAnswers) || 0);
           if (totAns > state.totalAttempts) {
             state.totalCorrect = Number(srv.correctAnswers) || 0;
@@ -1655,6 +1680,7 @@
               game: 'baking-chef-rush',
               chefRank: rank.title,
               completedRecipes: state.completedRecipes,
+              recipeStars: loadRecipeStars(appConfig.externalUserId),
             },
           }),
         });
@@ -3775,6 +3801,7 @@
       try {
         localStorage.removeItem(`baking_chef_v6_prog_${uid}`);
         localStorage.removeItem(`baking_chef_vocab_progress_${uid}`);
+        localStorage.removeItem(`baking_chef_stars_${uid}`);
       } catch {}
       applyProfileToState({ points: 0, exp: 0, level: 1, completedRecipes: 0, totalCorrect: 0, totalAttempts: 0, recentStudyKeys: [] });
       if (state.isOnline) {
@@ -3784,6 +3811,7 @@
         } catch {}
       }
       updateAllHUD();
+      renderRecipesAndRushModes();
       showToast(`🗑️ Data ${getStudentDisplayName(uid)} berhasil di-reset ke Lv.1!`);
     }
 
@@ -3913,7 +3941,47 @@
       });
     }
 
+    function initPwaSupport() {
+      const installBtn = document.getElementById('btn-install-pwa');
+      let deferredPrompt = null;
+      const isStandalone =
+        window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (!isStandalone && installBtn) installBtn.classList.remove('hidden');
+      });
+
+      installBtn?.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        BakerySFX.pop();
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice.catch(() => null);
+        deferredPrompt = null;
+        installBtn.classList.add('hidden');
+        if (choice?.outcome === 'accepted') {
+          showToast('📲 Baking Chef Rush terpasang di layar utama!');
+        }
+      });
+
+      window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        installBtn?.classList.add('hidden');
+      });
+
+      if (
+        'serviceWorker' in navigator &&
+        (window.location.protocol === 'https:' ||
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1')
+      ) {
+        navigator.serviceWorker.register('./sw-games.js').catch(() => {});
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
+      initPwaSupport();
       initEvents();
       renderRecipesAndRushModes();
       renderStudentLoginGrid();

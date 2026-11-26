@@ -15,6 +15,7 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "db:sync-cloud": "tsx scripts/sync-to-cloud.ts",
     "simulate": "tsx scripts/simulate-learning.ts",
+    "benchmark": "tsx scripts/benchmark-report.ts",
     "reset-data": "tsx scripts/reset-analytics.ts",
     "prisma:studio": "prisma studio"
   },

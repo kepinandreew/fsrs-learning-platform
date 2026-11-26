@@ -3,9 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#141138">
+  <meta name="theme-color" content="#1d4ed8">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pet Battle">
+  <link rel="icon" type="image/svg+xml" href="./icon-pet-battle.svg">
+  <link rel="apple-touch-icon" href="./icon-pet-battle.svg">
+  <link rel="manifest" href="./manifest-pet-battle.json">
   <title>Pet Battle Stadium — Monster Evolution</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -193,6 +198,9 @@
           </div>
         </div>
 
+        <button id="btn-install-pwa" type="button" class="hidden touch-btn px-2.5 sm:px-3 rounded-2xl text-xs font-bold arcade-btn-gold" title="Pasang Aplikasi Layar Penuh">
+          📲 <span class="hidden sm:inline">Pasang</span>
+        </button>
         <button id="btn-open-leaderboard" type="button" class="touch-btn px-2.5 sm:px-3.5 rounded-2xl text-xs font-bold bg-gradient-to-r from-amber-300/25 to-orange-400/25 hover:from-amber-300/35 hover:to-orange-400/35 border border-amber-300/50 text-amber-200">
           🏆 <span class="hidden sm:inline">Juara</span>
         </button>
@@ -4573,7 +4581,46 @@
       });
     }
 
+    function initPwaSupport() {
+      const installBtn = document.getElementById('btn-install-pwa');
+      let deferredPrompt = null;
+      const isStandalone =
+        window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (!isStandalone && installBtn) installBtn.classList.remove('hidden');
+      });
+
+      installBtn?.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice.catch(() => null);
+        deferredPrompt = null;
+        installBtn.classList.add('hidden');
+        if (choice?.outcome === 'accepted') {
+          showToast('📲 Pet Battle Stadium terpasang di layar utama!');
+        }
+      });
+
+      window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        installBtn?.classList.add('hidden');
+      });
+
+      if (
+        'serviceWorker' in navigator &&
+        (window.location.protocol === 'https:' ||
+          window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1')
+      ) {
+        navigator.serviceWorker.register('./sw-games.js').catch(() => {});
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
+      initPwaSupport();
       preloadBattleSpriteCache();
       initEvents();
       renderLoginView();
