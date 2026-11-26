@@ -23,7 +23,7 @@ export const monitoringQuerySchema = z.object({
   limit: z.coerce.number().int().min(5).max(100).default(25),
 });
 
-// Input simulator interaktif FSRS Engine (validasi Rencana Uji Coba #2 Proposal TA).
+// Skema input simulator interaktif FSRS-5.
 export const fsrsSimulateSchema = z.object({
   requestRetention: z.number().min(0.7).max(0.99).default(0.9),
   // Opsional: gunakan state kartu nyata milik siswa sebagai titik awal simulasi.

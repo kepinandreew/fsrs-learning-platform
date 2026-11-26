@@ -1,3 +1,8 @@
+/**
+ * @file middlewares/jwtAuth.ts
+ * @description Middleware autentikasi pengajar/pengembang berbasis JSON Web Token (`Authorization: Bearer <JWT>`).
+ * Memverifikasi tanda tangan token serta status aktif akun developer sebelum mengakses endpoint konsol.
+ */
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { prisma } from '../config/prisma';

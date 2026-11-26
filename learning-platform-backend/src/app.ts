@@ -1,3 +1,9 @@
+/**
+ * @file app.ts
+ * @description Konfigurasi utama aplikasi Express.js: keamanan HTTP (Helmet & CORS),
+ * pembatasan laju request (rate limiting), pemisahan rute Developer Dashboard (JWT)
+ * dan rute Aplikasi Klien (X-API-Key), serta penanganan galat terpusat.
+ */
 import fs from 'fs';
 import path from 'path';
 import cors from 'cors';

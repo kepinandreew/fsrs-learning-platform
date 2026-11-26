@@ -5,7 +5,11 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { dueQuerySchema, previewQuerySchema, reviewSchema } from './evaluation.schema';
 import * as service from './evaluation.service';
 
-// Route resmi FSRS Evaluation sesuai Proposal TA Rev 3 (Bagian IV.3.C: /api/review), diautentikasi lewat X-API-Key.
+/**
+ * @file modules/evaluation/review.routes.ts
+ * @description Endpoint REST API evaluasi pengulangan berjarak FSRS (`/api/review`),
+ * diautentikasi menggunakan `X-API-Key` per aplikasi klien.
+ */
 const router = Router();
 router.use(apiKeyAuth);
 

@@ -1,3 +1,8 @@
+/**
+ * @file pages/AiGeneratorPage.tsx
+ * @description Halaman pembangkit materi otomatis dari teks maupun dokumen PDF menggunakan Google Gemini,
+ * dilengkapi verifikasi kualitas 2 tahap dan penyuntingan draf langsung sebelum disimpan ke Bank Materi.
+ */
 import { useEffect, useState, FormEvent } from 'react';
 import { Sparkles, Upload, FileText, Check, Trash2, Save, Wand2, ShieldCheck } from 'lucide-react';
 import { aiApi, decksApi } from '../api/client';
@@ -347,7 +352,7 @@ export function AiGeneratorPage() {
             </button>
           </div>
 
-          {/* Banner Bukti Verifikasi AI 2nd-Pass (Rencana Uji Coba #3 Proposal TA) */}
+          {/* Banner Status Verifikasi AI Lapis ke-2 */}
           {genMeta && (
             <div className="p-4 rounded-xl bg-indigo-50/80 border border-indigo-200 space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -355,24 +360,24 @@ export function AiGeneratorPage() {
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>
                     {genMeta.verified
-                      ? 'Lolos Verifikasi Otomatis AI Lapis ke-2 (2nd-Pass Verifier)'
-                      : 'Draft Dihasilkan oleh AI Content Generator'}
+                      ? 'Terverifikasi Otomatis (2nd-Pass AI Verifier)'
+                      : 'Draf Konten Berhasil Dibuat'}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
                   <span className="px-2 py-0.5 rounded bg-white border border-indigo-200 text-indigo-700 font-semibold">
-                    Model: {genMeta.model}
+                    {genMeta.model}
                   </span>
                   <span className="px-2 py-0.5 rounded bg-white border border-emerald-200 text-emerald-700 font-semibold">
-                    Waktu: {genMeta.durationSec} dtk
+                    {genMeta.durationSec} dtk
                   </span>
                   <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 font-semibold">
-                    Koreksi AI: {genMeta.corrections.length}
+                    Koreksi: {genMeta.corrections.length}
                   </span>
                 </div>
               </div>
               <p className="text-xs text-slate-600">
-                Sesuai batasan arsitektur Proposal TA, AI hanya menghasilkan draf konten terstruktur dan tidak mengubah jadwal memori FSRS maupun database sebelum disetujui pengajar (<em>Human-in-the-Loop</em>).
+                Tinjau atau sunting draf di bawah ini sebelum disimpan ke Bank Materi.
               </p>
               {genMeta.corrections.length > 0 && (
                 <ul className="list-disc list-inside text-xs text-amber-800 space-y-0.5 pt-1">

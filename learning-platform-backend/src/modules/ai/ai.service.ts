@@ -1,3 +1,9 @@
+/**
+ * @file modules/ai/ai.service.ts
+ * @description Layanan orkestrasi AI Content Generator & 2nd-Pass Content Verifier menggunakan Google Gemini.
+ * Mengekstrak teks/PDF menjadi draf Flashcard dan Pilihan Ganda, memvalidasi kualitas bahasa & kunci jawaban,
+ * serta menyimpan draf yang disetujui pengajar ke dalam Bank Materi.
+ */
 import { ItemType } from '@prisma/client';
 import { env } from '../../config/env';
 import { prisma } from '../../config/prisma';

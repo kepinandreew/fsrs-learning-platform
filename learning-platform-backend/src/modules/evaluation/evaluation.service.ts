@@ -131,7 +131,7 @@ export async function reviewCard(app: ClientApp, input: ReviewInput) {
     if (dup) return dup;
   }
 
-  // Item harus flashcard aktif milik aplikasi ini (pada deck aktif). FSRS eksklusif untuk flashcard (Proposal Batasan #2).
+  // Item harus berupa flashcard aktif milik aplikasi klien ini; penjadwalan FSRS dikhususkan bagi flashcard.
   const item = await prisma.learningItem.findFirst({
     where: { id: input.itemId, appId: app.id, isActive: true, deck: { isActive: true } },
   });
@@ -143,9 +143,8 @@ export async function reviewCard(app: ClientApp, input: ReviewInput) {
   const now = new Date();
   const card = existing ? rowToCard(existing) : createEmptyCard(now);
 
-  // Sesuai Proposal TA Rev 3 (Batasan #2, Batasan #7, & Rencana Uji Coba #2):
-  // Kalkulasi interval jadwal FSRS murni mengikuti rumus matematis FSRS-5 berdasarkan rating subjektif
-  // (AGAIN, HARD, GOOD, EASY) tanpa mencampurkan hasil evaluasi Multiple Choice maupun deteksi anomali waktu.
+  // Kalkulasi interval jadwal FSRS-5 murni didasarkan pada rating ingatan subjektif (AGAIN, HARD, GOOD, EASY)
+  // tanpa mencampurkan skor kuis pilihan ganda ke dalam parameter stabilitas maupun kesulitan kartu.
   const engine = await buildEngine(app.id, app.requestRetention);
   const { card: next, log } = engine.review(card, GRADE[input.rating], now);
   const quizAccuracy = input.quizAccuracy ?? null;

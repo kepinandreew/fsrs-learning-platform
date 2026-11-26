@@ -1,3 +1,8 @@
+/**
+ * @file modules/analytics/analytics.routes.ts
+ * @description Rute REST API Learning Analytics, pemantauan siswa real-time, simulator FSRS-5,
+ * dan ekspor laporan CSV untuk Developer Dashboard (terproteksi JWT).
+ */
 import { Router } from 'express';
 import { jwtAuth } from '../../middlewares/jwtAuth';
 import { validate } from '../../middlewares/validate';
@@ -78,7 +83,7 @@ router.get(
   }),
 );
 
-// POST /fsrs-simulate - simulator interaktif FSRS Engine (validasi Rencana Uji Coba #2 Proposal TA).
+// POST /fsrs-simulate - simulator interaktif transisi parameter memori & kurva lupa FSRS-5.
 router.post(
   '/fsrs-simulate',
   validate({ body: fsrsSimulateSchema }),

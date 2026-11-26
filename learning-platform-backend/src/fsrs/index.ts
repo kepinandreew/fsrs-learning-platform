@@ -1,3 +1,10 @@
+/**
+ * @file fsrs/index.ts
+ * @description Mesin penjadwalan pengulangan berjarak FSRS-5 (Free Spaced Repetition Scheduler).
+ * Modul murni (bebas ketergantungan database maupun HTTP) yang menghitung transisi status kartu
+ * (NEW, LEARNING, REVIEW, RELEARNING), tingkat kesulitan (D), stabilitas memori (S), daya ingat R(t),
+ * serta pratinjau interval keempat tombol penilaian (Again, Hard, Good, Easy).
+ */
 import { DEFAULT_CONFIG } from './constants';
 import { computeDifficultyPenalty } from './dynamicAdjustment';
 import {

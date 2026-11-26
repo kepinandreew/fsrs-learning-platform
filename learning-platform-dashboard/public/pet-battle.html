@@ -26,10 +26,10 @@
 
     body {
       background:
-        radial-gradient(1100px 540px at 12% -8%, rgba(56, 189, 248, 0.34), transparent 60%),
-        radial-gradient(950px 520px at 92% 6%, rgba(244, 114, 182, 0.30), transparent 58%),
-        radial-gradient(900px 580px at 50% 112%, rgba(250, 204, 21, 0.18), transparent 62%),
-        linear-gradient(180deg, #171342 0%, #1e1952 52%, #131036 100%);
+        radial-gradient(920px 480px at 10% -6%, rgba(56, 189, 248, 0.52), transparent 62%),
+        radial-gradient(880px 480px at 94% 4%, rgba(244, 114, 182, 0.44), transparent 60%),
+        radial-gradient(960px 560px at 50% 108%, rgba(250, 204, 21, 0.28), transparent 62%),
+        linear-gradient(180deg, #1d4ed8 0%, #312e81 54%, #1e1b4b 100%);
       min-height: 100dvh;
       padding-bottom: env(safe-area-inset-bottom, 0px);
       -webkit-tap-highlight-color: transparent;
@@ -40,13 +40,14 @@
         90deg,
         #38bdf8 0px,
         #38bdf8 22px,
-        #fbbf24 22px,
-        #fbbf24 44px,
-        #f472b6 44px,
-        #f472b6 66px,
-        #a78bfa 66px,
-        #a78bfa 88px
+        #facc15 22px,
+        #facc15 44px,
+        #fb7185 44px,
+        #fb7185 66px,
+        #4ade80 66px,
+        #4ade80 88px
       );
+      height: 9px;
     }
 
     #phaser-container { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -58,20 +59,57 @@
 
     .stadium-card {
       background:
-        radial-gradient(120% 90% at 0% 0%, rgba(56, 189, 248, 0.12), transparent 55%),
-        linear-gradient(180deg, rgba(30, 27, 84, 0.92) 0%, rgba(17, 15, 52, 0.96) 100%);
-      border: 2px solid rgba(125, 211, 252, 0.28);
-      box-shadow: 0 16px 38px rgba(6, 5, 24, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-      backdrop-filter: blur(12px);
+        radial-gradient(130% 95% at 8% 0%, rgba(125, 211, 252, 0.24), transparent 58%),
+        linear-gradient(180deg, rgba(49, 46, 129, 0.90) 0%, rgba(30, 27, 75, 0.95) 100%);
+      border: 2.5px solid rgba(186, 230, 253, 0.42);
+      box-shadow: 0 8px 0 rgba(15, 23, 42, 0.48), 0 18px 36px rgba(15, 23, 42, 0.42), inset 0 2px 0 rgba(255, 255, 255, 0.26);
+      backdrop-filter: blur(14px);
     }
 
     .digivice-pod {
       background:
-        radial-gradient(circle at 50% 58%, rgba(56, 189, 248, 0.26), rgba(15, 23, 42, 0.92) 72%),
-        repeating-linear-gradient(0deg, rgba(56, 189, 248, 0.08) 0px, rgba(56, 189, 248, 0.08) 1px, transparent 1px, transparent 14px),
-        repeating-linear-gradient(90deg, rgba(56, 189, 248, 0.08) 0px, rgba(56, 189, 248, 0.08) 1px, transparent 1px, transparent 14px);
-      box-shadow: inset 0 0 26px rgba(56, 189, 248, 0.24), 0 10px 24px rgba(6, 5, 24, 0.55);
+        radial-gradient(circle at 50% 34%, rgba(254, 249, 195, 0.42), rgba(56, 189, 248, 0.36) 54%, rgba(30, 58, 138, 0.92) 92%),
+        linear-gradient(180deg, #38bdf8 0%, #1d4ed8 72%, #15803d 100%);
+      box-shadow: inset 0 3px 16px rgba(255, 255, 255, 0.42), 0 8px 0 rgba(15, 23, 42, 0.42);
     }
+
+    /* Tombol Arcade 3D Taktil Ramah Anak */
+    .arcade-btn-gold {
+      background: linear-gradient(180deg, #fef08a 0%, #facc15 45%, #f97316 100%);
+      color: #0f172a;
+      border: 2px solid #fef9c3;
+      box-shadow: 0 6px 0 #b45309, 0 12px 20px rgba(0, 0, 0, 0.32);
+      transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+    }
+    .arcade-btn-gold:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .arcade-btn-gold:active { transform: translateY(4px); box-shadow: 0 2px 0 #b45309; }
+
+    .arcade-btn-sky {
+      background: linear-gradient(180deg, #67e8f9 0%, #0ea5e9 52%, #2563eb 100%);
+      color: #ffffff;
+      border: 2px solid #bae6fd;
+      box-shadow: 0 6px 0 #1e3a8a, 0 12px 20px rgba(0, 0, 0, 0.30);
+      text-shadow: 0 1px 2px rgba(15, 23, 42, 0.45);
+      transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+    }
+    .arcade-btn-sky:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .arcade-btn-sky:active { transform: translateY(4px); box-shadow: 0 2px 0 #1e3a8a; }
+
+    .rate-3d {
+      --rc: #10b981;
+      color: #ffffff;
+      border: 2px solid rgba(255, 255, 255, 0.5) !important;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 74%, #ffffff), var(--rc));
+      box-shadow: 0 5px 0 color-mix(in srgb, var(--rc) 54%, #000000), 0 8px 14px rgba(0, 0, 0, 0.28);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+      transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+    }
+    .rate-3d:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .rate-3d:active { transform: translateY(4px); box-shadow: 0 1px 0 color-mix(in srgb, var(--rc) 54%, #000000); }
+    .rate-3d[data-rating="AGAIN"] { --rc: #f43f5e; }
+    .rate-3d[data-rating="HARD"] { --rc: #f59e0b; }
+    .rate-3d[data-rating="GOOD"] { --rc: #10b981; }
+    .rate-3d[data-rating="EASY"] { --rc: #0ea5e9; }
 
     .holo-ring-spin { animation: holoSpin 9s linear infinite; }
     @keyframes holoSpin { from { transform: rotateX(68deg) rotateZ(0deg); } to { transform: rotateX(68deg) rotateZ(360deg); } }
@@ -180,13 +218,13 @@
     <section id="view-login" class="view flex-1 flex flex-col justify-center py-2">
       <div class="max-w-lg w-full mx-auto stadium-card rounded-3xl p-4 sm:p-6 space-y-4">
         <div class="text-center space-y-1">
-          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-300/20 border border-amber-300/45 text-amber-200 text-xs font-bold">
-            ⚡ Turnamen Monster Kosakata
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-300 text-slate-950 text-xs font-extrabold shadow">
+            🌟 Arena Monster Pintar
           </div>
           <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">
-            Siap Bertarung <span class="bg-gradient-to-r from-amber-300 via-pink-300 to-cyan-300 bg-clip-text text-transparent">Hari Ini?</span>
+            Ayo <span class="text-amber-300">Bertarung!</span>
           </h2>
-          <p class="text-xs sm:text-sm text-indigo-200/85">Masuk atau daftar dengan nama &amp; email aslimu agar progres tersimpan.</p>
+          <p class="text-xs sm:text-sm text-sky-100/90">Kumpulkan monster, kuasai kata, &amp; jadi Juara #1!</p>
         </div>
 
         <div id="login-hero-pets" class="flex justify-center gap-2.5 sm:gap-5 py-0.5" aria-hidden="true"></div>
@@ -305,45 +343,52 @@
           <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full blur-3xl opacity-35 pointer-events-none" id="menu-pet-glow"></div>
 
           <div class="relative flex flex-col sm:flex-row items-center gap-4">
-            <div class="relative w-44 h-44 sm:w-52 sm:h-52 rounded-3xl border-2 border-cyan-300/40 digivice-pod grid place-items-center shrink-0 overflow-hidden">
-              <div class="absolute bottom-2 w-36 h-36 rounded-full border-2 border-dashed border-cyan-300/60 holo-ring-spin pointer-events-none"></div>
-              <div class="absolute bottom-3.5 w-28 h-5 rounded-full bg-cyan-400/25 blur-md pointer-events-none"></div>
+            <div class="relative w-44 h-44 sm:w-52 sm:h-52 rounded-3xl border-4 border-amber-200/80 digivice-pod grid place-items-center shrink-0 overflow-hidden">
+              <div class="absolute -bottom-3 w-44 h-12 rounded-full bg-gradient-to-t from-emerald-600 to-lime-400 border-t-2 border-lime-200/80 pointer-events-none"></div>
+              <div class="absolute top-2.5 right-3 text-base opacity-90 pointer-events-none">✨</div>
+              <div class="absolute top-3 left-3 text-sm opacity-80 pointer-events-none">☁️</div>
               <div id="menu-pet-img" class="relative z-10 w-40 h-40 sm:w-48 sm:h-48 pet-float"></div>
             </div>
             <div class="flex-1 w-full space-y-2.5 text-center sm:text-left">
               <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
-                <span id="menu-species-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-950/90 border border-indigo-300/30">🔥 Api</span>
-                <span id="menu-stage-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-300 text-slate-950">Lv.1</span>
-                <span id="menu-student-name" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-indigo-100">Siswa 01</span>
+                <span id="menu-species-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/15 border border-white/30">🔥 Api</span>
+                <span id="menu-stage-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">Lv.1</span>
+                <span id="menu-student-name" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-400/25 border border-sky-200/40 text-white">Siswa 01</span>
               </div>
               <div>
-                <h2 id="menu-pet-name" class="text-2xl sm:text-3xl font-bold leading-tight">Pyromon</h2>
-                <p id="menu-stage-title" class="text-xs sm:text-sm text-amber-200 font-semibold">Telur Naga Ajaib</p>
+                <h2 id="menu-pet-name" class="text-2xl sm:text-3xl font-extrabold leading-tight drop-shadow">Pyromon</h2>
+                <p id="menu-stage-title" class="text-xs sm:text-sm text-amber-200 font-bold">Telur Naga Ajaib</p>
               </div>
               <div>
-                <div class="flex justify-between text-xs text-indigo-200 mb-1">
+                <div class="flex justify-between text-xs text-sky-100 mb-1">
                   <strong id="menu-exp-text" class="text-white">0 EXP</strong>
-                  <span id="menu-next-evo" class="text-amber-300 font-semibold">Evolusi: 300 EXP</span>
+                  <span id="menu-next-evo" class="text-amber-300 font-bold">Evolusi: 300 EXP</span>
                 </div>
-                <div class="h-3.5 rounded-full bg-indigo-950/90 overflow-hidden border border-indigo-300/25 p-0.5">
-                  <div id="menu-exp-bar" class="exp-fill h-full rounded-full bg-gradient-to-r from-amber-300 via-orange-400 to-pink-500"></div>
+                <div class="h-4 rounded-full bg-indigo-950/90 overflow-hidden border-2 border-sky-200/35 p-0.5">
+                  <div id="menu-exp-bar" class="exp-fill h-full rounded-full bg-gradient-to-r from-lime-300 via-amber-300 to-pink-400"></div>
                 </div>
               </div>
               <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="rounded-2xl bg-indigo-950/80 border border-indigo-300/20 py-1.5">
-                  <div id="menu-stat-points" class="text-base sm:text-lg font-bold text-amber-300">0</div>
-                  <div class="text-[11px] text-indigo-200/80">Poin</div>
+                <div class="rounded-2xl bg-white/10 border border-white/20 py-1.5">
+                  <div id="menu-stat-points" class="text-base sm:text-lg font-extrabold text-amber-300">0</div>
+                  <div class="text-[11px] font-semibold text-sky-100">⭐ Poin</div>
                 </div>
-                <div class="rounded-2xl bg-indigo-950/80 border border-indigo-300/20 py-1.5">
-                  <div id="menu-stat-wins" class="text-base sm:text-lg font-bold text-emerald-300">0</div>
-                  <div class="text-[11px] text-indigo-200/80">Menang</div>
+                <div class="rounded-2xl bg-white/10 border border-white/20 py-1.5">
+                  <div id="menu-stat-wins" class="text-base sm:text-lg font-extrabold text-emerald-300">0</div>
+                  <div class="text-[11px] font-semibold text-sky-100">🏅 Trofi</div>
                 </div>
-                <div class="rounded-2xl bg-indigo-950/80 border border-indigo-300/20 py-1.5">
-                  <div id="menu-stat-acc" class="text-base sm:text-lg font-bold text-cyan-300">-</div>
-                  <div class="text-[11px] text-indigo-200/80">Tepat</div>
+                <div class="rounded-2xl bg-white/10 border border-white/20 py-1.5">
+                  <div id="menu-stat-acc" class="text-base sm:text-lg font-extrabold text-cyan-200">-</div>
+                  <div class="text-[11px] font-semibold text-sky-100">🎯 Tepat</div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Pita Misi Retensi Harian Anak -->
+          <div id="menu-quest-banner" class="rounded-2xl px-3.5 py-2 bg-gradient-to-r from-amber-300/20 via-fuchsia-400/20 to-cyan-300/20 border border-amber-200/45 flex items-center justify-between gap-2 text-xs font-bold">
+            <span id="menu-quest-text" class="text-amber-100 truncate">🎯 Misi: Kalahkan 3 Boss untuk piala emas!</span>
+            <span id="menu-quest-pill" class="px-2.5 py-0.5 rounded-full bg-amber-300 text-slate-950 shrink-0">0 / 3 🏅</span>
           </div>
 
           <!-- Jalur 4 Evolusi (Terkunci tetap terlihat keren dengan siluet bercahaya) -->
@@ -375,24 +420,24 @@
             </div>
           </div>
 
-          <div class="space-y-2.5 pt-1">
-            <button id="btn-start-training" type="button" class="touch-btn w-full py-3.5 px-4 rounded-2xl text-left bg-gradient-to-r from-cyan-500 via-sky-500 to-indigo-500 hover:brightness-110 shadow-lg flex items-center justify-between gap-3 border border-cyan-200/40">
+          <div class="space-y-3 pt-1">
+            <button id="btn-start-training" type="button" class="touch-btn arcade-btn-sky w-full py-3.5 px-4 rounded-2xl text-left flex items-center justify-between gap-3">
               <div>
-                <div class="font-bold text-base text-white flex flex-wrap items-center gap-2">
-                  <span>📖 Hafalkan Kartu Dulu</span>
-                  <span id="menu-due-badge" class="hidden text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">⏰ 0 Perlu Diulang</span>
+                <div class="font-bold text-base sm:text-lg text-white flex flex-wrap items-center gap-2">
+                  <span>📖 Latih Kartu</span>
+                  <span id="menu-due-badge" class="hidden text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">⏰ 0 Ulang</span>
                 </div>
-                <div id="menu-study-sub" class="text-xs text-cyan-50/95 font-medium">Dengar suara kata + tambah kekuatan serangan!</div>
+                <div id="menu-study-sub" class="text-xs text-sky-50 font-semibold">Suara + Tambah Power ⚡</div>
               </div>
-              <span class="text-xl font-bold">→</span>
+              <span class="text-2xl font-bold">▶</span>
             </button>
 
-            <button id="btn-start-battle" type="button" class="touch-btn w-full py-4 px-4 rounded-2xl text-left bg-gradient-to-r from-amber-300 via-orange-400 to-rose-500 text-slate-950 hover:brightness-110 shadow-xl flex items-center justify-between gap-3 border border-yellow-100/60">
+            <button id="btn-start-battle" type="button" class="touch-btn arcade-btn-gold w-full py-4 px-4 rounded-2xl text-left flex items-center justify-between gap-3">
               <div>
-                <div class="font-bold text-base sm:text-lg">⚔️ Mulai Bertarung!</div>
-                <div id="btn-battle-sub" class="text-xs text-slate-900 font-bold">Kalahkan Boss &amp; rebut Juara 1!</div>
+                <div class="font-extrabold text-base sm:text-xl">⚔️ Lawan Boss!</div>
+                <div id="btn-battle-sub" class="text-xs text-slate-900/90 font-bold">Rebut Piala Juara #1!</div>
               </div>
-              <span class="text-2xl font-bold">→</span>
+              <span class="text-2xl font-extrabold">▶</span>
             </button>
           </div>
         </div>
@@ -448,15 +493,15 @@
         <div id="study-feedback" class="hidden rounded-2xl py-2 px-3 text-xs sm:text-sm font-bold text-center bg-emerald-500/20 border border-emerald-300/40 text-emerald-200"></div>
         <div id="study-evo-ready" class="hidden rounded-2xl py-2 px-3 text-xs sm:text-sm font-bold text-center bg-amber-300/20 border border-amber-300/50 text-amber-200"></div>
 
-        <button id="btn-study-reveal" type="button" class="touch-btn w-full py-4 rounded-2xl font-bold text-base sm:text-lg bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-400 text-slate-950 hover:brightness-110 shadow-lg">👀 Buka Artinya!</button>
+        <button id="btn-study-reveal" type="button" class="touch-btn arcade-btn-sky w-full py-4 rounded-2xl font-bold text-base sm:text-lg">👀 Lihat Artinya!</button>
 
         <div id="study-rating-group" class="hidden space-y-2">
-          <p class="text-xs text-center font-bold text-indigo-200">Seberapa hafal kamu? FSRS akan mengatur urutan kartu di deck:</p>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button type="button" data-rating="AGAIN" class="rate-btn touch-btn py-2.5 px-2 rounded-2xl font-bold bg-rose-500/25 hover:bg-rose-500/35 border-2 border-rose-400/55 text-rose-100 text-sm leading-tight">😵 Lupa<br><span id="rate-sub-again" class="text-[10px] font-semibold text-rose-200/90">Paling Depan • 1m</span></button>
-            <button type="button" data-rating="HARD" class="rate-btn touch-btn py-2.5 px-2 rounded-2xl font-bold bg-amber-500/25 hover:bg-amber-500/35 border-2 border-amber-300/55 text-amber-100 text-sm leading-tight">🤔 Ragu<br><span id="rate-sub-hard" class="text-[10px] font-semibold text-amber-200/90">Agak Depan • 5m</span></button>
-            <button type="button" data-rating="GOOD" class="rate-btn touch-btn py-2.5 px-2 rounded-2xl font-bold bg-emerald-500/25 hover:bg-emerald-500/35 border-2 border-emerald-400/55 text-emerald-100 text-sm leading-tight">😄 Ingat!<br><span id="rate-sub-good" class="text-[10px] font-semibold text-emerald-200/90">Urutan Tengah • 1h</span></button>
-            <button type="button" data-rating="EASY" class="rate-btn touch-btn py-2.5 px-2 rounded-2xl font-bold bg-cyan-500/25 hover:bg-cyan-500/35 border-2 border-cyan-300/55 text-cyan-100 text-sm leading-tight">🤩 Hafal!<br><span id="rate-sub-easy" class="text-[10px] font-semibold text-cyan-200/90">Paling Belakang • 3h</span></button>
+          <p class="text-xs text-center font-bold text-sky-100">Pilih seberapa hafal:</p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <button type="button" data-rating="AGAIN" class="rate-btn rate-3d touch-btn py-2.5 px-2 rounded-2xl font-bold text-sm leading-tight">😵 Lupa<br><span id="rate-sub-again" class="text-[11px] font-extrabold text-white/95">1 mnt</span></button>
+            <button type="button" data-rating="HARD" class="rate-btn rate-3d touch-btn py-2.5 px-2 rounded-2xl font-bold text-sm leading-tight">🤔 Ragu<br><span id="rate-sub-hard" class="text-[11px] font-extrabold text-white/95">5 mnt</span></button>
+            <button type="button" data-rating="GOOD" class="rate-btn rate-3d touch-btn py-2.5 px-2 rounded-2xl font-bold text-sm leading-tight">😄 Ingat!<br><span id="rate-sub-good" class="text-[11px] font-extrabold text-white/95">1 hari</span></button>
+            <button type="button" data-rating="EASY" class="rate-btn rate-3d touch-btn py-2.5 px-2 rounded-2xl font-bold text-sm leading-tight">🤩 Hafal!<br><span id="rate-sub-easy" class="text-[11px] font-extrabold text-white/95">3 hari</span></button>
           </div>
         </div>
       </div>
@@ -657,6 +702,12 @@
   </dialog>
 
   <script>
+    /**
+     * @file pet-battle.html
+     * @description Aplikasi Gim Klien 1 (Pet Battle Stadium): RPG pertarungan monster berbasis giliran
+     * yang terintegrasi penuh dengan REST API FSRS-5, evaluasi kuis adaptif, caching ETag, dan antrean offline.
+     */
+
     /* =========================================================================
        1. KONFIGURASI, KATALOG MONSTER 4 ELEMEN, BOSS, & BANK KOSAKATA RINGKAS
        ========================================================================= */
@@ -731,10 +782,10 @@
     };
 
     const EVOLUTION_STAGES = [
-      { stage: 1, levelLabel: 'Lv.1', minExp: 0, nextExp: 300, shortTitle: 'Digi-Egg', title: 'Hatchling Digi-Egg', desc: 'Energi Digital mulai bangkit!', baseAtk: 25 },
-      { stage: 2, levelLabel: 'Lv.2', minExp: 300, nextExp: 800, shortTitle: 'Rookie', title: 'Rookie Beast Fighter', desc: 'Petarung cakar gesit siap menyerbu!', baseAtk: 34 },
-      { stage: 3, levelLabel: 'Lv.3', minExp: 800, nextExp: 1500, shortTitle: 'Champion', title: 'Cyber-Armor Champion', desc: 'Zirah Chrome-Digizoid & sayap tempur!', baseAtk: 44 },
-      { stage: 4, levelLabel: 'Lv.4', minExp: 1500, nextExp: null, shortTitle: 'Mega', title: 'Mega Dragon Knight', desc: 'Wujud tertinggi Ksatria Kaisar Digital!', baseAtk: 56 },
+      { stage: 1, levelLabel: 'Lv.1', minExp: 0, nextExp: 300, shortTitle: 'Telur Ajaib', title: 'Telur Monster Ajaib', desc: 'Si kecil menggemaskan siap menetas!', baseAtk: 25 },
+      { stage: 2, levelLabel: 'Lv.2', minExp: 300, nextExp: 800, shortTitle: 'Sahabat Kecil', title: 'Sahabat Monster Ceria', desc: 'Lincah & penuh semangat!', baseAtk: 34 },
+      { stage: 3, levelLabel: 'Lv.3', minExp: 800, nextExp: 1500, shortTitle: 'Penjaga Sayap', title: 'Penjaga Sayap Elemen', desc: 'Sayap berkilau & jurus dahsyat!', baseAtk: 44 },
+      { stage: 4, levelLabel: 'Lv.4', minExp: 1500, nextExp: null, shortTitle: 'Raja Legenda', title: 'Raja Naga Legendaris', desc: 'Wujud mahkota bintang tertinggi!', baseAtk: 56 },
     ];
 
     const ENEMY_ROSTER = [
@@ -828,19 +879,21 @@
     }
 
     /* =========================================================================
-       2. GENERATOR DIGIMON-STYLE CEL-SHADED 3/4 SPRITES (16 EVO + 4 DARK BOSSES)
+       2. GENERATOR KARAKTER CHIBI-MONSTER EKSPRESIF (16 WUJUD EVOLUSI + 4 BOSS)
+          Gaya Bulat-Halus Ramah Anak (Pokémon / Kawaii Chibi) dengan Mata Besar Berkilau
        ========================================================================= */
-    function svgAnimeEye(cx, cy, rx, ry, irisHex = '#22d3ee', dir = 1, fierce = true) {
-      const px = cx + dir * (rx * 0.16);
-      const browY1 = fierce ? cy - ry - 4 : cy - ry - 2;
-      const browY2 = fierce ? cy - ry + 3 : cy - ry - 1;
+    function svgKawaiiEye(cx, cy, r = 11, irisHex = '#38bdf8', lookDir = 1, angry = false) {
+      const ox = lookDir * (r * 0.16);
+      const brow = angry
+        ? `<path d="M${cx - lookDir * (r + 3)} ${cy - r - 3} L${cx + lookDir * (r + 2)} ${cy - r + 3}" stroke="#1e1b4b" stroke-width="3.4" stroke-linecap="round"/>`
+        : `<path d="M${cx - r * 0.8} ${cy - r - 2.5} Q${cx} ${cy - r - 6} ${cx + r * 0.8} ${cy - r - 2.5}" fill="none" stroke="#1e1b4b" stroke-width="2.4" stroke-linecap="round"/>`;
       return `
-        <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#090d1f" stroke="#020617" stroke-width="2.2"/>
-        <ellipse cx="${px}" cy="${cy + 0.8}" rx="${rx * 0.72}" ry="${ry * 0.78}" fill="${irisHex}"/>
-        <ellipse cx="${px + dir * 1.1}" cy="${cy + 0.5}" rx="${rx * 0.30}" ry="${ry * 0.62}" fill="#020617"/>
-        <circle cx="${cx - dir * (rx * 0.25)}" cy="${cy - ry * 0.34}" r="${Math.max(2.1, rx * 0.31)}" fill="#ffffff"/>
-        <circle cx="${px + dir * (rx * 0.22)}" cy="${cy + ry * 0.30}" r="${Math.max(1.2, rx * 0.16)}" fill="#ffffff" opacity="0.9"/>
-        <path d="M${cx - dir * (rx + 4)} ${browY1} L${cx + dir * (rx + 3)} ${browY2}" stroke="#0f172a" stroke-width="3.6" stroke-linecap="round"/>
+        <ellipse cx="${cx}" cy="${cy}" rx="${r * 0.95}" ry="${r * 1.08}" fill="#0f172a"/>
+        <ellipse cx="${cx + ox}" cy="${cy + r * 0.12}" rx="${r * 0.72}" ry="${r * 0.82}" fill="${irisHex}"/>
+        <ellipse cx="${cx + ox}" cy="${cy + r * 0.04}" rx="${r * 0.44}" ry="${r * 0.56}" fill="#0f172a"/>
+        <circle cx="${cx - lookDir * (r * 0.26)}" cy="${cy - r * 0.32}" r="${r * 0.34}" fill="#ffffff"/>
+        <circle cx="${cx + lookDir * (r * 0.30)}" cy="${cy + r * 0.34}" r="${r * 0.18}" fill="#ffffff" opacity="0.92"/>
+        ${brow}
       `;
     }
 
@@ -850,226 +903,205 @@
       const sp = SPECIES_CATALOG[speciesId] || SPECIES_CATALOG.fire;
       const st = Math.max(1, Math.min(4, Number(stage) || 1));
       const uid = `m_${sp.id}_${st}_${++svgSeq}`;
+      const strokeCol = sp.id === 'fire' ? '#9a3412' : sp.id === 'electric' ? '#854d0e' : sp.id === 'water' ? '#075985' : '#065f46';
+      const cheekCol = sp.id === 'electric' ? '#f43f5e' : '#fb7185';
 
       const defs = `
         <defs>
-          <radialGradient id="aura_${uid}" cx="50%" cy="52%" r="50%">
-            <stop offset="0%" stop-color="${sp.glowHex}" stop-opacity="${0.24 + st * 0.11}"/>
-            <stop offset="65%" stop-color="${sp.primaryHex}" stop-opacity="0.12"/>
+          <radialGradient id="aura_${uid}" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+            <stop offset="45%" stop-color="${sp.glowHex}" stop-opacity="${0.28 + st * 0.10}"/>
             <stop offset="100%" stop-color="${sp.primaryHex}" stop-opacity="0"/>
           </radialGradient>
-          <linearGradient id="body_${uid}" x1="15%" y1="0%" x2="85%" y2="100%">
+          <linearGradient id="body_${uid}" x1="20%" y1="0%" x2="80%" y2="100%">
             <stop offset="0%" stop-color="${sp.secondaryHex}"/>
-            <stop offset="48%" stop-color="${sp.primaryHex}"/>
+            <stop offset="55%" stop-color="${sp.primaryHex}"/>
             <stop offset="100%" stop-color="${sp.darkHex}"/>
           </linearGradient>
-          <linearGradient id="belly_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id="belly_${uid}" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stop-color="#ffffff"/>
-            <stop offset="55%" stop-color="${sp.bellyHex}"/>
-            <stop offset="100%" stop-color="#94a3b8"/>
+            <stop offset="100%" stop-color="${sp.bellyHex}"/>
           </linearGradient>
-          <linearGradient id="chrome_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#fffbeb"/>
-            <stop offset="38%" stop-color="${sp.armorHex}"/>
-            <stop offset="78%" stop-color="#78350f"/>
-            <stop offset="100%" stop-color="#1e293b"/>
-          </linearGradient>
-          <linearGradient id="steel_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#f8fafc"/>
-            <stop offset="50%" stop-color="#94a3b8"/>
-            <stop offset="100%" stop-color="#1e293b"/>
+          <linearGradient id="gold_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fef9c3"/>
+            <stop offset="50%" stop-color="#facc15"/>
+            <stop offset="100%" stop-color="#d97706"/>
           </linearGradient>
         </defs>`;
 
-      // Ornamen Kepala Khas Spesies (3/4 Menghadap Kanan ala Digimon!)
-      const headCrest = sp.id === 'fire'
-        ? `<polygon points="148,54 176,34 162,64" fill="#fef3c7" stroke="#78350f" stroke-width="2.5" stroke-linejoin="round"/>
-           <polygon points="94,52 62,22 110,42" fill="#fde047" stroke="#b45309" stroke-width="2.6" stroke-linejoin="round"/>
-           <path d="M108 38 C100 14, 128 8, 126 30 C138 18, 146 32, 130 44 Z" fill="#fde047" stroke="#ea580c" stroke-width="2.4"/>`
+      // Ornamen Telinga/Jambul Imut Khas Elemen
+      const cuteEars = sp.id === 'fire'
+        ? `<path d="M90 58 C82 32, 104 26, 108 48 Z" fill="url(#gold_${uid})" stroke="${strokeCol}" stroke-width="2.6"/>
+           <path d="M138 56 C144 30, 164 32, 152 56 Z" fill="url(#gold_${uid})" stroke="${strokeCol}" stroke-width="2.6"/>
+           <path d="M114 48 C108 20, 134 14, 132 38 C142 26, 148 38, 132 50 Z" fill="#fde047" stroke="#ea580c" stroke-width="2.4"/>`
         : sp.id === 'electric'
-        ? `<polygon points="86,56 42,10 106,42" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8" stroke-linejoin="round"/>
-           <polygon points="50,16 74,36 86,32" fill="#1e3a8a"/>
-           <polygon points="116,46 96,8 136,42" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8" stroke-linejoin="round"/>
-           <path d="M92 48 Q128 38 158 54 L152 66 Q124 54 90 62 Z" fill="#38bdf8" fill-opacity="0.82" stroke="#e0f2fe" stroke-width="2"/>`
+        ? `<path d="M88 64 C56 22, 68 12, 106 50 Z" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+           <path d="M68 24 C64 16, 74 16, 82 28 L72 34 Z" fill="#1e293b"/>
+           <path d="M136 58 C156 14, 174 20, 152 62 Z" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+           <path d="M160 22 C166 18, 168 26, 160 36 L152 30 Z" fill="#1e293b"/>`
         : sp.id === 'water'
-        ? `<path d="M88 58 L40 34 L56 60 L38 74 L86 78 Z" fill="#67e8f9" stroke="#0c4a6e" stroke-width="2.5" stroke-linejoin="round"/>
-           <path d="M104 44 L82 14 L122 36 L142 18 L138 46 Z" fill="#facc15" stroke="#0c4a6e" stroke-width="2.4" stroke-linejoin="round"/>
-           <circle cx="144" cy="48" r="6.5" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>`
-        : `<path d="M148 56 C172 36, 186 16, 166 12 C154 24, 144 38, 134 48 Z" fill="#fde047" stroke="#78350f" stroke-width="2.6"/>
-           <path d="M96 48 C64 16, 44 34, 78 58 Z" fill="#86efac" stroke="#064e3b" stroke-width="2.5"/>
-           <path d="M114 42 C96 10, 128 8, 130 42 Z" fill="#4ade80" stroke="#064e3b" stroke-width="2.5"/>`;
+        ? `<path d="M80 78 C46 58, 46 88, 78 96 Z" fill="#bae6fd" stroke="${strokeCol}" stroke-width="2.6"/>
+           <path d="M162 76 C192 58, 192 88, 162 96 Z" fill="#bae6fd" stroke="${strokeCol}" stroke-width="2.6"/>
+           <path d="M106 50 L114 26 L124 42 L136 26 L140 50 Z" fill="url(#gold_${uid})" stroke="${strokeCol}" stroke-width="2.4" stroke-linejoin="round"/>
+           <circle cx="123" cy="44" r="5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.6"/>`
+        : `<path d="M86 62 C62 36, 56 58, 82 74 Z" fill="#86efac" stroke="${strokeCol}" stroke-width="2.6"/>
+           <path d="M154 62 C178 36, 184 58, 158 74 Z" fill="#86efac" stroke="${strokeCol}" stroke-width="2.6"/>
+           <path d="M122 48 C118 22, 100 18, 108 38 C114 46, 120 48, 122 48 Z" fill="#4ade80" stroke="${strokeCol}" stroke-width="2.4"/>
+           <path d="M122 48 C128 20, 148 20, 138 40 C132 46, 126 48, 122 48 Z" fill="#bef264" stroke="${strokeCol}" stroke-width="2.4"/>
+           <circle cx="123" cy="24" r="6.5" fill="#fb7185" stroke="#ffffff" stroke-width="1.8"/>`;
 
-      // Ekor Petarung Khas Spesies (Menyapu ke Kiri untuk Keseimbangan Pose 3/4)
-      const battleTail = sp.id === 'fire'
-        ? `<path d="M88 156 C52 168, 28 144, 34 108 C44 130, 62 142, 92 138 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-           <path d="M32 114 C10 96, 18 62, 42 58 C38 76, 52 74, 52 96 C52 112, 40 118, 32 114 Z" fill="#f97316" stroke="#dc2626" stroke-width="2.4"/>
-           <path d="M34 106 C24 92, 28 74, 40 72 C40 86, 46 92, 34 106 Z" fill="#fef08a"/>`
+      // Ekor Bulat Ceria Khas Elemen
+      const cuteTail = sp.id === 'fire'
+        ? `<path d="M82 162 C48 168, 34 140, 46 116 C54 134, 66 144, 88 144 Z" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+           <path d="M44 120 C24 102, 34 68, 56 72 C52 88, 66 88, 62 108 C60 120, 50 124, 44 120 Z" fill="#fb923c" stroke="#ea580c" stroke-width="2.4"/>
+           <path d="M46 114 C38 100, 42 84, 52 84 C52 96, 56 102, 46 114 Z" fill="#fef08a"/>`
         : sp.id === 'electric'
-        ? `<polygon points="88,150 48,136 58,120 16,96 46,92 34,68 78,108 66,122 94,136" fill="#fde047" stroke="#1e3a8a" stroke-width="2.8" stroke-linejoin="round"/>
-           <polyline points="24,94 46,104 38,118 64,128" fill="none" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>`
+        ? `<polygon points="84,158 50,144 60,126 26,104 56,98 46,74 84,112 72,126 92,142" fill="#fde047" stroke="${strokeCol}" stroke-width="2.8" stroke-linejoin="round"/>`
         : sp.id === 'water'
-        ? `<path d="M88 156 C46 168, 22 136, 36 96 C46 120, 58 138, 92 138 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-           <polygon points="36,98 14,76 34,80 38,56 48,80 64,74 44,102" fill="#67e8f9" stroke="#0c4a6e" stroke-width="2.4" stroke-linejoin="round"/>`
-        : `<path d="M88 156 C50 166, 26 138, 36 102 C48 124, 62 138, 92 138 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-           <polygon points="34,104 14,76 42,66 56,92 38,110" fill="#86efac" stroke="#064e3b" stroke-width="2.6" stroke-linejoin="round"/>
-           <line x1="22" y1="74" x2="46" y2="98" stroke="#fef08a" stroke-width="2.2"/>`;
+        ? `<path d="M84 162 C44 170, 28 134, 48 106 C58 126, 66 142, 90 144 Z" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+           <circle cx="44" cy="100" r="14" fill="#7dd3fc" stroke="${strokeCol}" stroke-width="2.4"/>
+           <circle cx="39" cy="95" r="4.5" fill="#ffffff"/>
+           <circle cx="28" cy="78" r="6" fill="#bae6fd" opacity="0.9"/>`
+        : `<path d="M84 162 C48 168, 32 138, 48 108 C58 128, 68 142, 90 144 Z" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+           <path d="M46 112 C22 92, 38 64, 62 84 C68 98, 56 114, 46 112 Z" fill="#4ade80" stroke="${strokeCol}" stroke-width="2.5"/>`;
 
-      // Kepala Sculpted 3/4 Menghadap Kanan (Moncong + Taring + Loreng Tempur)
-      const rookieHead = `
-        ${headCrest}
-        <path d="M82 76 C80 46, 114 38, 142 50 L176 64 C185 69, 184 82, 170 86 L138 89 L166 96 C162 108, 138 112, 110 104 C88 98, 82 88, 82 76 Z"
-          fill="url(#body_${uid})" stroke="#0f172a" stroke-width="3" stroke-linejoin="round"/>
-        <path d="M134 88 L168 85 L162 97 L132 96 Z" fill="#9f1239" stroke="#0f172a" stroke-width="2"/>
-        <polygon points="152,86 156,95 160,86" fill="#ffffff"/>
-        <polygon points="138,87 141,93 144,87" fill="#ffffff"/>
-        <path d="M92 64 L106 58 L100 72 Z" fill="${sp.trimHex}" opacity="0.88"/>
-        <ellipse cx="166" cy="70" rx="2.6" ry="1.6" fill="#0f172a"/>
-        ${svgAnimeEye(128, 69, 9.5, 10.5, sp.irisHex, 1, true)}
-      `;
-
-      // STAGE 1: DIGI-EGG HATCHLING (Telur Siber Retak + Bayi Digimon Garang-Imut!)
+      // STAGE 1: TELUR AJAIB IMUT (Bayi Monster Mengintip dengan Mata Berbinar!)
       if (st === 1) {
         return `
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="${size}" height="${size}" style="width:100%;height:100%;display:block;">
             ${defs}
-            <circle cx="120" cy="126" r="96" fill="url(#aura_${uid})"/>
-            <ellipse cx="120" cy="208" rx="64" ry="12" fill="none" stroke="${sp.glowHex}" stroke-width="2.2" stroke-dasharray="8 5" opacity="0.75"/>
-            <ellipse cx="120" cy="208" rx="52" ry="9" fill="#020617" opacity="0.55"/>
-            ${headCrest}
-            <path d="M80 104 C80 68, 152 66, 162 102 L172 110 C174 120, 160 128, 122 128 C88 128, 78 118, 80 104 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="3"/>
-            ${svgAnimeEye(112, 100, 8.2, 9.2, sp.irisHex, 1, false)}
-            ${svgAnimeEye(144, 99, 7.2, 8.4, sp.irisHex, 1, false)}
-            <path d="M122 112 L138 112 L130 121 Z" fill="#be123c" stroke="#0f172a" stroke-width="2"/>
-            <polygon points="125,112 128,117 131,112" fill="#ffffff"/>
-            <!-- Cangkang Digi-Egg Siber Retak -->
-            <path d="M62 124 L82 140 L102 122 L122 140 L142 120 L160 138 L178 122 C182 174, 156 204, 120 204 C84 204, 58 174, 62 124 Z"
-              fill="#f8fafc" stroke="#1e293b" stroke-width="3.2" stroke-linejoin="round"/>
-            <path d="M74 156 L98 146 L118 160 L146 146 L168 158" fill="none" stroke="${sp.primaryHex}" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
-            <polygon points="94,174 108,166 122,174 108,184" fill="${sp.glowHex}" stroke="${sp.darkHex}" stroke-width="2"/>
-            <!-- Cakar Mungil Mencengkeram Cangkang -->
-            <polygon points="68,122 82,116 88,132 72,134" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.4"/>
-            <polygon points="154,120 170,116 174,132 158,132" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.4"/>
+            <circle cx="120" cy="124" r="98" fill="url(#aura_${uid})"/>
+            <ellipse cx="120" cy="206" rx="56" ry="11" fill="#0f172a" opacity="0.32"/>
+            ${cuteEars}
+            <!-- Kepala Bulat Bayi Mengintip -->
+            <ellipse cx="122" cy="102" rx="44" ry="38" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="3"/>
+            <ellipse cx="94" cy="110" rx="8.5" ry="5" fill="${cheekCol}" opacity="0.65"/>
+            <ellipse cx="150" cy="110" rx="8.5" ry="5" fill="${cheekCol}" opacity="0.65"/>
+            ${svgKawaiiEye(105, 98, 9.5, sp.irisHex, 1, false)}
+            ${svgKawaiiEye(141, 98, 9.5, sp.irisHex, 1, false)}
+            <path d="M114 111 Q123 121 132 111" fill="#fb7185" stroke="#881337" stroke-width="2.2" stroke-linecap="round"/>
+            <!-- Cangkang Telur Bercorak Bintang -->
+            <path d="M64 124 L84 138 L104 122 L122 138 L142 122 L160 136 L176 122 C180 176, 154 204, 120 204 C86 204, 60 176, 64 124 Z"
+              fill="#fffbeb" stroke="${strokeCol}" stroke-width="3.2" stroke-linejoin="round"/>
+            <circle cx="92" cy="164" r="9" fill="${sp.secondaryHex}" opacity="0.85"/>
+            <circle cx="146" cy="160" r="11" fill="${sp.primaryHex}" opacity="0.80"/>
+            <circle cx="120" cy="182" r="7" fill="${sp.glowHex}" opacity="0.9"/>
+            <!-- Tangan Mungil Bulat -->
+            <ellipse cx="74" cy="126" rx="11" ry="9" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.6"/>
+            <ellipse cx="168" cy="126" rx="11" ry="9" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.6"/>
           </svg>`;
       }
 
-      // STAGE 2: ROOKIE DIGIMON (Pose Tempur 3/4 Dinamis + Syal Tamer + Cakar Tajam)
+      // STAGE 2: SAHABAT CHIBI CERIA (Proporsi Chubby Menggemaskan ala Pokémon Starter!)
       if (st === 2) {
         return `
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="${size}" height="${size}" style="width:100%;height:100%;display:block;">
             ${defs}
-            <circle cx="120" cy="124" r="98" fill="url(#aura_${uid})"/>
-            <ellipse cx="120" cy="206" rx="66" ry="12" fill="#020617" opacity="0.55"/>
-            ${battleTail}
-            <!-- Kaki Belakang & Kaki Depan Digitigrade + 3 Cakar Putih -->
-            <path d="M84 158 C72 172, 74 190, 68 200 L98 200 C98 188, 96 174, 102 162 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <polygon points="94,200 106,196 102,203" fill="#ffffff" stroke="#0f172a" stroke-width="1.5"/>
-            <!-- Lengan Belakang -->
-            <path d="M132 118 L168 108 L174 122 L138 134 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <polygon points="168,106 184,102 174,114" fill="#ffffff" stroke="#0f172a" stroke-width="1.6"/>
-            <polygon points="172,114 188,114 174,122" fill="#ffffff" stroke="#0f172a" stroke-width="1.6"/>
-            <!-- Torso Berotot + Pelat Perut + Loreng Bahu -->
-            <path d="M84 112 C76 138, 82 168, 104 176 C128 182, 148 168, 146 136 C144 114, 128 102, 104 104 Z"
-              fill="url(#body_${uid})" stroke="#0f172a" stroke-width="3"/>
-            <path d="M108 114 C128 114, 142 130, 138 156 C134 170, 118 174, 106 166 C100 148, 100 128, 108 114 Z"
-              fill="url(#belly_${uid})" stroke="#0f172a" stroke-width="2"/>
-            <!-- Kaki Depan Kuda-kuda + 3 Cakar -->
-            <path d="M112 158 C112 176, 124 188, 122 202 L156 202 C154 188, 142 178, 140 156 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="3"/>
-            <path d="M118 168 L134 164 L126 176 Z" fill="${sp.trimHex}"/>
-            <polygon points="148,202 164,196 158,204" fill="#ffffff" stroke="#0f172a" stroke-width="1.6"/>
-            <polygon points="138,202 152,198 146,205" fill="#ffffff" stroke="#0f172a" stroke-width="1.6"/>
-            <!-- Syal Tamer Digital Berkibar -->
-            <path d="M62 104 L94 98 L84 116 L50 118 L60 110 Z" fill="#ef4444" stroke="#0f172a" stroke-width="2.4" stroke-linejoin="round"/>
-            <path d="M88 98 C108 106, 132 106, 144 98 L140 110 C124 116, 104 116, 86 108 Z" fill="#ef4444" stroke="#0f172a" stroke-width="2.4"/>
-            <circle cx="122" cy="108" r="5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/>
-            <!-- Lengan Depan Cakar Petarung + Percikan Elemen -->
-            <path d="M86 116 C76 132, 92 148, 118 142 L124 128 C106 130, 98 122, 98 112 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <polygon points="118,126 136,122 124,134" fill="#ffffff" stroke="#0f172a" stroke-width="1.6"/>
-            <polygon points="120,134 138,134 122,142" fill="#ffffff" stroke="#0f172a" stroke-width="1.6"/>
-            ${rookieHead}
+            <circle cx="120" cy="122" r="100" fill="url(#aura_${uid})"/>
+            <ellipse cx="120" cy="206" rx="62" ry="11" fill="#0f172a" opacity="0.34"/>
+            ${cuteTail}
+            <!-- Sayap Mungil / Sirip Punggung -->
+            <path d="M88 124 C60 104, 58 134, 86 142 Z" fill="${sp.glowHex}" stroke="${strokeCol}" stroke-width="2.4"/>
+            <!-- Kaki Bulat Chubby -->
+            <ellipse cx="96" cy="194" rx="16" ry="12" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+            <ellipse cx="144" cy="194" rx="16" ry="12" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+            <!-- Badan Bulat Empuk + Perut Krem Cerah -->
+            <ellipse cx="120" cy="152" rx="42" ry="44" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="3"/>
+            <ellipse cx="124" cy="158" rx="27" ry="30" fill="url(#belly_${uid})"/>
+            <!-- Syal Bintang Petualang -->
+            <path d="M86 116 Q122 130 154 116 L150 128 Q122 140 90 128 Z" fill="#f43f5e" stroke="#881337" stroke-width="2.2"/>
+            <circle cx="124" cy="128" r="6" fill="#facc15" stroke="#ffffff" stroke-width="1.6"/>
+            <!-- Tangan Melambai Semangat -->
+            <ellipse cx="78" cy="142" rx="13" ry="10" transform="rotate(-24 78 142)" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+            <ellipse cx="164" cy="136" rx="13" ry="10" transform="rotate(-32 164 136)" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+            <!-- Kepala Besar Chibi + Mata Berkilau + Pipi Merona -->
+            ${cuteEars}
+            <ellipse cx="122" cy="84" rx="48" ry="42" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="3.2"/>
+            <ellipse cx="90" cy="95" rx="9.5" ry="5.5" fill="${cheekCol}" opacity="0.68"/>
+            <ellipse cx="156" cy="95" rx="9.5" ry="5.5" fill="${cheekCol}" opacity="0.68"/>
+            ${svgKawaiiEye(104, 82, 10.8, sp.irisHex, 1, false)}
+            ${svgKawaiiEye(142, 82, 10.8, sp.irisHex, 1, false)}
+            <path d="M111 96 Q124 110 137 96 Z" fill="#fb7185" stroke="#881337" stroke-width="2.2" stroke-linejoin="round"/>
+            <polygon points="130,97 133,103 136,97" fill="#ffffff"/>
           </svg>`;
       }
 
-      // STAGE 3: CHAMPION CYBER-BEAST (Helm Chrome-Digizoid + Sayap Tempur + Giga Claw!)
+      // STAGE 3: PENJAGA SAYAP ELEMEN (Gagah-Imut dengan Sayap Lebar, Mahkota Permata & Perisai Dada!)
       if (st === 3) {
         return `
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="${size}" height="${size}" style="width:100%;height:100%;display:block;">
             ${defs}
-            <circle cx="120" cy="120" r="106" fill="url(#aura_${uid})"/>
-            <ellipse cx="120" cy="210" rx="76" ry="13" fill="#020617" opacity="0.6"/>
-            <!-- Sayap Naga / Thruster Siber Lebar -->
-            <path d="M92 104 L12 34 L30 82 L8 108 L52 116 L32 144 L94 132 Z" fill="url(#body_${uid})" stroke="url(#chrome_${uid})" stroke-width="3" stroke-linejoin="round"/>
-            <path d="M132 100 L196 30 L182 78 L206 98 L164 112 L134 124 Z" fill="url(#body_${uid})" stroke="url(#chrome_${uid})" stroke-width="2.8" stroke-linejoin="round"/>
-            <polyline points="22,46 68,108 24,104" fill="none" stroke="${sp.glowHex}" stroke-width="2.4" opacity="0.85"/>
-            ${battleTail}
-            <!-- Kaki Lapis Pelindung Baja -->
-            <path d="M78 156 L64 204 L98 204 L98 160 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <path d="M118 156 L124 204 L162 204 L148 154 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="3"/>
-            <polygon points="120,166 150,162 146,184 122,184" fill="url(#steel_${uid})" stroke="#0f172a" stroke-width="2.4"/>
-            <polygon points="154,204 172,196 164,206" fill="#ffffff" stroke="#0f172a" stroke-width="1.6"/>
-            <!-- Torso Zirah Chrome-Digizoid + Inti Digi-Core -->
-            <path d="M80 102 L148 100 L154 158 L118 176 L82 158 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="3"/>
-            <polygon points="88,102 146,102 142,150 118,166 94,150" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.8" stroke-linejoin="round"/>
-            <polygon points="120,114 134,130 120,146 106,130" fill="${sp.glowHex}" stroke="#ffffff" stroke-width="2.2"/>
-            <!-- Lengan Kanan Giga-Claw Mekanik Menyerang -->
-            <polygon points="142,108 188,96 196,120 148,132" fill="url(#steel_${uid})" stroke="#0f172a" stroke-width="2.8" stroke-linejoin="round"/>
-            <polygon points="188,94 218,86 196,106" fill="${sp.glowHex}" stroke="#0f172a" stroke-width="2"/>
-            <polygon points="192,106 222,104 196,116" fill="${sp.glowHex}" stroke="#0f172a" stroke-width="2"/>
-            <polygon points="190,116 216,122 192,124" fill="${sp.glowHex}" stroke="#0f172a" stroke-width="2"/>
-            <!-- Pelindung Bahu Berduri (Pauldron) -->
-            <path d="M58 108 C64 84, 98 84, 108 108 L96 130 L62 126 Z" fill="url(#steel_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <polygon points="68,92 52,70 82,86" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.2"/>
-            <circle cx="76" cy="112" r="3" fill="#0f172a"/><circle cx="92" cy="114" r="3" fill="#0f172a"/>
-            <!-- Kepala Naga Berhelm Baja (MetalGreymon / WereGarurumon Vibe) -->
-            <path d="M84 74 C84 46, 122 40, 150 54 L182 68 L174 84 L138 86 L168 94 C162 106, 134 108, 104 98 Z" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <path d="M78 72 C80 38, 124 32, 156 50 L184 64 L160 72 L134 78 L112 68 L88 80 Z" fill="url(#steel_${uid})" stroke="#0f172a" stroke-width="2.8" stroke-linejoin="round"/>
-            <polygon points="162,56 196,34 176,66" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.5"/>
-            <polygon points="92,44 52,14 114,38" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.6"/>
-            ${svgAnimeEye(134, 68, 8.5, 8.5, sp.irisHex, 1, true)}
+            <circle cx="120" cy="118" r="106" fill="url(#aura_${uid})"/>
+            <ellipse cx="120" cy="208" rx="72" ry="12" fill="#0f172a" opacity="0.38"/>
+            <!-- Sayap Elemen Lebar Berkilau -->
+            <path d="M92 122 C36 62, 12 96, 36 132 C22 146, 48 164, 92 146 Z" fill="url(#body_${uid})" stroke="url(#gold_${uid})" stroke-width="3"/>
+            <path d="M148 122 C204 62, 228 96, 204 132 C218 146, 192 164, 148 146 Z" fill="url(#body_${uid})" stroke="url(#gold_${uid})" stroke-width="3"/>
+            <path d="M84 126 C48 86, 34 106, 52 132 Z" fill="${sp.glowHex}" opacity="0.8"/>
+            <path d="M156 126 C192 86, 206 106, 188 132 Z" fill="${sp.glowHex}" opacity="0.8"/>
+            ${cuteTail}
+            <!-- Kaki & Badan Penjaga + Pelindung Dada Emas -->
+            <ellipse cx="96" cy="194" rx="18" ry="13" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="3"/>
+            <ellipse cx="146" cy="194" rx="18" ry="13" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="3"/>
+            <ellipse cx="120" cy="148" rx="44" ry="46" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="3"/>
+            <ellipse cx="122" cy="154" rx="28" ry="30" fill="url(#belly_${uid})"/>
+            <path d="M90 116 L122 132 L154 116 L146 142 L122 152 L98 142 Z" fill="url(#gold_${uid})" stroke="#92400e" stroke-width="2.4" stroke-linejoin="round"/>
+            <circle cx="122" cy="134" r="8" fill="${sp.glowHex}" stroke="#ffffff" stroke-width="2"/>
+            <!-- Lengan Berpelindung Gelang Emas -->
+            <ellipse cx="74" cy="138" rx="15" ry="11" transform="rotate(-20 74 138)" fill="url(#body_${uid})" stroke="url(#gold_${uid})" stroke-width="2.8"/>
+            <ellipse cx="168" cy="134" rx="15" ry="11" transform="rotate(-28 168 134)" fill="url(#body_${uid})" stroke="url(#gold_${uid})" stroke-width="2.8"/>
+            <!-- Kepala Bermahkota Elemen -->
+            ${cuteEars}
+            <ellipse cx="122" cy="78" rx="46" ry="40" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="3.2"/>
+            <polygon points="98,48 110,26 122,42 134,26 146,48" fill="url(#gold_${uid})" stroke="#92400e" stroke-width="2.4" stroke-linejoin="round"/>
+            <circle cx="122" cy="40" r="4.5" fill="#f43f5e" stroke="#ffffff" stroke-width="1.4"/>
+            <ellipse cx="90" cy="89" rx="8.5" ry="5" fill="${cheekCol}" opacity="0.6"/>
+            <ellipse cx="154" cy="89" rx="8.5" ry="5" fill="${cheekCol}" opacity="0.6"/>
+            ${svgKawaiiEye(104, 77, 10.5, sp.irisHex, 1, false)}
+            ${svgKawaiiEye(142, 77, 10.5, sp.irisHex, 1, false)}
+            <path d="M112 91 Q123 102 135 91" fill="none" stroke="#1e1b4b" stroke-width="2.8" stroke-linecap="round"/>
           </svg>`;
       }
 
-      // STAGE 4: MEGA ROYAL DRAGON-KNIGHT (WarGreymon / Imperialdramon / MagnaGarurumon Vibe!)
+      // STAGE 4: RAJA NAGA LEGENDARIS (Halo Bintang Emas, Jubah Kerajaan, 4 Sayap Cahaya & Bola Energi!)
       return `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="${size}" height="${size}" style="width:100%;height:100%;display:block;">
           ${defs}
           <circle cx="120" cy="116" r="112" fill="url(#aura_${uid})"/>
-          <!-- Halo Rune Digital Kaisar -->
-          <circle cx="116" cy="108" r="94" fill="none" stroke="#fde047" stroke-width="2.6" stroke-dasharray="12 6" opacity="0.9"/>
-          <circle cx="116" cy="108" r="82" fill="none" stroke="${sp.glowHex}" stroke-width="1.6" opacity="0.65"/>
-          <ellipse cx="120" cy="214" rx="82" ry="13" fill="#020617" opacity="0.62"/>
-          <!-- 4 Sayap Perisai X-Booster (Brave Shield Wings) + Semburan Plasma -->
-          <polygon points="94,92 8,18 32,68 4,88 88,112" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.8" stroke-linejoin="round"/>
-          <polygon points="84,88 22,34 42,74 82,102" fill="${sp.trimHex}"/>
-          <polygon points="92,118 12,138 38,158 18,182 94,142" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.6" stroke-linejoin="round"/>
-          <polygon points="138,90 218,18 196,68 224,86 144,110" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.8" stroke-linejoin="round"/>
-          <polygon points="142,118 214,142 188,166 138,140" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.6" stroke-linejoin="round"/>
-          <!-- Kaki Ksatria Berzirah Emas (Greaves & Sabatons) -->
-          <polygon points="86,150 68,208 98,208 108,154" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-          <polygon points="122,150 132,208 166,208 150,148" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-          <polygon points="104,148 128,148 122,192 110,198 100,190" fill="${sp.trimHex}" stroke="#fde047" stroke-width="2"/>
-          <!-- Torso Ksatria Naga + Crest Bintang -->
-          <polygon points="82,86 152,86 142,148 116,160 90,148" fill="url(#body_${uid})" stroke="#0f172a" stroke-width="3"/>
-          <polygon points="76,84 158,84 146,136 116,152 88,136" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.8" stroke-linejoin="round"/>
-          <polygon points="118,96 125,112 142,118 125,124 118,140 111,124 94,118 111,112" fill="${sp.glowHex}" stroke="#ffffff" stroke-width="2"/>
-          <!-- Bahu Raksasa + Senjata Dramon-Killer / Meriam Plasma Kanan-Kiri -->
-          <polygon points="52,96 86,74 96,108 58,118" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-          <polygon points="144,76 184,92 174,116 140,106" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-          <polygon points="164,104 208,94 214,124 166,130" fill="url(#steel_${uid})" stroke="#fde047" stroke-width="2.6"/>
-          <polygon points="208,94 236,84 216,106" fill="#ffffff" stroke="${sp.glowHex}" stroke-width="2"/>
-          <polygon points="212,106 238,108 214,118" fill="#ffffff" stroke="${sp.glowHex}" stroke-width="2"/>
-          <polygon points="210,118 234,128 210,126" fill="#ffffff" stroke="${sp.glowHex}" stroke-width="2"/>
-          <circle cx="58" cy="134" r="15" fill="${sp.glowHex}" fill-opacity="0.85" stroke="#ffffff" stroke-width="2.5"/>
-          <!-- Helm Ksatria Naga Bermahkota Emas -->
-          <polygon points="94,44 58,8 112,34" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.5"/>
-          <polygon points="134,42 174,8 124,34" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.5"/>
-          <path d="M88 62 C88 34, 134 32, 156 50 L178 62 L162 82 L100 82 Z" fill="url(#chrome_${uid})" stroke="#0f172a" stroke-width="2.8" stroke-linejoin="round"/>
-          <polygon points="104,40 118,12 132,40 118,50" fill="${sp.glowHex}" stroke="#ffffff" stroke-width="2"/>
-          <polygon points="110,60 166,56 158,72 112,72" fill="#090d1f" stroke="${sp.glowHex}" stroke-width="2"/>
-          <polygon points="124,64 152,61 146,68 124,68" fill="${sp.glowHex}"/>
+          <circle cx="120" cy="112" r="92" fill="none" stroke="#fde047" stroke-width="2.8" stroke-dasharray="10 6" opacity="0.92"/>
+          <ellipse cx="120" cy="212" rx="80" ry="13" fill="#0f172a" opacity="0.42"/>
+          <!-- 4 Sayap Raja Naga Bercahaya -->
+          <path d="M92 110 C24 34, 4 78, 34 116 C8 134, 30 172, 92 146 Z" fill="url(#gold_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+          <path d="M148 110 C216 34, 236 78, 206 116 C232 134, 210 172, 148 146 Z" fill="url(#gold_${uid})" stroke="${strokeCol}" stroke-width="2.8"/>
+          <path d="M86 114 C36 58, 24 86, 48 114 Z" fill="${sp.glowHex}"/>
+          <path d="M154 114 C204 58, 216 86, 192 114 Z" fill="${sp.glowHex}"/>
+          <!-- Jubah Merah Kerajaan -->
+          <path d="M78 118 L58 196 L182 196 L162 118 Z" fill="#e11d48" stroke="#fde047" stroke-width="2.6"/>
+          ${cuteTail}
+          <!-- Kaki & Zirah Emas Raja -->
+          <ellipse cx="96" cy="196" rx="19" ry="13" fill="url(#gold_${uid})" stroke="#92400e" stroke-width="2.8"/>
+          <ellipse cx="146" cy="196" rx="19" ry="13" fill="url(#gold_${uid})" stroke="#92400e" stroke-width="2.8"/>
+          <ellipse cx="120" cy="146" rx="45" ry="46" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="3"/>
+          <path d="M84 112 L156 112 L146 164 L120 178 L94 164 Z" fill="url(#gold_${uid})" stroke="#92400e" stroke-width="2.8" stroke-linejoin="round"/>
+          <polygon points="120,122 126,136 140,140 126,146 120,160 114,146 100,140 114,136" fill="${sp.glowHex}" stroke="#ffffff" stroke-width="2"/>
+          <!-- Bola Energi Pamungkas di Tangan -->
+          <ellipse cx="70" cy="134" rx="15" ry="12" fill="url(#gold_${uid})" stroke="#92400e" stroke-width="2.6"/>
+          <ellipse cx="172" cy="130" rx="15" ry="12" fill="url(#gold_${uid})" stroke="#92400e" stroke-width="2.6"/>
+          <circle cx="192" cy="112" r="15" fill="${sp.glowHex}" stroke="#ffffff" stroke-width="2.6"/>
+          <circle cx="188" cy="108" r="5" fill="#ffffff"/>
+          <!-- Kepala Raja Naga Bermahkota Bintang -->
+          ${cuteEars}
+          <ellipse cx="122" cy="74" rx="47" ry="40" fill="url(#body_${uid})" stroke="${strokeCol}" stroke-width="3.2"/>
+          <polygon points="88,48 96,14 112,34 122,8 132,34 148,14 156,48" fill="url(#gold_${uid})" stroke="#92400e" stroke-width="2.6" stroke-linejoin="round"/>
+          <circle cx="122" cy="34" r="6" fill="#38bdf8" stroke="#ffffff" stroke-width="1.8"/>
+          <ellipse cx="90" cy="84" rx="8.5" ry="5" fill="${cheekCol}" opacity="0.65"/>
+          <ellipse cx="154" cy="84" rx="8.5" ry="5" fill="${cheekCol}" opacity="0.65"/>
+          ${svgKawaiiEye(104, 73, 10.5, sp.irisHex, 1, false)}
+          ${svgKawaiiEye(142, 73, 10.5, sp.irisHex, 1, false)}
+          <path d="M111 87 Q123 99 136 87 Z" fill="#fb7185" stroke="#881337" stroke-width="2.2"/>
         </svg>`;
     }
 
-    // 4 Dark Digimon Bosses — Pose Mengancam 3/4 Menghadap KIRI (Berhadapan Langsung dengan Pemain!)
+    // 4 Boss Kartun Ekspresif & Berwarna Cerah — Menghadap KIRI (Berhadapan dengan Monster Pemain)
     function renderEnemySVG(enemyIdx = 0, size = 180) {
       const idx = Math.max(0, Math.min(3, Number(enemyIdx) || 0));
       const en = ENEMY_ROSTER[idx];
@@ -1077,131 +1109,95 @@
       const defs = `
         <defs>
           <radialGradient id="ba_${uid}" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="${en.secondaryHex}" stop-opacity="0.52"/>
+            <stop offset="0%" stop-color="${en.secondaryHex}" stop-opacity="0.62"/>
             <stop offset="100%" stop-color="${en.primaryHex}" stop-opacity="0"/>
           </radialGradient>
           <linearGradient id="bb_${uid}" x1="15%" y1="0%" x2="85%" y2="100%">
             <stop offset="0%" stop-color="${en.secondaryHex}"/>
-            <stop offset="52%" stop-color="${en.primaryHex}"/>
+            <stop offset="55%" stop-color="${en.primaryHex}"/>
             <stop offset="100%" stop-color="${en.darkHex}"/>
-          </linearGradient>
-          <linearGradient id="bdark_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#475569"/>
-            <stop offset="50%" stop-color="#1e293b"/>
-            <stop offset="100%" stop-color="#020617"/>
           </linearGradient>
         </defs>`;
 
       if (idx === 0) {
-        // ViroSlime: Mutant Cyber-Virus Slime King (Inti Virus Hijau Menyala di Dalam Gel!)
+        // Boss 1: King Jelly Slime (Raja Agar-Agar Ungu Lucu-Nakal Bermahkota Emas!)
         return `
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="${size}" height="${size}" style="width:100%;height:100%;display:block;">
             ${defs}
-            <circle cx="120" cy="126" r="96" fill="url(#ba_${uid})"/>
-            <ellipse cx="120" cy="204" rx="78" ry="14" fill="#020617" opacity="0.58"/>
-            <!-- Tentakel Gel Menyerang ke Kiri -->
-            <path d="M68 142 C32 132, 14 106, 28 88 C42 104, 48 118, 76 124 Z" fill="url(#bb_${uid})" stroke="#f5d0fe" stroke-width="2.6"/>
-            <path d="M44 176 C42 92, 78 56, 126 58 C176 60, 204 98, 196 174 C194 196, 168 202, 150 192 C132 206, 94 206, 78 192 C58 202, 44 194, 44 176 Z"
-              fill="url(#bb_${uid})" stroke="#f5d0fe" stroke-width="3.2"/>
-            <!-- Inti Virus Siber & Kubus Data Terperangkap -->
-            <polygon points="146,126 164,142 146,158 128,142" fill="#4ade80" fill-opacity="0.85" stroke="#ecfccb" stroke-width="2"/>
-            <rect x="156" y="96" width="14" height="14" transform="rotate(18 163 103)" fill="none" stroke="#67e8f9" stroke-width="2"/>
-            <!-- Mahkota Raja Miring -->
-            <polygon points="90,62 94,24 114,44 128,16 142,44 162,26 158,64" fill="#facc15" stroke="#78350f" stroke-width="2.8" stroke-linejoin="round"/>
-            <circle cx="126" cy="44" r="5.5" fill="#4ade80" stroke="#ffffff" stroke-width="1.5"/>
-            ${svgAnimeEye(86, 114, 9.5, 10.5, '#4ade80', -1, true)}
-            ${svgAnimeEye(126, 116, 10.5, 11.5, '#fde047', -1, true)}
-            <!-- Mulut Gerigi Monster Menghadap Kiri -->
-            <path d="M64 142 L84 152 L102 142 L120 154 L140 144 C134 174, 82 176, 64 142 Z" fill="#2e1065" stroke="#f5d0fe" stroke-width="2.4" stroke-linejoin="round"/>
-            <polygon points="74,147 80,160 86,150" fill="#ffffff"/>
-            <polygon points="108,147 114,160 120,150" fill="#ffffff"/>
+            <circle cx="120" cy="126" r="98" fill="url(#ba_${uid})"/>
+            <ellipse cx="120" cy="204" rx="76" ry="13" fill="#0f172a" opacity="0.4"/>
+            <path d="M44 172 C42 88, 76 58, 122 58 C172 58, 200 92, 196 172 C194 196, 166 202, 148 192 C130 206, 96 206, 78 192 C58 202, 44 194, 44 172 Z"
+              fill="url(#bb_${uid})" stroke="#f5d0fe" stroke-width="3.5"/>
+            <ellipse cx="86" cy="88" rx="18" ry="9" transform="rotate(-22 86 88)" fill="#ffffff" opacity="0.45"/>
+            <circle cx="164" cy="136" r="10" fill="#4ade80" opacity="0.8"/>
+            <circle cx="176" cy="108" r="6" fill="#67e8f9" opacity="0.85"/>
+            <polygon points="88,62 94,24 114,44 128,16 142,44 162,26 156,62" fill="#facc15" stroke="#92400e" stroke-width="2.8" stroke-linejoin="round"/>
+            <circle cx="126" cy="44" r="6" fill="#ec4899" stroke="#ffffff" stroke-width="1.6"/>
+            ${svgKawaiiEye(90, 118, 11, '#fde047', -1, true)}
+            ${svgKawaiiEye(134, 118, 11, '#fde047', -1, true)}
+            <path d="M84 146 Q112 172 140 146 Z" fill="#4c1d95" stroke="#f5d0fe" stroke-width="2.4" stroke-linejoin="round"/>
+            <polygon points="94,148 99,158 104,149" fill="#ffffff"/>
+            <polygon points="120,149 125,158 130,148" fill="#ffffff"/>
           </svg>`;
       }
 
       if (idx === 1) {
-        // Magma Fang: Hellfire Obsidian Cyber-Wolf Menghadap Kiri!
+        // Boss 2: Magma Fang (Singa-Serigala Surai Api Kartun Keren!)
         return `
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="${size}" height="${size}" style="width:100%;height:100%;display:block;">
             ${defs}
             <circle cx="120" cy="122" r="100" fill="url(#ba_${uid})"/>
-            <ellipse cx="120" cy="208" rx="78" ry="13" fill="#020617" opacity="0.6"/>
-            <!-- Ekor & Surai Api Berkobar di Kanan -->
-            <path d="M154 150 C198 156, 224 118, 206 72 C192 98, 182 118, 150 130 Z" fill="#f97316" stroke="#7f1d1d" stroke-width="2.8"/>
-            <path d="M142 74 L204 42 L182 88 L214 106 L162 116 Z" fill="#facc15" stroke="#b91c1c" stroke-width="2.6" stroke-linejoin="round"/>
-            <!-- Kaki & Torso Batu Lava Retak -->
-            <polygon points="84,158 68,204 102,204 108,162" fill="url(#bb_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <polygon points="134,158 144,204 176,204 160,156" fill="url(#bb_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <polygon points="82,102 162,104 156,166 118,180 86,162" fill="url(#bb_${uid})" stroke="#0f172a" stroke-width="3"/>
-            <polyline points="100,116 118,136 112,158 134,142 146,120" fill="none" stroke="#fef08a" stroke-width="3.2" stroke-linecap="round"/>
-            <!-- Bahu Obsidian Berduri + Cakar Magma Menyerang ke Kiri -->
-            <polygon points="130,96 184,82 174,122 132,120" fill="url(#bdark_${uid})" stroke="#f97316" stroke-width="2.5"/>
-            <polygon points="94,114 44,104 38,132 90,138" fill="url(#bdark_${uid})" stroke="#f97316" stroke-width="2.6"/>
-            <polygon points="44,104 14,96 36,116" fill="#fde047" stroke="#b91c1c" stroke-width="2"/>
-            <polygon points="40,116 12,116 36,128" fill="#fde047" stroke="#b91c1c" stroke-width="2"/>
-            <!-- Kepala Serigala Iblis Rahang Baja Menghadap Kiri -->
-            <polygon points="110,50 86,8 132,42" fill="url(#bb_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <polygon points="142,52 178,10 156,58" fill="url(#bb_${uid})" stroke="#0f172a" stroke-width="2.8"/>
-            <path d="M156 76 C156 44, 114 38, 86 54 L50 68 L58 84 L96 86 L62 96 C68 110, 104 112, 138 100 Z" fill="url(#bb_${uid})" stroke="#0f172a" stroke-width="3" stroke-linejoin="round"/>
-            <polygon points="58,84 96,86 92,102 62,98" fill="url(#bdark_${uid})" stroke="#0f172a" stroke-width="2"/>
-            <polygon points="66,84 70,96 76,85" fill="#ffffff"/><polygon points="82,85 86,95 90,86" fill="#ffffff"/>
-            ${svgAnimeEye(104, 68, 9, 9.5, '#fef08a', -1, true)}
+            <ellipse cx="120" cy="206" rx="74" ry="13" fill="#0f172a" opacity="0.45"/>
+            <path d="M152 152 C198 158, 222 116, 202 74 C188 98, 178 118, 148 132 Z" fill="#fb923c" stroke="#9a3412" stroke-width="2.8"/>
+            <!-- Surai Api Bintang -->
+            <path d="M72 88 L56 48 L92 56 L114 22 L138 52 L176 34 L168 78 L198 96 L166 122 L76 122 Z" fill="#facc15" stroke="#dc2626" stroke-width="3" stroke-linejoin="round"/>
+            <ellipse cx="122" cy="156" rx="44" ry="42" fill="url(#bb_${uid})" stroke="#7f1d1d" stroke-width="3"/>
+            <ellipse cx="96" cy="196" rx="17" ry="12" fill="url(#bb_${uid})" stroke="#7f1d1d" stroke-width="2.8"/>
+            <ellipse cx="148" cy="196" rx="17" ry="12" fill="url(#bb_${uid})" stroke="#7f1d1d" stroke-width="2.8"/>
+            <ellipse cx="70" cy="142" rx="16" ry="12" fill="#f97316" stroke="#7f1d1d" stroke-width="2.8"/>
+            <ellipse cx="118" cy="88" rx="44" ry="38" fill="url(#bb_${uid})" stroke="#7f1d1d" stroke-width="3"/>
+            ${svgKawaiiEye(96, 86, 10.5, '#fef08a', -1, true)}
+            ${svgKawaiiEye(136, 86, 10.5, '#fef08a', -1, true)}
+            <path d="M94 106 Q116 122 138 106 Z" fill="#7f1d1d" stroke="#fde047" stroke-width="2"/>
+            <polygon points="102,107 106,116 110,108" fill="#ffffff"/>
+            <polygon points="124,108 128,116 132,107" fill="#ffffff"/>
           </svg>`;
       }
 
       if (idx === 2) {
-        // Cryo Titan: Mecha-Ice Golem Menghadap Kiri + Inti Antimateri!
+        // Boss 3: Cryo Golem (Raksasa Kristal Es Bulat Berinti Bintang Aurora!)
         return `
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="${size}" height="${size}" style="width:100%;height:100%;display:block;">
             ${defs}
-            <circle cx="120" cy="118" r="102" fill="url(#ba_${uid})"/>
-            <ellipse cx="120" cy="208" rx="80" ry="13" fill="#020617" opacity="0.6"/>
-            <!-- Pilar Kristal Es Punggung -->
-            <polygon points="142,84 198,20 184,96 216,82 168,124" fill="#67e8f9" stroke="#1e3a8a" stroke-width="2.8" stroke-linejoin="round"/>
-            <polygon points="88,76 54,22 108,58" fill="#bae6fd" stroke="#1e3a8a" stroke-width="2.6"/>
-            <!-- Badan Baja Gelap + Inti Reaktor Oranye -->
-            <polygon points="72,68 172,72 162,168 118,188 78,164" fill="url(#bdark_${uid})" stroke="#67e8f9" stroke-width="3" stroke-linejoin="round"/>
-            <polygon points="116,102 140,128 116,154 92,128" fill="#fb923c" stroke="#ffffff" stroke-width="2.6"/>
-            <circle cx="116" cy="128" r="8" fill="#fef08a"/>
-            <!-- Tinju Penghancur Es Raksasa Melayang (Kiri Depan & Kanan Belakang) -->
-            <polygon points="12,112 56,96 68,144 22,158 6,134" fill="url(#bb_${uid})" stroke="#e0f2fe" stroke-width="3" stroke-linejoin="round"/>
-            <polygon points="12,112 2,94 28,104" fill="#ffffff"/>
-            <polygon points="168,118 214,108 222,152 174,160" fill="url(#bb_${uid})" stroke="#bae6fd" stroke-width="2.8" stroke-linejoin="round"/>
-            <!-- Kepala Mecha Mono-Eye Menghadap Kiri -->
-            <polygon points="78,48 148,48 156,78 72,78" fill="url(#bb_${uid})" stroke="#e0f2fe" stroke-width="2.8"/>
-            <rect x="76" y="56" width="58" height="16" rx="6" fill="#020617" stroke="#38bdf8" stroke-width="2"/>
-            <circle cx="96" cy="64" r="6.5" fill="#f43f5e"/><circle cx="94" cy="62" r="2.2" fill="#ffffff"/>
+            <circle cx="120" cy="120" r="102" fill="url(#ba_${uid})"/>
+            <ellipse cx="120" cy="208" rx="78" ry="13" fill="#0f172a" opacity="0.45"/>
+            <polygon points="74,64 52,18 98,48" fill="#67e8f9" stroke="#0369a1" stroke-width="2.8"/>
+            <polygon points="166,64 192,18 142,48" fill="#67e8f9" stroke="#0369a1" stroke-width="2.8"/>
+            <rect x="66" y="72" width="108" height="116" rx="38" fill="url(#bb_${uid})" stroke="#bae6fd" stroke-width="3.2"/>
+            <circle cx="120" cy="144" r="18" fill="#fef08a" stroke="#ffffff" stroke-width="3"/>
+            <ellipse cx="44" cy="132" rx="20" ry="24" fill="#38bdf8" stroke="#e0f2fe" stroke-width="3"/>
+            <ellipse cx="196" cy="132" rx="20" ry="24" fill="#38bdf8" stroke="#e0f2fe" stroke-width="3"/>
+            ${svgKawaiiEye(98, 102, 10, '#fb923c', -1, true)}
+            ${svgKawaiiEye(142, 102, 10, '#fb923c', -1, true)}
           </svg>`;
       }
 
-      // Chaos Kaiser: 6-Winged Mecha-Dragon Emperor + Meriam Bahu Ganda Menghadap Kiri!
+      // Boss 4: Chaos Kaiser (Naga Galaksi Bintang Bermahkota Kembar!)
       return `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="${size}" height="${size}" style="width:100%;height:100%;display:block;">
           ${defs}
           <circle cx="120" cy="116" r="110" fill="url(#ba_${uid})"/>
-          <circle cx="124" cy="110" r="92" fill="none" stroke="#f43f5e" stroke-width="2.4" stroke-dasharray="10 6"/>
-          <ellipse cx="120" cy="212" rx="84" ry="13" fill="#020617" opacity="0.65"/>
-          <!-- 6 Sayap Kaisar Chaos -->
-          <polygon points="142,92 232,14 206,76 234,104 192,118 222,154 140,136" fill="url(#bb_${uid})" stroke="#38bdf8" stroke-width="2.8" stroke-linejoin="round"/>
-          <polygon points="94,96 20,26 42,78 16,104 88,122" fill="url(#bb_${uid})" stroke="#38bdf8" stroke-width="2.6" stroke-linejoin="round"/>
-          <!-- Meriam Giga Bahu Membidik ke Kiri! -->
-          <polygon points="42,68 104,76 100,94 38,84" fill="url(#bdark_${uid})" stroke="#facc15" stroke-width="2.5"/>
-          <circle cx="40" cy="76" r="6" fill="#38bdf8"/>
-          <polygon points="134,64 182,50 188,68 138,82" fill="url(#bdark_${uid})" stroke="#facc15" stroke-width="2.5"/>
-          <!-- Zirah Kaisar Hitam-Emas + Chaos Core -->
-          <polygon points="84,152 68,208 102,208 110,156" fill="url(#bdark_${uid})" stroke="#facc15" stroke-width="2.5"/>
-          <polygon points="128,152 142,208 174,208 156,152" fill="url(#bdark_${uid})" stroke="#facc15" stroke-width="2.5"/>
-          <polygon points="80,88 164,88 152,158 120,174 88,156" fill="url(#bdark_${uid})" stroke="#facc15" stroke-width="2.8" stroke-linejoin="round"/>
-          <polygon points="120,104 138,128 120,152 102,128" fill="#38bdf8" stroke="#ffffff" stroke-width="2.4"/>
-          <!-- Cakar Laser Kiri -->
-          <polygon points="86,112 36,114 32,138 84,136" fill="url(#bb_${uid})" stroke="#facc15" stroke-width="2.5"/>
-          <polygon points="36,114 8,108 28,124" fill="#f43f5e"/><polygon points="34,126 6,128 30,136" fill="#f43f5e"/>
-          <!-- Kepala Kaisar Naga Bertanduk Emas -->
-          <polygon points="98,48 60,8 114,38" fill="#facc15" stroke="#78350f" stroke-width="2.4"/>
-          <polygon points="140,48 184,8 126,38" fill="#facc15" stroke="#78350f" stroke-width="2.4"/>
-          <path d="M150 66 C150 38, 104 36, 82 54 L60 66 L76 86 L142 86 Z" fill="url(#bb_${uid})" stroke="#38bdf8" stroke-width="2.8"/>
-          <polygon points="98,40 112,14 122,30 132,14 142,40" fill="#facc15" stroke="#78350f" stroke-width="2.2"/>
-          ${svgAnimeEye(96, 66, 8.5, 8.5, '#38bdf8', -1, true)}
-          ${svgAnimeEye(126, 67, 8, 8, '#38bdf8', -1, true)}
+          <circle cx="120" cy="112" r="92" fill="none" stroke="#f472b6" stroke-width="2.5" stroke-dasharray="10 6"/>
+          <ellipse cx="120" cy="210" rx="82" ry="13" fill="#0f172a" opacity="0.5"/>
+          <path d="M90 112 C18 32, 4 86, 36 124 C12 146, 40 176, 92 148 Z" fill="url(#bb_${uid})" stroke="#facc15" stroke-width="3"/>
+          <path d="M150 112 C222 32, 236 86, 204 124 C228 146, 200 176, 148 148 Z" fill="url(#bb_${uid})" stroke="#facc15" stroke-width="3"/>
+          <ellipse cx="120" cy="148" rx="46" ry="46" fill="url(#bb_${uid})" stroke="#facc15" stroke-width="3"/>
+          <polygon points="120,124 128,140 144,144 128,150 120,166 112,150 96,144 112,140" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
+          <ellipse cx="120" cy="78" rx="46" ry="40" fill="url(#bb_${uid})" stroke="#facc15" stroke-width="3.2"/>
+          <polygon points="84,48 94,10 112,34 120,6 128,34 146,10 156,48" fill="#facc15" stroke="#78350f" stroke-width="2.6" stroke-linejoin="round"/>
+          ${svgKawaiiEye(100, 78, 10.5, '#38bdf8', -1, true)}
+          ${svgKawaiiEye(140, 78, 10.5, '#38bdf8', -1, true)}
+          <path d="M100 98 Q120 114 140 98 Z" fill="#500724" stroke="#facc15" stroke-width="2"/>
         </svg>`;
     }
 
@@ -3745,8 +3741,8 @@
       const grid = document.getElementById('boss-tier-grid');
       if (!grid || !state.profile) return;
       const chosen = ENEMY_ROSTER[state.selectedBossTier] || ENEMY_ROSTER[0];
-      document.getElementById('menu-boss-bonus-hint').textContent = `${chosen.biome} • Poin x${chosen.ptsMult}`;
-      document.getElementById('btn-battle-sub').textContent = `Lawan ${chosen.name} (${chosen.biome}) • Bonus Poin x${chosen.ptsMult}!`;
+      document.getElementById('menu-boss-bonus-hint').textContent = `HP ${chosen.maxHp} • Poin x${chosen.ptsMult}`;
+      document.getElementById('btn-battle-sub').textContent = `Lawan ${chosen.name} • Poin x${chosen.ptsMult}!`;
 
       grid.innerHTML = ENEMY_ROSTER.map((en) => {
         const active = en.idx === state.selectedBossTier;
@@ -3802,13 +3798,13 @@
         } catch {}
       }
       if (dueCount > 0) {
-        badgeEl.textContent = `⏰ ${dueCount} Perlu Diulang!`;
+        badgeEl.textContent = `⏰ ${dueCount} Ulang!`;
         badgeEl.className = 'text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow animate-pulse';
-        if (subEl) subEl.textContent = `Ada ${dueCount} kosakata jatuh tempo FSRS — ulangi dulu biar Power naik!`;
+        if (subEl) subEl.textContent = `${dueCount} kata jatuh tempo • Ulangi biar Power naik!`;
       } else {
-        badgeEl.textContent = newCount > 0 ? `✨ ${newCount} Kata Baru` : '✅ Ingatan Kuat';
-        badgeEl.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white';
-        if (subEl) subEl.textContent = 'Dengar suara kata + tambah kekuatan serangan!';
+        badgeEl.textContent = newCount > 0 ? `✨ ${newCount} Baru` : '✅ Siap!';
+        badgeEl.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white';
+        if (subEl) subEl.textContent = 'Suara kata + tambah Power ⚡';
       }
     }
 
@@ -3840,6 +3836,23 @@
       document.getElementById('menu-stat-points').textContent = state.profile.points;
       document.getElementById('menu-stat-wins').textContent = state.profile.wins;
       document.getElementById('menu-stat-acc').textContent = state.profile.totalAnswered > 0 ? `${Math.round((state.profile.totalCorrect / state.profile.totalAnswered) * 100)}%` : '-';
+
+      const qText = document.getElementById('menu-quest-text');
+      const qPill = document.getElementById('menu-quest-pill');
+      if (qText && qPill) {
+        const w = state.profile.wins || 0;
+        if (stInfo.stage < 4) {
+          const needExp = Math.max(0, stInfo.nextExp - state.profile.exp);
+          qText.textContent = `🎯 Misi Evolusi: Butuh ${needExp} EXP lagi ke ${EVOLUTION_STAGES[stInfo.stage]?.shortTitle || 'Mega'}!`;
+          qPill.textContent = `${stInfo.progressPct}% ⚡`;
+        } else if (w < 10) {
+          qText.textContent = '🎯 Misi Juara: Koleksi 10 Trofi Kemenangan Boss!';
+          qPill.textContent = `${w} / 10 🏆`;
+        } else {
+          qText.textContent = '👑 Master Legenda! Pertahankan Peringkat #1!';
+          qPill.textContent = `${w} 🏆`;
+        }
+      }
 
       renderEvolutionPath('evo-path-menu', sp.id, stInfo.stage);
       renderBossTierSelector();
@@ -3909,34 +3922,30 @@
 
       const lastR = card._requeueTag || card._lastRating;
       const badgeLabel =
-        card._requeueTag === 'AGAIN'
-          ? '🔴 PALING DEPAN • Ulang Lupa'
-          : card._requeueTag === 'HARD'
-            ? '🟠 AGAK DEPAN • Latih Ragu'
-            : lastR === 'AGAIN'
-              ? '🔴 Prioritas #1 (Lupa)'
-              : lastR === 'HARD'
-                ? '🟠 Prioritas #2 (Agak Depan)'
-                : lastR === 'EASY'
-                  ? '🔵 Urutan Belakang (Hafal)'
-                  : card.isNew === false
-                    ? '⏰ Jadwal Ulas FSRS'
-                    : '✨ Kata Baru';
+        card._requeueTag === 'AGAIN' || lastR === 'AGAIN'
+          ? '🔴 Ulang Lupa'
+          : card._requeueTag === 'HARD' || lastR === 'HARD'
+            ? '🟠 Latih Ragu'
+            : lastR === 'EASY'
+              ? '🔵 Sudah Hafal'
+              : card.isNew === false
+                ? '⏰ Waktunya Ulang'
+                : '✨ Kata Baru';
       document.getElementById('study-card-tag').textContent = badgeLabel;
       document.getElementById('study-card-front').textContent = card.content?.front || '-';
       document.getElementById('study-card-back').textContent = card.content?.back || '-';
 
-      // Tampilkan interval FSRS-5 asli per kartu pada keempat tombol penilaian
+      // Tampilkan interval FSRS-5 asli per kartu secara ringkas & jelas pada keempat tombol 3D
       const pv = card._preview;
       const stab = Number(card._stability) || 0;
       const estGood = pv?.GOOD || (stab >= 1 ? `${Math.max(2, Math.round(stab * 2.4))} hari` : '10 mnt');
       const estEasy = pv?.EASY || (stab >= 1 ? `${Math.max(4, Math.round(stab * 3.8))} hari` : '4 hari');
       const estHard = pv?.HARD || (stab >= 2 ? `${Math.max(1, Math.round(stab * 1.2))} hari` : '6 mnt');
       const estAgain = pv?.AGAIN || (card.isNew ? '1 mnt' : '10 mnt');
-      document.getElementById('rate-sub-again').textContent = `Paling Depan • ${estAgain}`;
-      document.getElementById('rate-sub-hard').textContent = `Agak Depan • ${estHard}`;
-      document.getElementById('rate-sub-good').textContent = `Urutan Tengah • ${estGood}`;
-      document.getElementById('rate-sub-easy').textContent = `Paling Belakang • ${estEasy}`;
+      document.getElementById('rate-sub-again').textContent = estAgain;
+      document.getElementById('rate-sub-hard').textContent = estHard;
+      document.getElementById('rate-sub-good').textContent = estGood;
+      document.getElementById('rate-sub-easy').textContent = estEasy;
       document.getElementById('study-card-back-wrap').classList.add('hidden');
       document.getElementById('study-feedback').classList.add('hidden');
       document.getElementById('btn-study-reveal').classList.remove('hidden');

@@ -1,6 +1,9 @@
-// Skor kuis pilihan ganda. Murni (tanpa DB) agar mudah diuji.
+/**
+ * @file modules/evaluation/scoring.ts
+ * @description Fungsi murni perhitungan skor kuis pilihan ganda berbasis ketepatan dan kecepatan respons.
+ */
 
-// Batas waktu per soal pada game client (15 detik, sesuai proposal).
+// Batas waktu acuan per soal pada aplikasi klien (15.000 milidetik).
 export const QUIZ_TIME_LIMIT_MS = 15_000;
 // Poin dasar untuk jawaban benar.
 export const QUIZ_BASE_SCORE = 100;

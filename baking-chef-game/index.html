@@ -24,10 +24,10 @@
 
     body {
       background:
-        radial-gradient(1100px 550px at 8% -8%, rgba(244, 114, 182, 0.30), transparent 60%),
-        radial-gradient(950px 520px at 105% 10%, rgba(251, 191, 36, 0.25), transparent 60%),
-        radial-gradient(900px 580px at 50% 115%, rgba(249, 115, 22, 0.22), transparent 60%),
-        #1e0e1b;
+        radial-gradient(960px 500px at 10% -6%, rgba(251, 113, 133, 0.55), transparent 62%),
+        radial-gradient(920px 500px at 96% 8%, rgba(253, 224, 71, 0.38), transparent 60%),
+        radial-gradient(920px 560px at 50% 110%, rgba(244, 114, 182, 0.38), transparent 62%),
+        linear-gradient(180deg, #9d174d 0%, #831843 52%, #581c87 100%);
       min-height: 100dvh;
       padding-bottom: env(safe-area-inset-bottom, 0px);
       -webkit-tap-highlight-color: transparent;
@@ -37,11 +37,15 @@
       background: repeating-linear-gradient(
         90deg,
         #fb7185 0px,
-        #fb7185 26px,
-        #fff1f2 26px,
-        #fff1f2 52px
+        #fb7185 24px,
+        #fffbeb 24px,
+        #fffbeb 48px,
+        #facc15 48px,
+        #facc15 72px,
+        #fffbeb 72px,
+        #fffbeb 96px
       );
-      height: 7px;
+      height: 9px;
     }
 
     #phaser-container { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -52,11 +56,57 @@
     @media (pointer: coarse) { .touch-btn { min-block-size: 48px; } }
 
     .bakery-card {
-      background: linear-gradient(165deg, rgba(56, 23, 48, 0.90), rgba(34, 14, 31, 0.92));
-      border: 1.5px solid rgba(253, 224, 71, 0.28);
-      box-shadow: 0 12px 28px rgba(15, 5, 14, 0.45);
-      backdrop-filter: blur(12px);
+      background:
+        radial-gradient(125% 90% at 8% 0%, rgba(254, 240, 138, 0.18), transparent 56%),
+        linear-gradient(170deg, rgba(131, 24, 67, 0.90) 0%, rgba(76, 5, 40, 0.94) 100%);
+      border: 2.5px solid rgba(254, 240, 138, 0.46);
+      box-shadow: 0 8px 0 rgba(46, 5, 25, 0.46), 0 18px 34px rgba(46, 5, 25, 0.38), inset 0 2px 0 rgba(255, 255, 255, 0.24);
+      backdrop-filter: blur(14px);
     }
+
+    .chef-pod {
+      background:
+        radial-gradient(circle at 50% 38%, rgba(255, 251, 235, 0.52), rgba(244, 114, 182, 0.42) 60%, rgba(131, 24, 67, 0.92) 95%);
+      border: 3.5px solid rgba(254, 240, 138, 0.80);
+      box-shadow: inset 0 3px 14px rgba(255, 255, 255, 0.45), 0 6px 0 rgba(69, 10, 38, 0.45);
+    }
+
+    .candy-btn-gold {
+      background: linear-gradient(180deg, #fef08a 0%, #facc15 48%, #f97316 100%);
+      color: #1e1b4b;
+      border: 2px solid #fef9c3;
+      box-shadow: 0 6px 0 #b45309, 0 10px 18px rgba(0, 0, 0, 0.28);
+      transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+    }
+    .candy-btn-gold:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .candy-btn-gold:active { transform: translateY(4px); box-shadow: 0 2px 0 #b45309; }
+
+    .candy-btn-berry {
+      background: linear-gradient(180deg, #c084fc 0%, #9333ea 52%, #6b21a8 100%);
+      color: #ffffff;
+      border: 2px solid #f3e8ff;
+      box-shadow: 0 6px 0 #3b0764, 0 10px 18px rgba(0, 0, 0, 0.28);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+      transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+    }
+    .candy-btn-berry:hover { filter: brightness(1.06); transform: translateY(-1px); }
+    .candy-btn-berry:active { transform: translateY(4px); box-shadow: 0 2px 0 #3b0764; }
+
+    .chef-rate-3d {
+      --cc: #10b981;
+      color: #ffffff;
+      border: 2px solid rgba(255, 255, 255, 0.5) !important;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--cc) 74%, #ffffff), var(--cc));
+      box-shadow: 0 5px 0 color-mix(in srgb, var(--cc) 54%, #000000), 0 8px 14px rgba(0, 0, 0, 0.28);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+      transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+    }
+    .chef-rate-3d:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .chef-rate-3d:active { transform: translateY(4px); box-shadow: 0 1px 0 color-mix(in srgb, var(--cc) 54%, #000000); }
+    .chef-rate-3d[data-study-rating="AGAIN"] { --cc: #f43f5e; }
+    .chef-rate-3d[data-study-rating="HARD"] { --cc: #f59e0b; }
+    .chef-rate-3d[data-study-rating="GOOD"] { --cc: #10b981; }
+    .chef-rate-3d[data-study-rating="EASY"] { --cc: #0ea5e9; }
 
     .no-scrollbar { scrollbar-width: none; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -144,13 +194,13 @@
     <section id="view-login" class="view flex-1 flex flex-col justify-center py-2">
       <div class="max-w-lg w-full mx-auto bakery-card rounded-3xl p-4 sm:p-6 space-y-4 shadow-2xl shadow-rose-950/60">
         <div class="text-center space-y-1">
-          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-300/20 border border-amber-300/45 text-amber-200 text-xs font-bold">
-            🧁 Akademi Patisserie &amp; Kosakata
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-300 text-slate-950 text-xs font-extrabold shadow">
+            🧁 Toko Kue Bintang 5
           </div>
           <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">
-            Siap Memasak, <span class="bg-gradient-to-r from-amber-300 via-pink-300 to-orange-300 bg-clip-text text-transparent">Koki Muda?</span>
+            Ayo Memasak, <span class="text-amber-300">Koki Cilik!</span>
           </h2>
-          <p class="text-xs sm:text-sm text-amber-100/80">Masuk atau daftar dengan nama &amp; email aslimu untuk membuka toko roti!</p>
+          <p class="text-xs sm:text-sm text-pink-100/95">Panggang kue lezat, kuasai kata, &amp; koleksi ⭐⭐⭐!</p>
         </div>
 
         <div id="login-hero-desserts" class="flex justify-center items-center gap-2.5 sm:gap-5 py-0.5" aria-hidden="true"></div>
@@ -238,30 +288,34 @@
         <div class="lg:col-span-6 bakery-card rounded-3xl p-4 sm:p-6 space-y-4 relative overflow-hidden flex flex-col justify-between">
           <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-pink-500/20 blur-3xl pointer-events-none"></div>
           <div class="relative flex flex-col sm:flex-row items-center gap-4">
-            <div id="menu-chef-svg" class="w-32 h-32 sm:w-40 sm:h-40 shrink-0 chef-float"></div>
+            <div class="relative w-36 h-36 sm:w-44 sm:h-44 rounded-3xl chef-pod grid place-items-center shrink-0 overflow-hidden">
+              <div class="absolute top-2 right-2.5 text-sm pointer-events-none">✨</div>
+              <div class="absolute bottom-2 left-2.5 text-sm pointer-events-none">🍓</div>
+              <div id="menu-chef-svg" class="w-32 h-32 sm:w-40 sm:h-40 chef-float"></div>
+            </div>
             <div class="flex-1 w-full space-y-2 text-center sm:text-left">
               <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
-                <span id="menu-rank-pill" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950">Lv.1</span>
-                <span id="menu-student-id-badge" class="text-xs font-mono px-2 py-0.5 rounded-full bg-black/35 border border-white/10 text-amber-200">siswa_01</span>
-                <span id="menu-api-pill" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/35 text-emerald-200">Memuat...</span>
+                <span id="menu-rank-pill" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">Lv.1</span>
+                <span id="menu-student-id-badge" class="text-xs font-mono px-2 py-0.5 rounded-full bg-white/15 border border-white/25 text-amber-100">siswa_01</span>
+                <span id="menu-api-pill" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/25 border border-emerald-300/45 text-emerald-100">Memuat...</span>
               </div>
               <div>
-                <h2 id="menu-student-display-name" class="text-2xl sm:text-3xl font-bold leading-tight">Siswa 01</h2>
-                <p id="menu-rank-title" class="text-xs sm:text-sm text-pink-200 font-semibold">Junior Baker • Koki Pemula</p>
+                <h2 id="menu-student-display-name" class="text-2xl sm:text-3xl font-extrabold leading-tight drop-shadow">Siswa 01</h2>
+                <p id="menu-rank-title" class="text-xs sm:text-sm text-amber-200 font-bold">Junior Baker • Koki Pemula</p>
               </div>
               <div>
-                <div class="flex justify-between text-xs text-amber-100/75 mb-1">
-                  <strong id="menu-exp-text" class="text-amber-200">0 EXP</strong>
-                  <span id="menu-next-exp">Naik Pangkat: 180 EXP</span>
+                <div class="flex justify-between text-xs text-pink-100 mb-1">
+                  <strong id="menu-exp-text" class="text-white">0 EXP</strong>
+                  <span id="menu-next-exp" class="text-amber-200 font-bold">Target: 180 EXP</span>
                 </div>
-                <div class="h-3 rounded-full bg-black/40 overflow-hidden border border-white/10">
-                  <div id="menu-exp-bar" class="exp-fill h-full rounded-full bg-gradient-to-r from-amber-300 via-orange-400 to-pink-500"></div>
+                <div class="h-3.5 rounded-full bg-black/35 overflow-hidden border-2 border-amber-200/35 p-0.5">
+                  <div id="menu-exp-bar" class="exp-fill h-full rounded-full bg-gradient-to-r from-amber-300 via-orange-400 to-pink-400"></div>
                 </div>
               </div>
               <div class="grid grid-cols-3 gap-2 text-center pt-0.5">
-                <div class="rounded-xl bg-black/35 border border-white/10 py-1.5"><div id="menu-stat-points" class="text-base sm:text-lg font-bold text-amber-300">0</div><div class="text-[11px] text-amber-100/70">Poin</div></div>
-                <div class="rounded-xl bg-black/35 border border-white/10 py-1.5"><div id="menu-stat-cakes" class="text-base sm:text-lg font-bold text-pink-300">0</div><div class="text-[11px] text-amber-100/70">Kue Matang</div></div>
-                <div class="rounded-xl bg-black/35 border border-white/10 py-1.5"><div id="menu-stat-acc" class="text-base sm:text-lg font-bold text-emerald-300">-</div><div class="text-[11px] text-amber-100/70">Akurasi</div></div>
+                <div class="rounded-xl bg-white/10 border border-white/20 py-1.5"><div id="menu-stat-points" class="text-base sm:text-lg font-extrabold text-amber-300">0</div><div class="text-[11px] font-semibold text-pink-100">⭐ Poin</div></div>
+                <div class="rounded-xl bg-white/10 border border-white/20 py-1.5"><div id="menu-stat-cakes" class="text-base sm:text-lg font-extrabold text-pink-200">0</div><div class="text-[11px] font-semibold text-pink-100">🧁 Kue</div></div>
+                <div class="rounded-xl bg-white/10 border border-white/20 py-1.5"><div id="menu-stat-acc" class="text-base sm:text-lg font-extrabold text-emerald-300">-</div><div class="text-[11px] font-semibold text-pink-100">🎯 Tepat</div></div>
               </div>
             </div>
           </div>
@@ -281,12 +335,15 @@
 
         <!-- Panel Pilih Resep Kue, Kecepatan Pesanan, & Mulai Masak -->
         <div class="lg:col-span-6 bakery-card rounded-3xl p-4 sm:p-6 flex flex-col gap-3">
-          <div class="flex items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-amber-300">🍰 Buku Resep Toko Roti</h3>
-              <p id="menu-item-count" class="text-[11px] text-amber-100/70">Memuat bahan...</p>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base sm:text-lg font-extrabold text-amber-300">🍰 Buku Resep</h3>
+                <span id="recipe-stars-pill" class="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">⭐ 0 / 18</span>
+              </div>
+              <p id="menu-item-count" class="text-[11px] text-pink-100/85">Memuat bahan...</p>
             </div>
-            <select id="deck-select" class="max-w-[190px] px-2.5 py-1.5 rounded-xl bg-black/45 border border-amber-200/25 text-xs font-semibold truncate" title="Pilih Deck Materi"></select>
+            <select id="deck-select" class="max-w-[185px] px-2.5 py-1.5 rounded-xl bg-black/35 border border-amber-200/35 text-xs font-bold truncate" title="Pilih Deck Materi"></select>
           </div>
 
           <div id="recipe-list" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Daftar Resep Kue"></div>
@@ -294,30 +351,30 @@
           <!-- Tingkat Kecepatan Pesanan Pelanggan -->
           <div>
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-bold uppercase tracking-wider text-amber-200/75">Mode Tantangan Pesanan</span>
-              <span id="rush-bonus-hint" class="text-[11px] font-bold text-amber-300">Waktu 13s • Poin x1.0</span>
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-200">⚡ Kecepatan Dapur</span>
+              <span id="rush-bonus-hint" class="text-[11px] font-bold text-amber-300">13 dtk • Poin x1.0</span>
             </div>
             <div id="rush-mode-grid" class="grid grid-cols-3 gap-2"></div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-auto pt-1">
-            <button id="btn-start-study" type="button" class="touch-btn py-3.5 px-4 rounded-2xl text-left bg-gradient-to-r from-indigo-500 to-violet-600 hover:brightness-110 shadow-lg shadow-indigo-950/50 flex items-center justify-between gap-2">
+            <button id="btn-start-study" type="button" class="touch-btn candy-btn-berry py-3.5 px-4 rounded-2xl text-left flex items-center justify-between gap-2">
               <div>
                 <div class="font-bold text-sm sm:text-base flex flex-wrap items-center gap-1.5">
                   <span>📖 Hafal Bahan</span>
                   <span id="chef-due-badge" class="hidden text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">⏰ 0 Due</span>
                 </div>
-                <div id="chef-study-sub" class="text-[11px] text-indigo-100/90">Kartu Suara + Bonus Resep</div>
+                <div id="chef-study-sub" class="text-[11px] text-purple-100 font-semibold">Suara + Hafalan Cepat</div>
               </div>
-              <span class="text-lg">→</span>
+              <span class="text-xl font-bold">▶</span>
             </button>
 
-            <button id="btn-start-cooking" type="button" class="touch-btn py-3.5 px-4 rounded-2xl text-left bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-slate-950 hover:brightness-110 shadow-lg shadow-rose-950/50 flex items-center justify-between gap-2">
+            <button id="btn-start-cooking" type="button" class="touch-btn candy-btn-gold py-3.5 px-4 rounded-2xl text-left flex items-center justify-between gap-2">
               <div>
-                <div class="font-bold text-sm sm:text-base">🍳 Mulai Masak!</div>
-                <div class="text-[11px] text-slate-900/85 font-semibold">Layani Pesanan &amp; Panggang!</div>
+                <div class="font-extrabold text-sm sm:text-base">🍳 Mulai Masak!</div>
+                <div class="text-[11px] text-slate-900/90 font-bold">Panggang &amp; Raih ⭐⭐⭐</div>
               </div>
-              <span class="text-lg font-bold">→</span>
+              <span class="text-xl font-extrabold">▶</span>
             </button>
           </div>
         </div>
@@ -373,15 +430,15 @@
 
         <div id="study-fsrs-feedback" class="hidden rounded-2xl py-2 px-3 text-xs sm:text-sm font-bold text-center bg-emerald-500/20 border border-emerald-400/35 text-emerald-200"></div>
 
-        <button id="btn-study-reveal" type="button" class="touch-btn w-full py-4 rounded-2xl font-bold text-base sm:text-lg bg-gradient-to-r from-indigo-500 to-violet-600 hover:brightness-110 shadow-lg">👀 Balik Kartu &amp; Lihat Arti</button>
+        <button id="btn-study-reveal" type="button" class="touch-btn candy-btn-berry w-full py-4 rounded-2xl font-bold text-base sm:text-lg">👀 Lihat Artinya!</button>
 
         <div id="study-rating-group" class="hidden space-y-2">
-          <p class="text-xs text-center font-semibold text-amber-100/80">Seberapa hafal kamu? (Menentukan urutan kartu di deck)</p>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button type="button" data-study-rating="AGAIN" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-rose-500/25 hover:bg-rose-500/35 border-2 border-rose-400/45 text-rose-100 text-sm">😵 Lupa<br><span id="chef-sub-again" class="text-[11px] font-normal text-rose-200/80">Paling Depan • 1 mnt</span></button>
-            <button type="button" data-study-rating="HARD" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-amber-500/25 hover:bg-amber-500/35 border-2 border-amber-400/45 text-amber-100 text-sm">🤔 Ragu<br><span id="chef-sub-hard" class="text-[11px] font-normal text-amber-200/80">Agak Depan • 6 mnt</span></button>
-            <button type="button" data-study-rating="GOOD" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-emerald-500/25 hover:bg-emerald-500/35 border-2 border-emerald-400/45 text-emerald-100 text-sm">😊 Ingat!<br><span id="chef-sub-good" class="text-[11px] font-normal text-emerald-200/80">Urutan Tengah • 10 mnt</span></button>
-            <button type="button" data-study-rating="EASY" class="study-rate-btn touch-btn py-3 rounded-2xl font-bold bg-sky-500/25 hover:bg-sky-500/35 border-2 border-sky-400/45 text-sky-100 text-sm">🤩 Hafal!<br><span id="chef-sub-easy" class="text-[11px] font-normal text-sky-200/80">Paling Belakang • 4 hari</span></button>
+          <p class="text-xs text-center font-bold text-pink-100">Pilih seberapa hafal:</p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <button type="button" data-study-rating="AGAIN" class="study-rate-btn chef-rate-3d touch-btn py-3 rounded-2xl font-bold text-sm leading-tight">😵 Lupa<br><span id="chef-sub-again" class="text-[11px] font-extrabold text-white/95">1 mnt</span></button>
+            <button type="button" data-study-rating="HARD" class="study-rate-btn chef-rate-3d touch-btn py-3 rounded-2xl font-bold text-sm leading-tight">🤔 Ragu<br><span id="chef-sub-hard" class="text-[11px] font-extrabold text-white/95">6 mnt</span></button>
+            <button type="button" data-study-rating="GOOD" class="study-rate-btn chef-rate-3d touch-btn py-3 rounded-2xl font-bold text-sm leading-tight">😊 Ingat!<br><span id="chef-sub-good" class="text-[11px] font-extrabold text-white/95">1 hari</span></button>
+            <button type="button" data-study-rating="EASY" class="study-rate-btn chef-rate-3d touch-btn py-3 rounded-2xl font-bold text-sm leading-tight">🤩 Hafal!<br><span id="chef-sub-easy" class="text-[11px] font-extrabold text-white/95">3 hari</span></button>
           </div>
         </div>
       </div>
@@ -570,6 +627,12 @@
   </dialog>
 
   <script>
+    /**
+     * @file baking-chef.html
+     * @description Aplikasi Gim Klien 2 (Baking Chef Rush): simulasi memasak patisserie kosakata interaktif
+     * yang terintegrasi dengan REST API FSRS-5, prioritas bahan adaptif, caching ETag, dan antrean offline.
+     */
+
     /* =========================================================================
        1. KONFIGURASI SERVER, SUARA DAPUR (WEB AUDIO), & JENJANG KOKI
        ========================================================================= */
@@ -786,46 +849,61 @@
       const uid = `ch_${level}_${Math.random().toString(36).slice(2, 6)}`;
       const isMaster = level >= 4;
       const isHead = level >= 3;
-      const scarfColor = level === 1 ? '#f43f5e' : level === 2 ? '#0284c7' : level === 3 ? '#d97706' : '#9333ea';
+      const scarfColor = level === 1 ? '#f43f5e' : level === 2 ? '#0ea5e9' : level === 3 ? '#f59e0b' : '#a855f7';
+      const irisColor = level === 1 ? '#be185d' : level === 2 ? '#0284c7' : level === 3 ? '#b45309' : '#7e22ce';
 
       return `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="${size}" height="${size}" style="width:100%;height:100%;display:block;">
         <defs>
-          <radialGradient id="gl_${uid}" cx="50%" cy="52%" r="48%">
-            <stop offset="0%" stop-color="${r.trimHex}" stop-opacity="0.45"/>
+          <radialGradient id="gl_${uid}" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fffbeb" stop-opacity="0.65"/>
+            <stop offset="55%" stop-color="${r.trimHex}" stop-opacity="0.38"/>
             <stop offset="100%" stop-color="${r.trimHex}" stop-opacity="0"/>
           </radialGradient>
         </defs>
-        <circle cx="100" cy="108" r="82" fill="url(#gl_${uid})"/>
-        <ellipse cx="100" cy="184" rx="56" ry="11" fill="#0f0710" opacity="0.45"/>
-        ${isHead ? `<path d="M58 112 L38 172 L162 172 L142 112 Z" fill="${scarfColor}" stroke="#fef08a" stroke-width="2.2" opacity="0.9"/>` : ''}
-        <!-- Jas Chef Double-Breasted -->
-        <path d="M62 110 C62 96, 138 96, 138 110 L146 174 L54 174 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="3" stroke-linejoin="round"/>
-        <path d="M82 108 L100 128 L118 108" fill="none" stroke="${scarfColor}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-        <polygon points="100,124 91,142 100,137 109,142" fill="${scarfColor}"/>
-        <circle cx="84" cy="144" r="3.5" fill="#334155"/><circle cx="116" cy="144" r="3.5" fill="#334155"/>
-        <circle cx="84" cy="160" r="3.5" fill="#334155"/><circle cx="116" cy="160" r="3.5" fill="#334155"/>
-        ${isMaster ? `<circle cx="100" cy="150" r="9" fill="#facc15" stroke="#92400e" stroke-width="2"/><polygon points="100,144 102,149 107,149 103,152 105,157 100,154 95,157 97,152 93,149 98,149" fill="#ffffff"/>` : ''}
-        <!-- Tangan & Alat Kocok Whisk -->
-        <circle cx="50" cy="140" r="11" fill="#fed7aa" stroke="#ea580c" stroke-width="2"/>
-        <g transform="translate(148,132) rotate(18)">
-          <rect x="-3.5" y="-28" width="7" height="32" rx="3" fill="${level >= 3 ? '#f59e0b' : '#94a3b8'}" stroke="#1e293b" stroke-width="1.6"/>
-          <ellipse cx="0" cy="-42" rx="11" ry="17" fill="none" stroke="${level >= 3 ? '#fde047' : '#e2e8f0'}" stroke-width="2.6"/>
-          <ellipse cx="0" cy="-42" rx="5.5" ry="16" fill="none" stroke="${level >= 3 ? '#fef08a' : '#cbd5e1'}" stroke-width="2"/>
-          <circle cx="0" cy="4" r="11" fill="#fed7aa" stroke="#ea580c" stroke-width="2"/>
+        <circle cx="100" cy="106" r="88" fill="url(#gl_${uid})"/>
+        <ellipse cx="100" cy="186" rx="54" ry="10" fill="#3b0764" opacity="0.32"/>
+        <!-- Rambut Belakang Chibi Cokelat Hangat -->
+        <ellipse cx="100" cy="88" rx="44" ry="38" fill="#7c2d12" stroke="#451a03" stroke-width="2.6"/>
+        <circle cx="58" cy="102" r="13" fill="#9a3412" stroke="#451a03" stroke-width="2.2"/>
+        <circle cx="142" cy="102" r="13" fill="#9a3412" stroke="#451a03" stroke-width="2.2"/>
+        ${isHead ? `<path d="M56 116 L38 176 L162 176 L144 116 Z" fill="${scarfColor}" stroke="#fef08a" stroke-width="2.4"/>` : ''}
+        <!-- Seragam & Celemek Patisserie Imut -->
+        <path d="M62 114 C62 100, 138 100, 138 114 L148 178 L52 178 Z" fill="#ffffff" stroke="#fbcfe8" stroke-width="3" stroke-linejoin="round"/>
+        <rect x="76" y="138" width="48" height="30" rx="10" fill="#fff1f2" stroke="${scarfColor}" stroke-width="2.2"/>
+        <path d="M100 158 C92 152, 90 144, 96 144 C99 144, 100 147, 100 147 C100 147, 101 144, 104 144 C110 144, 108 152, 100 158 Z" fill="${scarfColor}"/>
+        <!-- Pita Leher Koki (Bow-Tie) -->
+        <polygon points="100,122 80,112 82,132" fill="${scarfColor}" stroke="#881337" stroke-width="1.8" stroke-linejoin="round"/>
+        <polygon points="100,122 120,112 118,132" fill="${scarfColor}" stroke="#881337" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="100" cy="122" r="6" fill="#fde047" stroke="#881337" stroke-width="1.8"/>
+        <!-- Tangan & Whisk Emas Berkilau -->
+        <circle cx="50" cy="142" r="11.5" fill="#ffedd5" stroke="#c2410c" stroke-width="2.2"/>
+        <g transform="translate(150,134) rotate(16)">
+          <rect x="-4" y="-26" width="8" height="30" rx="3.5" fill="${level >= 3 ? '#f59e0b' : '#f472b6'}" stroke="#7c2d12" stroke-width="1.8"/>
+          <ellipse cx="0" cy="-40" rx="11.5" ry="16.5" fill="none" stroke="${level >= 3 ? '#fde047' : '#fbcfe8'}" stroke-width="2.8"/>
+          <ellipse cx="0" cy="-40" rx="5.5" ry="15.5" fill="none" stroke="#ffffff" stroke-width="2"/>
+          <circle cx="0" cy="4" r="11.5" fill="#ffedd5" stroke="#c2410c" stroke-width="2.2"/>
         </g>
-        <!-- Wajah Ceria Koki -->
-        <circle cx="100" cy="84" r="32" fill="#fed7aa" stroke="#ea580c" stroke-width="2.4"/>
-        <ellipse cx="78" cy="91" rx="6.5" ry="4" fill="#fb7185" opacity="0.55"/>
-        <ellipse cx="122" cy="91" rx="6.5" ry="4" fill="#fb7185" opacity="0.55"/>
-        <circle cx="87" cy="82" r="4.6" fill="#1e1b4b"/><circle cx="85.5" cy="80.2" r="1.7" fill="#ffffff"/>
-        <circle cx="113" cy="82" r="4.6" fill="#1e1b4b"/><circle cx="111.5" cy="80.2" r="1.7" fill="#ffffff"/>
-        <path d="M89 94 Q100 105 111 94" fill="none" stroke="#7c2d12" stroke-width="3" stroke-linecap="round"/>
-        <!-- Topi Chef (Toque Blanche Bertingkat sesuai Level) -->
-        <path d="M66 56 C48 48, 52 20, 76 24 C84 8, 116 8, 124 24 C148 20, 152 48, 134 56 Z" fill="${r.hatHex}" stroke="${r.trimHex}" stroke-width="3"/>
-        <rect x="68" y="50" width="64" height="15" rx="5" fill="${r.hatHex}" stroke="${r.trimHex}" stroke-width="2.8"/>
-        <rect x="70" y="57" width="60" height="6" rx="2" fill="${r.trimHex}"/>
-        ${isMaster ? `<polygon points="84,48 90,34 100,42 110,34 116,48" fill="#facc15" stroke="#92400e" stroke-width="1.8"/>` : ''}
+        <!-- Wajah Chibi Anime Mata Berbinar & Poni Rambut -->
+        <ellipse cx="100" cy="86" rx="36" ry="33" fill="#ffedd5" stroke="#c2410c" stroke-width="2.5"/>
+        <ellipse cx="74" cy="95" rx="7.5" ry="4.5" fill="#fb7185" opacity="0.72"/>
+        <ellipse cx="126" cy="95" rx="7.5" ry="4.5" fill="#fb7185" opacity="0.72"/>
+        <!-- Mata Besar Anime Berkilau -->
+        <ellipse cx="84" cy="86" rx="7.5" ry="8.8" fill="#1e1b4b"/>
+        <ellipse cx="84" cy="87.5" rx="5.5" ry="6.2" fill="${irisColor}"/>
+        <circle cx="81.5" cy="83" r="2.8" fill="#ffffff"/><circle cx="86.5" cy="89.5" r="1.5" fill="#ffffff"/>
+        <ellipse cx="116" cy="86" rx="7.5" ry="8.8" fill="#1e1b4b"/>
+        <ellipse cx="116" cy="87.5" rx="5.5" ry="6.2" fill="${irisColor}"/>
+        <circle cx="113.5" cy="83" r="2.8" fill="#ffffff"/><circle cx="118.5" cy="89.5" r="1.5" fill="#ffffff"/>
+        <!-- Senyum Ceria Terbuka -->
+        <path d="M90 97 Q100 109 110 97 Z" fill="#fb7185" stroke="#881337" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Poni Rambut Depan di Bawah Topi -->
+        <path d="M64 76 C68 56, 132 56, 136 76 C126 66, 114 74, 108 64 C100 74, 88 72, 82 64 C74 72, 68 74, 64 76 Z" fill="#9a3412" stroke="#451a03" stroke-width="2.2"/>
+        <!-- Topi Chef Puff Besar Berpita -->
+        <path d="M62 56 C40 46, 46 14, 74 20 C84 2, 116 2, 126 20 C154 14, 160 46, 138 56 Z" fill="${r.hatHex}" stroke="${r.trimHex}" stroke-width="3"/>
+        <rect x="65" y="49" width="70" height="15" rx="6" fill="${r.hatHex}" stroke="${r.trimHex}" stroke-width="2.8"/>
+        <rect x="68" y="55" width="64" height="6" rx="3" fill="${r.trimHex}"/>
+        ${isMaster ? `<polygon points="100,18 104,28 115,28 106,35 109,45 100,39 91,45 94,35 85,28 96,28" fill="#facc15" stroke="#92400e" stroke-width="1.8"/>` : `<circle cx="100" cy="34" r="5.5" fill="${r.trimHex}" opacity="0.85"/>`}
       </svg>`;
     }
 
@@ -1766,14 +1844,14 @@
         g.clear(); rf.clear(); cg.clear(); vg.clear();
         const cy = this.counterY;
 
-        // 1. Dinding Patisserie Paris Cerah & Hangat + Panel Kayu Wainscoting
-        g.fillGradientStyle(0x4c1d3d, 0x5b2146, 0x83345b, 0x9d3f64, 1);
+        // 1. Dinding Patisserie Pastel Strawberry-Cream Cerah & Ceria
+        g.fillGradientStyle(0xbe185d, 0xdb2777, 0xf472b6, 0xfbcfe8, 1);
         g.fillRect(0, 0, w, cy);
-        g.lineStyle(1.2, 0xfce7f3, 0.09);
+        g.lineStyle(1.4, 0xffffff, 0.16);
         for (let x = 16; x < w; x += Math.round(24 * sc)) g.lineBetween(x, 0, x, cy);
-        g.fillStyle(0x581c3c, 0.85);
+        g.fillStyle(0x9d174d, 0.78);
         g.fillRect(0, cy - Math.round(30 * sc), w, Math.round(30 * sc));
-        g.lineStyle(2, 0xfbbf24, 0.45);
+        g.lineStyle(2.5, 0xfde047, 0.75);
         g.lineBetween(0, cy - Math.round(30 * sc), w, cy - Math.round(30 * sc));
 
         // 2. Jendela Layanan Kafe Cerah (Tempat Pelanggan Memesan!)
@@ -2568,17 +2646,17 @@
       document.getElementById('study-card-front').textContent = item.en;
       document.getElementById('study-card-back').textContent = item.id;
 
-      // Tampilkan interval FSRS-5 asli per kartu pada keempat tombol penilaian
+      // Tampilkan interval FSRS-5 asli per kartu secara ringkas pada keempat tombol 3D
       const pv = item.preview;
       const stab = Number(item.stability) || 0;
       const estGood = pv?.GOOD || (stab >= 1 ? `${Math.max(2, Math.round(stab * 2.4))} hari` : '10 mnt');
       const estEasy = pv?.EASY || (stab >= 1 ? `${Math.max(4, Math.round(stab * 3.8))} hari` : '4 hari');
       const estHard = pv?.HARD || (stab >= 2 ? `${Math.max(1, Math.round(stab * 1.2))} hari` : '6 mnt');
       const estAgain = pv?.AGAIN || (item.isNew ? '1 mnt' : '10 mnt');
-      document.getElementById('chef-sub-again').textContent = `Paling Depan • ${estAgain}`;
-      document.getElementById('chef-sub-hard').textContent = `Agak Depan • ${estHard}`;
-      document.getElementById('chef-sub-good').textContent = `Urutan Tengah • ${estGood}`;
-      document.getElementById('chef-sub-easy').textContent = `Paling Belakang • ${estEasy}`;
+      document.getElementById('chef-sub-again').textContent = estAgain;
+      document.getElementById('chef-sub-hard').textContent = estHard;
+      document.getElementById('chef-sub-good').textContent = estGood;
+      document.getElementById('chef-sub-easy').textContent = estEasy;
 
       document.getElementById('study-card-back-wrap').classList.add('hidden');
       document.getElementById('study-fsrs-feedback').classList.add('hidden');
@@ -3062,9 +3140,27 @@
       }
     }
 
+    function loadRecipeStars(userId = appConfig.externalUserId) {
+      try {
+        const obj = JSON.parse(localStorage.getItem(`baking_chef_stars_${userId}`) || '{}');
+        return obj && typeof obj === 'object' ? obj : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveRecipeStars(recipeId, earnedStars, userId = appConfig.externalUserId) {
+      if (!recipeId) return;
+      const cur = loadRecipeStars(userId);
+      cur[recipeId] = Math.max(Number(cur[recipeId]) || 0, Math.min(3, Math.max(1, earnedStars)));
+      try { localStorage.setItem(`baking_chef_stars_${userId}`, JSON.stringify(cur)); } catch {}
+    }
+
     async function finishCookingSession(isVictory) {
       stopOrderTimer();
       clearTimeout(state.stepAdvanceTimer);
+      const acc = state.sessionAttempts > 0 ? Math.round((state.sessionCorrect / state.sessionAttempts) * 100) : 100;
+      const earnedStars = isVictory ? (acc >= 90 ? 3 : acc >= 70 ? 2 : 1) : 0;
       if (isVictory) {
         BakerySFX.win();
         const clearBonus = Math.round(40 * getRushMode().mult);
@@ -3072,24 +3168,25 @@
         state.sessionScore += clearBonus;
         state.points += clearBonus;
         state.exp += 40;
+        saveRecipeStars(state.recipe.id, earnedStars);
       } else {
         BakerySFX.wrong();
       }
 
       updateAllHUD();
+      renderRecipesAndRushModes();
       switchView('summary');
 
       const rank = getChefRank(state.exp);
-      const acc = state.sessionAttempts > 0 ? Math.round((state.sessionCorrect / state.sessionAttempts) * 100) : 100;
       document.getElementById('summary-dessert-svg').innerHTML = isVictory
         ? renderDessertSVG(state.recipe.art, 180)
         : renderChefSVG(rank.level, 180);
       document.getElementById('summary-title').textContent = isVictory
-        ? `🧁 ${state.recipe.title} Matang!`
-        : '🥣 Adonan Belum Berhasil!';
+        ? `${'⭐'.repeat(earnedStars)} ${state.recipe.title}!`
+        : '🥣 Coba Panggang Lagi!';
       document.getElementById('summary-subtitle').textContent = isVictory
-        ? `Pelanggan puas! Kamu menyajikan kue bintang 5 dengan akurasi ${acc}%.`
-        : 'Yuk hafalkan dulu kosakata bahannya lalu panggang ulang!';
+        ? `Lezat sekali! Akurasi ${acc}% — bintang resepmu bertambah!`
+        : 'Latih bahannya sebentar lalu masak ulang ya!';
       document.getElementById('summary-score').textContent = `+${state.sessionScore}`;
       document.getElementById('summary-combo').textContent = `x${state.maxCombo}`;
       document.getElementById('summary-accuracy').textContent = `${acc}%`;
@@ -3346,17 +3443,24 @@
     }
 
     function renderRecipesAndRushModes() {
+      const starsMap = loadRecipeStars();
+      const totalStars = RECIPES.reduce((s, r) => s + (Number(starsMap[r.id]) || 0), 0);
+      const starsPill = document.getElementById('recipe-stars-pill');
+      if (starsPill) starsPill.textContent = `⭐ ${totalStars} / ${RECIPES.length * 3}`;
+
       const rEl = document.getElementById('recipe-list');
       if (rEl) {
         rEl.innerHTML = RECIPES.map((r) => {
           const active = r.id === state.selectedRecipeId;
+          const st = Number(starsMap[r.id]) || 0;
+          const starIcons = '⭐'.repeat(st) + '☆'.repeat(3 - st);
           return `
             <button type="button" role="radio" aria-checked="${active}" data-rid="${r.id}" class="touch-btn rounded-2xl p-2.5 border-2 text-center flex flex-col items-center gap-1 transition ${
-              active ? 'bg-amber-400/20 border-amber-300 shadow-md' : 'bg-black/35 border-white/10 hover:border-amber-300/50'
+              active ? 'bg-amber-300/25 border-amber-200 shadow-lg scale-[1.02]' : 'bg-white/10 border-white/20 hover:border-amber-200/60'
             }">
-              <div class="w-12 h-12">${renderDessertSVG(r.art, 48)}</div>
-              <div class="text-[11px] sm:text-xs font-bold leading-tight line-clamp-2">${r.title}</div>
-              <span class="text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-amber-400 text-slate-950 font-bold' : 'bg-black/45 text-amber-200/80'}">${r.badge}</span>
+              <div class="w-14 h-14">${renderDessertSVG(r.art, 56)}</div>
+              <div class="text-[11px] sm:text-xs font-bold leading-tight line-clamp-2 text-white">${r.title}</div>
+              <span class="text-[11px] tracking-wider ${st > 0 ? 'text-amber-300' : 'text-pink-200/70'} font-bold">${starIcons}</span>
             </button>`;
         }).join('');
         rEl.querySelectorAll('button[data-rid]').forEach((b) => {
@@ -3419,7 +3523,7 @@
       document.getElementById('menu-stat-acc').textContent = state.totalAttempts > 0
         ? `${Math.round((state.totalCorrect / state.totalAttempts) * 100)}%`
         : '-';
-      document.getElementById('menu-item-count').textContent = `${Object.keys(state.dynamicIngredients).length} bahan tersedia • Pilihan diacak setiap masak`;
+      document.getElementById('menu-item-count').textContent = `${Object.keys(state.dynamicIngredients).length} bahan siap dimasak!`;
 
       const strip = document.getElementById('chef-ranks-strip');
       if (strip) {

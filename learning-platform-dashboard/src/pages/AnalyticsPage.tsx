@@ -1,3 +1,8 @@
+/**
+ * @file pages/AnalyticsPage.tsx
+ * @description Halaman pemantauan progres siswa secara langsung, visualisasi empat metrik
+ * Learning Analytics (Retensi, Penguasaan, Topik Sulit, Estimasi Waktu), serta Simulator Kurva FSRS-5.
+ */
 import { useEffect, useState } from 'react';
 import {
   Brain,
@@ -423,7 +428,7 @@ export function AnalyticsPage() {
                 onChange={(e) => setSelectedDeckId(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold bg-white"
               >
-                <option value="">🌟 Semua Materi / Semua Deck (Gabungan Real-Time)</option>
+                <option value="">🌟 Semua Deck</option>
                 {decks
                   .filter((d) => !selectedAppId || d.appId === selectedAppId)
                   .map((d) => (
@@ -434,9 +439,9 @@ export function AnalyticsPage() {
               </select>
             </div>
 
-            <div className="flex-1 min-w-[220px]">
+            <div className="flex-1 min-w-[200px]">
               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                Filter Siswa (Klik atau Ketik ID)
+                Filter Siswa
               </label>
               <div className="flex gap-2">
                 <select
@@ -468,7 +473,7 @@ export function AnalyticsPage() {
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold transition-all shadow-sm"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-              Muat Ulang Data
+              Segarkan
             </button>
 
             <button
@@ -476,10 +481,10 @@ export function AnalyticsPage() {
               onClick={handleExportCsv}
               disabled={csvLoading}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold transition-all shadow-sm"
-              title="Unduh tabel data evaluasi lengkap (.csv) siap buka di Microsoft Excel untuk Bab IV/V Skripsi"
+              title="Unduh laporan data evaluasi lengkap (.csv) kompatibel Microsoft Excel"
             >
               <Download className="w-3.5 h-3.5" />
-              {csvLoading ? 'Mengunduh...' : 'Export CSV Skripsi (Excel)'}
+              {csvLoading ? 'Mengunduh...' : 'Ekspor CSV'}
             </button>
 
             <button
@@ -487,19 +492,16 @@ export function AnalyticsPage() {
               onClick={() => window.print()}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all"
             >
-              🖨️ Cetak / PDF
+              🖨️ Cetak
             </button>
           </div>
 
-          {/* Bar Simulasi Majukan Hari (Demo Sidang TA: Jatuh Tempo / Due) */}
+          {/* Bar Simulasi Pergeseran Hari (Uji Jatuh Tempo / Due) */}
           <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 font-bold text-slate-700">
                 <FastForward className="w-3.5 h-3.5 text-amber-600" />
-                Simulasi Waktu (Demo Jatuh Tempo / Due):
-              </span>
-              <span className="text-slate-500">
-                Majukan hari untuk memperlihatkan kartu berubah menjadi <strong>Due</strong> &amp; retensi menurun secara live:
+                Simulasi Waktu Jatuh Tempo:
               </span>
             </div>
 

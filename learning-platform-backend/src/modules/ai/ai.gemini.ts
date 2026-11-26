@@ -3,10 +3,12 @@ import type { z } from 'zod';
 import { env } from '../../config/env';
 import { ApiError } from '../../utils/ApiError';
 
-// =============================================================================
-// Klien Gemini. AI hanya berperan sebagai Content Generator (sesuai batasan proposal):
-// tidak pernah menyentuh jadwal FSRS ataupun database.
-// =============================================================================
+/**
+ * @file modules/ai/ai.gemini.ts
+ * @description Klien integrasi Google Gemini API dengan keluaran JSON terstruktur (Structured Output)
+ * dan validasi skema Zod berlapis. Berperan murni sebagai pembangkit & pemeriksa draf materi tanpa
+ * memodifikasi jadwal FSRS maupun basis data secara langsung.
+ */
 
 // Klien dibuat sekali (lazy) agar server tetap bisa jalan tanpa GEMINI_API_KEY.
 let client: GoogleGenAI | null = null;

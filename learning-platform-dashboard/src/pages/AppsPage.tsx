@@ -1,3 +1,8 @@
+/**
+ * @file pages/AppsPage.tsx
+ * @description Halaman manajemen tenant aplikasi klien, konfigurasi target retensi FSRS-5,
+ * rotasi kredensial X-API-Key, pembagi QR Deep-Link ke gim klien, serta penguji kontrak REST API langsung.
+ */
 import { useEffect, useState, FormEvent } from 'react';
 import QRCode from 'qrcode';
 import {
@@ -45,7 +50,7 @@ const INSPECTOR_ENDPOINTS = [
   },
 ] as const;
 
-// Panel Interaktif Uji Kontrak REST API & Isolasi Multi-Client (Rencana Uji Coba #1 Proposal TA)
+// Panel interaktif pengujian kontrak JSON, header ETag, dan validasi keamanan X-API-Key
 function LiveApiInspector({ defaultKey }: { defaultKey: string }) {
   const [selectedPath, setSelectedPath] = useState<string>(INSPECTOR_ENDPOINTS[1].path);
   const [apiKeyInput, setApiKeyInput] = useState<string>(defaultKey);
@@ -106,8 +111,8 @@ function LiveApiInspector({ defaultKey }: { defaultKey: string }) {
             Live REST API Contract &amp; Security Inspector
           </div>
           <p className="text-xs text-slate-400">
-            Uji langsung kontrak JSON, waktu respons (<code className="text-emerald-300">ms</code>), header{' '}
-            <code className="text-sky-300">ETag</code>, serta penolakan <code className="text-rose-300">401 Unauthorized</code> untuk demo arsitektur REST API.
+            Uji respons JSON, latensi (<code className="text-emerald-300">ms</code>), header{' '}
+            <code className="text-sky-300">ETag</code>, serta penolakan <code className="text-rose-300">401</code> secara langsung.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

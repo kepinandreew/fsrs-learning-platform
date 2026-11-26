@@ -1,3 +1,8 @@
+/**
+ * @file modules/items/items.client.routes.ts
+ * @description Endpoint pengambilan materi pembelajaran (`/api/items`) khusus aplikasi klien (`X-API-Key`),
+ * dilengkapi perhitungan ETag konten deterministik untuk revalidasi cepat HTTP `304 Not Modified`.
+ */
 import crypto from 'crypto';
 import { Router } from 'express';
 import { apiKeyAuth } from '../../middlewares/apiKeyAuth';

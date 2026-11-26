@@ -1,3 +1,9 @@
+/**
+ * @file middlewares/apiKeyAuth.ts
+ * @description Middleware autentikasi aplikasi klien berbasis header `X-API-Key`.
+ * Memvalidasi SHA-256 hash kunci terhadap tabel `apps`, menerapkan cache memori singkat (TTL 30 detik),
+ * dan menyematkan konteks tenant `req.clientApp` untuk menjamin isolasi data multi-aplikasi.
+ */
 import { prisma } from '../config/prisma';
 import { ApiError } from '../utils/ApiError';
 import { hashApiKey } from '../utils/apiKey';

@@ -1,3 +1,8 @@
+/**
+ * @file fsrs/formulas.ts
+ * @description Fungsi-fungsi matematika inti FSRS-5 berbasis model DSR (Difficulty, Stability, Retrievability)
+ * menggunakan 19 parameter bobot standar (w0..w18).
+ */
 import { D_MAX, D_MIN, DECAY, FACTOR, S_MIN } from './constants';
 import { Grade } from './types';
 

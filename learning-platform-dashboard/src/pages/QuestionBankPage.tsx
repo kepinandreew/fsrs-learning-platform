@@ -1,3 +1,8 @@
+/**
+ * @file pages/QuestionBankPage.tsx
+ * @description Halaman pengelolaan Deck dan Bank Materi (Flashcard & Pilihan Ganda),
+ * dilengkapi pencarian cepat, pembaruan versi konten otomatis (`contentVersion`), serta audit kualitas AI.
+ */
 import { useEffect, useState, FormEvent } from 'react';
 import {
   Plus,

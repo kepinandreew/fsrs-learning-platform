@@ -144,7 +144,7 @@ export interface AiVerifyDeckResponse {
   model: string;
 }
 
-// Entitas Monitoring & Learning Analytics (4 Indikator Utama Proposal TA).
+// Entitas Monitoring & Learning Analytics (4 Indikator Analitik Pembelajaran).
 export interface AnalyticsMeta {
   deckId: string;
   deckTitle: string;

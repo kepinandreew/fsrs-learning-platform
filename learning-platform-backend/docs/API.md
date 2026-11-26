@@ -66,7 +66,7 @@ Semua respons JSON memakai amplop standar:
 ### D. Monitoring, Learning Analytics, & Simulator FSRS-5 (`/api/dashboard/analytics`)
 | Method | Rute | Keterangan |
 | :--- | :--- | :--- |
-| `GET` | `/api/dashboard/analytics/summary` | Keempat indikator utama Proposal TA sekaligus ($R_{avg}$, Mastery $S \ge 7$h, Difficult Topics, Completion Time) |
+| `GET` | `/api/dashboard/analytics/summary` | Ringkasan keempat indikator analitik sekaligus ($R_{avg}$, Mastery $S \ge 7$h, Difficult Topics, Completion Time) |
 | `GET` | `/api/dashboard/analytics/retention` | Indikator 1: *Retention State* ($R_{avg}$) |
 | `GET` | `/api/dashboard/analytics/mastery` | Indikator 2: *Mastery Prediction* ($S \ge 7$ hari) |
 | `GET` | `/api/dashboard/analytics/difficult-topics` | Indikator 3: Kartu & tag tersulit |
@@ -85,7 +85,7 @@ Semua respons JSON memakai amplop standar:
 | `GET` | `/api/decks` | Daftar deck aktif milik aplikasi klien |
 | `GET` | `/api/items` | Ambil materi Flashcard & Pilihan Ganda (mendukung header caching `ETag` / `If-None-Match` → `304`) |
 | `GET` | `/api/evaluation/due` | Antrean kartu prioritas FSRS-5 siswa (`Again` → `Hard` → `Due` → `Good` → `Easy`) |
-| `POST` | `/api/evaluation/review` | Catat review flashcard (`AGAIN`/`HARD`/`GOOD`/`EASY`) + *Dynamic FSRS Difficulty Adjustment* |
+| `POST` | `/api/evaluation/review` | Catat penilaian kartu FSRS-5 (`AGAIN`/`HARD`/`GOOD`/`EASY`) secara idempoten |
 | `POST` | `/api/evaluation/quiz` | Evaluasi jawaban kuis pilihan ganda, hitung skor, waktu respons, & korelasi FSRS |
 | `GET` | `/api/progress` | Ambil profil progres gamifikasi siswa (Level, EXP, Poin, Streak, `clientState`) |
 | `PUT` | `/api/progress` | Sinkronisasi state progres permainan siswa |

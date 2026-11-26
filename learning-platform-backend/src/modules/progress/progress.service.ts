@@ -1,3 +1,8 @@
+/**
+ * @file modules/progress/progress.service.ts
+ * @description Layanan manajemen progres gamifikasi pemain (poin, EXP, level, streak harian),
+ * penggabungan atribut `clientState` lintas-gim, serta agregasi papan peringkat kompetitif.
+ */
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { ApiError } from '../../utils/ApiError';

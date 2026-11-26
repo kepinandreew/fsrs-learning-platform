@@ -1,3 +1,8 @@
+/**
+ * @file components/Layout.tsx
+ * @description Kerangka tata letak utama Developer Console: navigasi responsif (sidebar desktop &
+ * drawer seluler), indikator koneksi API aktif, serta pintasan langsung ke kedua aplikasi gim klien.
+ */
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {

@@ -1,3 +1,8 @@
+/**
+ * @file modules/analytics/analytics.service.ts
+ * @description Layanan agregasi data analitik pembelajaran per aplikasi/deck/siswa, pemantauan
+ * status kartu FSRS-5 secara langsung, simulasi kurva pelupaan, serta ekspor laporan evaluasi CSV.
+ */
 import { CardStateType, ItemType, Rating } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { FSRS, Grade, State, createEmptyCard, retrievability, type Card } from '../../fsrs';
@@ -802,7 +807,7 @@ export async function deleteStudent(developerId: string, appId: string, external
 }
 
 // =============================================================================
-// Export CSV Data Evaluasi Uji Coba (Bab IV/V Skripsi - Microsoft Excel Ready)
+// Export CSV Laporan Evaluasi Pembelajaran (UTF-8 BOM, Kompatibel Microsoft Excel)
 // =============================================================================
 
 function csvCell(val: unknown): string {
@@ -826,14 +831,14 @@ export async function exportAnalyticsCsv(developerId: string, q: MonitoringQuery
 
   const lines: string[] = [];
 
-  lines.push(csvRow(['LAPORAN DATA EVALUASI PEMBELAJARAN ADAPTIF FSRS-5 (TUGAS AKHIR / SKRIPSI)']));
+  lines.push(csvRow(['LAPORAN DATA EVALUASI PEMBELAJARAN ADAPTIF FSRS-5']));
   lines.push(csvRow(['Aplikasi Client', monitoring.app?.name ?? '-']));
   lines.push(csvRow(['Cakupan Materi (Deck)', summary.meta.deckTitle]));
   lines.push(csvRow(['Filter Siswa', q.externalUserId ?? 'Semua Siswa Aktif']));
   lines.push(csvRow(['Waktu Ekspor (ISO)', monitoring.generatedAt]));
   lines.push('');
 
-  lines.push(csvRow(['=== 1. RINGKASAN 4 INDIKATOR ANALITIK UTAMA PROPOSAL TA ===']));
+  lines.push(csvRow(['=== 1. RINGKASAN 4 INDIKATOR ANALITIK PEMBELAJARAN ===']));
   lines.push(
     csvRow([
       'TotalSiswaAktif',

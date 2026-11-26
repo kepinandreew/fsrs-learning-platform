@@ -1,3 +1,8 @@
+/**
+ * @file api/client.ts
+ * @description Klien HTTP terpusat untuk Developer Dashboard dengan penyisipan otomatis token JWT,
+ * deduplikasi serta cache GET berdurasi singkat (30 detik), dan pemetaan penuh ke endpoint REST API.
+ */
 import type {
   AiGenerateResponse,
   AiStatus,

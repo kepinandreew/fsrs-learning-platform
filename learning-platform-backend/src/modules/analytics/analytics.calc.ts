@@ -1,12 +1,12 @@
 import { retrievability } from '../../fsrs';
 
-// =============================================================================
-// Kalkulasi Learning Analytics (fungsi MURNI: tanpa DB agar mudah diuji)
-// Rumus mengacu pada proposal TA: Retention State, Mastery Prediction,
-// Difficult Topics, dan Completion Time Estimation.
-// =============================================================================
+/**
+ * @file modules/analytics/analytics.calc.ts
+ * @description Fungsi kalkulasi murni (tanpa akses database) untuk empat indikator analitik pembelajaran:
+ * Retention State (R_avg), Mastery Prediction (S >= 7 hari), Difficult Topics, dan Completion Time Estimation.
+ */
 
-// Batas stabilitas (hari) untuk dianggap "dikuasai" (proposal: S >= 7 hari).
+// Ambang stabilitas memori (dalam hari) agar sebuah kartu dikategorikan telah dikuasai jangka panjang.
 export const MASTERY_STABILITY_DAYS = 7;
 
 const MS_DAY = 86_400_000;
