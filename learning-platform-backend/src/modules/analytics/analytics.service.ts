@@ -13,6 +13,7 @@ import type { AnalyticsQuery, FsrsSimulateInput, MonitoringQuery, ShiftDueInput 
 import {
   computeCompletion,
   computeDifficultTopics,
+  computeFsrsCalibration,
   computeMastery,
   computeRetention,
   type CardRow,
@@ -676,8 +677,64 @@ const SIM_GRADE: Record<'AGAIN' | 'HARD' | 'GOOD' | 'EASY', Grade> = {
   EASY: Grade.Easy,
 };
 
+export async function resolveAppCustomWeights(
+  developerId: string,
+  appId?: string,
+): Promise<number[] | undefined> {
+  if (!appId) return undefined;
+  const owned = await getOwnedApp(developerId, appId);
+  const raw = owned.fsrsParams;
+  return Array.isArray(raw) && raw.length === 19 && raw.every((n) => typeof n === 'number' && Number.isFinite(n))
+    ? (raw as number[])
+    : undefined;
+}
+
+export async function getCalibration(developerId: string, q: AnalyticsQuery) {
+  const scope = await loadScope(developerId, q);
+  const now = new Date();
+  const [appRow, logs] = await Promise.all([
+    prisma.app.findUnique({ where: { id: scope.deck.appId }, select: { id: true, name: true, fsrsParams: true } }),
+    prisma.reviewLog.findMany({
+      where: {
+        item: { ...scope.deckFilter, type: ItemType.FLASHCARD },
+        ...(scope.userId ? { userId: scope.userId } : {}),
+      },
+      select: {
+        userId: true,
+        itemId: true,
+        rating: true,
+        stateBefore: true,
+        retrievability: true,
+        elapsedDays: true,
+        reviewedAt: true,
+      },
+      orderBy: { reviewedAt: 'asc' },
+    }),
+  ]);
+
+  const rawParams = appRow?.fsrsParams;
+  const customWeights =
+    Array.isArray(rawParams) && rawParams.length === 19 && rawParams.every((n) => typeof n === 'number')
+      ? (rawParams as number[])
+      : null;
+
+  const cal = computeFsrsCalibration(logs, customWeights);
+  return {
+    meta: metaOf(scope, now),
+    appId: appRow?.id ?? scope.deck.appId,
+    appName: appRow?.name ?? 'Aplikasi',
+    usingCustomWeights: Boolean(customWeights),
+    ...cal,
+  };
+}
+
 export function simulateFsrs(input: FsrsSimulateInput) {
-  const engine = new FSRS({ requestRetention: input.requestRetention });
+  const customW =
+    Array.isArray(input.fsrsParams) && input.fsrsParams.length === 19 ? input.fsrsParams : undefined;
+  const engine = new FSRS({
+    requestRetention: input.requestRetention,
+    ...(customW ? { w: customW } : {}),
+  });
   const t0 = new Date('2026-01-01T08:00:00.000Z');
   const hasInitialCard = Boolean(
     input.initialCard && input.initialCard.state !== 'NEW' && input.initialCard.stability > 0,
@@ -759,6 +816,7 @@ export function simulateFsrs(input: FsrsSimulateInput) {
 
   return {
     requestRetention: input.requestRetention,
+    usingCustomWeights: Boolean(customW),
     initialCard: hasInitialCard && input.initialCard ? input.initialCard : null,
     finalCard: {
       state: card.state,

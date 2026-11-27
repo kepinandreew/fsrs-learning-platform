@@ -19,6 +19,8 @@ import {
   Upload,
   Image as ImageIcon,
   Volume2,
+  Archive,
+  RotateCcw,
 } from 'lucide-react';
 import { appsApi, decksApi, itemsApi, aiApi } from '../api/client';
 import type {
@@ -27,6 +29,7 @@ import type {
   LearningItem,
   ItemType,
   AiVerifyDeckResponse,
+  PaginationMeta,
   PortableDeckItem,
 } from '../api/types';
 
@@ -91,6 +94,9 @@ export function QuestionBankPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [bulkNotice, setBulkNotice] = useState<string | null>(null);
   const [importingBulk, setImportingBulk] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageMeta, setPageMeta] = useState<PaginationMeta | null>(null);
   const fileImportRef = useRef<HTMLInputElement | null>(null);
 
   // State Edit Deck & Edit Soal (menaikkan contentVersion otomatis di server)
@@ -99,15 +105,18 @@ export function QuestionBankPage() {
   const [editDeckDesc, setEditDeckDesc] = useState('');
   const [editingItem, setEditingItem] = useState<LearningItem | null>(null);
 
-  async function loadInitial() {
+  async function loadInitial(includeArchived = showArchived) {
     setLoading(true);
     try {
-      const [appsList, decksList] = await Promise.all([appsApi.list(), decksApi.list()]);
+      const [appsList, decksList] = await Promise.all([
+        appsApi.list(),
+        decksApi.list(undefined, includeArchived),
+      ]);
       const activeApps = appsList.filter((a) => a.isActive);
       setApps(activeApps);
       setDecks(decksList);
       if (activeApps[0] && !deckAppId) setDeckAppId(activeApps[0].id);
-      if (decksList[0] && !selectedDeckId) {
+      if (decksList[0] && (!selectedDeckId || !decksList.some((d) => d.id === selectedDeckId))) {
         setSelectedDeckId(decksList[0].id);
       }
     } catch (err) {
@@ -117,26 +126,55 @@ export function QuestionBankPage() {
     }
   }
 
-  async function loadItems(deckId: string) {
+  async function loadItems(deckId: string, pageNum = page, includeArchived = showArchived) {
     if (!deckId) {
       setItems([]);
+      setPageMeta(null);
       return;
     }
     try {
-      const res = await itemsApi.list({ deckId, pageSize: 100 });
+      const res = await itemsApi.list({
+        deckId,
+        page: pageNum,
+        pageSize: 50,
+        includeInactive: includeArchived,
+      });
       setItems(res.items);
+      setPageMeta(res.meta);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat item');
     }
   }
 
   useEffect(() => {
-    loadInitial();
-  }, []);
+    loadInitial(showArchived);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showArchived]);
 
   useEffect(() => {
-    if (selectedDeckId) loadItems(selectedDeckId);
-  }, [selectedDeckId]);
+    if (selectedDeckId) loadItems(selectedDeckId, page, showArchived);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDeckId, page, showArchived]);
+
+  async function handleRestoreDeck(deck: Deck) {
+    try {
+      await decksApi.update(deck.id, { isActive: true });
+      setBulkNotice(`Deck "${deck.title}" berhasil dipulihkan kembali.`);
+      await loadInitial(showArchived);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal memulihkan deck');
+    }
+  }
+
+  async function handleRestoreItem(item: LearningItem) {
+    try {
+      await itemsApi.update(item.id, { isActive: true });
+      setBulkNotice('Materi terhapus berhasil dipulihkan ke deck aktif.');
+      await loadItems(selectedDeckId, page, showArchived);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal memulihkan materi');
+    }
+  }
 
   async function handleCreateDeck(e: FormEvent) {
     e.preventDefault();
@@ -539,13 +577,30 @@ export function QuestionBankPage() {
             Kelola deck pembelajaran, kartu memori FSRS, dan soal kuis pilihan ganda.
           </p>
         </div>
-        <button
-          onClick={() => setShowDeckForm((v) => !v)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all shadow-sm self-start"
-        >
-          <FolderPlus className="w-4 h-4" />
-          {showDeckForm ? 'Tutup Form Deck' : 'Deck Baru'}
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          <button
+            type="button"
+            onClick={() => {
+              setPage(1);
+              setShowArchived((v) => !v);
+            }}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
+              showArchived
+                ? 'bg-amber-50 border-amber-300 text-amber-800'
+                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <Archive className="w-3.5 h-3.5" />
+            {showArchived ? 'Sembunyikan Arsip' : 'Lihat Arsip Terhapus'}
+          </button>
+          <button
+            onClick={() => setShowDeckForm((v) => !v)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all shadow-sm"
+          >
+            <FolderPlus className="w-4 h-4" />
+            {showDeckForm ? 'Tutup Form Deck' : 'Deck Baru'}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -635,6 +690,7 @@ export function QuestionBankPage() {
                 value={selectedDeckId}
                 onChange={(e) => {
                   setSelectedDeckId(e.target.value);
+                  setPage(1);
                   setVerifyReport(null);
                 }}
                 className="w-full mt-0.5 px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -642,6 +698,7 @@ export function QuestionBankPage() {
                 {decks.length === 0 && <option value="">-- Belum ada deck --</option>}
                 {decks.map((d) => (
                   <option key={d.id} value={d.id}>
+                    {d.isActive ? '' : '[ARSIP] '}
                     {d.title} ({d._count?.learningItems ?? 0} item)
                   </option>
                 ))}
@@ -709,13 +766,24 @@ export function QuestionBankPage() {
                 <Wrench className="w-3.5 h-3.5" />
                 {verifyingDeck ? 'Memeriksa Deck...' : 'Audit & Perbaiki via AI'}
               </button>
-              <button
-                onClick={() => handleDeleteDeck(currentDeck)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 hover:bg-rose-50 text-xs font-semibold text-rose-600"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Hapus Deck
-              </button>
+              {currentDeck.isActive ? (
+                <button
+                  onClick={() => handleDeleteDeck(currentDeck)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200 hover:bg-rose-50 text-xs font-semibold text-rose-600"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Hapus Deck
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleRestoreDeck(currentDeck)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-semibold text-emerald-800"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Pulihkan Deck
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -1123,6 +1191,11 @@ export function QuestionBankPage() {
                           >
                             v{item.contentVersion}
                           </span>
+                          {!item.isActive && (
+                            <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-bold">
+                              Arsip Terhapus
+                            </span>
+                          )}
                           {linkedFc && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/60 text-[10px] font-semibold">
                               <Link2 className="w-3 h-3" />
@@ -1227,17 +1300,55 @@ export function QuestionBankPage() {
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleDeleteItem(item)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                          title="Hapus materi"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {item.isActive ? (
+                          <button
+                            onClick={() => handleDeleteItem(item)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Hapus materi"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleRestoreItem(item)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-[11px] font-semibold"
+                            title="Pulihkan materi ini"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            Pulihkan
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {pageMeta && pageMeta.totalPages > 1 && (
+              <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between text-xs">
+                <span className="text-slate-500">
+                  Halaman <strong>{pageMeta.page}</strong> dari <strong>{pageMeta.totalPages}</strong> ({pageMeta.total} total materi)
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="px-3 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 font-semibold text-slate-700"
+                  >
+                    ← Sebelumnya
+                  </button>
+                  <button
+                    type="button"
+                    disabled={page >= pageMeta.totalPages}
+                    onClick={() => setPage((p) => Math.min(pageMeta.totalPages, p + 1))}
+                    className="px-3 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 font-semibold text-slate-700"
+                  >
+                    Berikutnya →
+                  </button>
+                </div>
               </div>
             )}
           </div>

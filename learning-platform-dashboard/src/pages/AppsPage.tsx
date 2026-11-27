@@ -50,7 +50,12 @@ const INSPECTOR_ENDPOINTS = [
   { label: 'GET /api/decks (Daftar Deck Klien)', path: '/api/decks', needsKey: true },
   {
     label: 'GET /api/items (Kontrak Materi + ETag)',
-    path: '/api/items?type=FLASHCARD&pageSize=3',
+    path: '/api/items?type=FLASHCARD&limit=3',
+    needsKey: true,
+  },
+  {
+    label: 'GET /api/assets/manifest (Manifest Aset Media + CacheKey)',
+    path: '/api/assets/manifest',
     needsKey: true,
   },
   {

@@ -1,9 +1,9 @@
-import { retrievability } from '../../fsrs';
+import { DEFAULT_WEIGHTS, FACTOR, retrievability } from '../../fsrs';
 
 /**
  * @file modules/analytics/analytics.calc.ts
- * @description Fungsi kalkulasi murni (tanpa akses database) untuk empat indikator analitik pembelajaran:
- * Retention State (R_avg), Mastery Prediction (S >= 7 hari), Difficult Topics, dan Completion Time Estimation.
+ * @description Fungsi kalkulasi murni (tanpa akses database) untuk empat indikator analitik pembelajaran
+ * serta evaluasi akurasi prediktif & kalibrasi bobot empiris FSRS-5 (RMSE, Brier Score, Log-Loss).
  */
 
 // Ambang stabilitas memori (dalam hari) agar sebuah kartu dikategorikan telah dikuasai jangka panjang.
@@ -346,4 +346,193 @@ export function computeDifficultTopics(
     .sort((a, b) => b.score - a.score);
 
   return { cards: cards.slice(0, limit), tags: tags.slice(0, limit) };
+}
+
+// =============================================================================
+// 5) Evaluasi Akurasi Prediktif & Kalibrasi Bobot Empiris FSRS-5
+// =============================================================================
+
+export interface CalibrationLogRow {
+  userId: string;
+  itemId: string;
+  rating: 'AGAIN' | 'HARD' | 'GOOD' | 'EASY';
+  stateBefore: 'NEW' | 'LEARNING' | 'REVIEW' | 'RELEARNING';
+  retrievability: number | null;
+  elapsedDays: number;
+  reviewedAt: Date;
+}
+
+export interface CalibrationBin {
+  label: string;
+  count: number;
+  predictedAvg: number | null;
+  actualRate: number | null;
+}
+
+export interface FsrsCalibrationResult {
+  totalReviewLogs: number;
+  evaluatedReviews: number;
+  meanPredicted: number | null;
+  actualRecallRate: number | null;
+  rmse: number | null;
+  brierScore: number | null;
+  logLoss: number | null;
+  bins: CalibrationBin[];
+  currentWeights: number[];
+  suggestedWeights: number[];
+}
+
+export function computeFsrsCalibration(
+  logs: CalibrationLogRow[],
+  currentWeightsInput?: readonly number[] | null,
+): FsrsCalibrationResult {
+  const baseW =
+    Array.isArray(currentWeightsInput) && currentWeightsInput.length === 19
+      ? [...currentWeightsInput]
+      : [...DEFAULT_WEIGHTS];
+
+  const evalRows = logs.filter(
+    (l) =>
+      l.stateBefore !== 'NEW' &&
+      typeof l.retrievability === 'number' &&
+      Number.isFinite(l.retrievability) &&
+      l.retrievability > 0,
+  );
+
+  const binDefs = [
+    { label: '< 70%', lo: 0, hi: 0.7 },
+    { label: '70–85%', lo: 0.7, hi: 0.85 },
+    { label: '85–93%', lo: 0.85, hi: 0.93 },
+    { label: '93–100%', lo: 0.93, hi: 1.01 },
+  ];
+
+  if (evalRows.length === 0) {
+    return {
+      totalReviewLogs: logs.length,
+      evaluatedReviews: 0,
+      meanPredicted: null,
+      actualRecallRate: null,
+      rmse: null,
+      brierScore: null,
+      logLoss: null,
+      bins: binDefs.map((b) => ({ label: b.label, count: 0, predictedAvg: null, actualRate: null })),
+      currentWeights: baseW.map((v) => round(v, 5)),
+      suggestedWeights: baseW.map((v) => round(v, 5)),
+    };
+  }
+
+  let sumPred = 0;
+  let sumActual = 0;
+  let sumBrier = 0;
+  let sumLogLoss = 0;
+  const bucketItems = binDefs.map(() => [] as Array<{ p: number; y: number }>);
+
+  for (const r of evalRows) {
+    const p = Math.min(0.999999, Math.max(0.000001, r.retrievability!));
+    const y = r.rating === 'AGAIN' ? 0 : 1;
+    sumPred += p;
+    sumActual += y;
+    sumBrier += (p - y) * (p - y);
+    sumLogLoss += -(y * Math.log(p) + (1 - y) * Math.log(1 - p));
+
+    const bIdx = binDefs.findIndex((b) => p >= b.lo && p < b.hi);
+    if (bIdx >= 0) bucketItems[bIdx]!.push({ p, y });
+  }
+
+  const N = evalRows.length;
+  let weightedSqErr = 0;
+  const bins: CalibrationBin[] = binDefs.map((b, idx) => {
+    const arr = bucketItems[idx]!;
+    if (arr.length === 0) {
+      return { label: b.label, count: 0, predictedAvg: null, actualRate: null };
+    }
+    const pAvg = arr.reduce((s, x) => s + x.p, 0) / arr.length;
+    const yAvg = arr.reduce((s, x) => s + x.y, 0) / arr.length;
+    weightedSqErr += (arr.length / N) * (pAvg - yAvg) * (pAvg - yAvg);
+    return {
+      label: b.label,
+      count: arr.length,
+      predictedAvg: round(pAvg),
+      actualRate: round(yAvg),
+    };
+  });
+
+  const meanPredicted = sumPred / N;
+  const actualRecallRate = sumActual / N;
+
+  // Estimasi stabilitas awal empiris w0..w3 dari pasangan review ke-1 (NEW) -> review ke-2 kartu yang sama.
+  const byCard = new Map<string, CalibrationLogRow[]>();
+  for (const l of logs) {
+    const key = `${l.userId}:${l.itemId}`;
+    const arr = byCard.get(key);
+    if (arr) arr.push(l);
+    else byCard.set(key, [l]);
+  }
+
+  const firstStats: Array<{ sumY: number; sumT: number; n: number }> = [
+    { sumY: 0, sumT: 0, n: 0 },
+    { sumY: 0, sumT: 0, n: 0 },
+    { sumY: 0, sumT: 0, n: 0 },
+    { sumY: 0, sumT: 0, n: 0 },
+  ];
+  const gradeIndex: Record<CalibrationLogRow['rating'], number> = {
+    AGAIN: 0,
+    HARD: 1,
+    GOOD: 2,
+    EASY: 3,
+  };
+
+  for (const seq of byCard.values()) {
+    if (seq.length < 2) continue;
+    seq.sort((a, b) => a.reviewedAt.getTime() - b.reviewedAt.getTime());
+    const first = seq[0]!;
+    const second = seq[1]!;
+    if (first.stateBefore !== 'NEW') continue;
+    const dtDays = Math.max(
+      second.elapsedDays || 0,
+      (second.reviewedAt.getTime() - first.reviewedAt.getTime()) / MS_DAY,
+      0.15,
+    );
+    const st = firstStats[gradeIndex[first.rating]]!;
+    st.sumY += second.rating === 'AGAIN' ? 0 : 1;
+    st.sumT += dtDays;
+    st.n += 1;
+  }
+
+  const suggested = [...baseW];
+  for (let g = 0; g < 4; g++) {
+    const st = firstStats[g]!;
+    if (st.n === 0) continue;
+    const smoothedR = Math.min(0.97, Math.max(0.55, (st.sumY + 4 * 0.9) / (st.n + 4)));
+    const avgT = Math.max(0.25, st.sumT / st.n);
+    const denom = Math.pow(smoothedR, -2) - 1;
+    if (denom > 0.001) {
+      const empS = Math.min(35, Math.max(0.1, (FACTOR * avgT) / denom));
+      const alpha = Math.min(0.6, st.n / (st.n + 6));
+      suggested[g] = (1 - alpha) * baseW[g]! + alpha * empS;
+    }
+  }
+  // Jaga monotonisitas ketat w0 < w1 < w2 < w3
+  for (let g = 1; g < 4; g++) {
+    if (suggested[g]! <= suggested[g - 1]!) {
+      suggested[g] = Number((suggested[g - 1]! * 1.35 + 0.15).toFixed(5));
+    }
+  }
+  if (N >= 3) {
+    const delta = actualRecallRate - meanPredicted;
+    suggested[8] = Math.min(2.5, Math.max(0.8, baseW[8]! + 0.35 * delta));
+  }
+
+  return {
+    totalReviewLogs: logs.length,
+    evaluatedReviews: N,
+    meanPredicted: round(meanPredicted),
+    actualRecallRate: round(actualRecallRate),
+    rmse: round(Math.sqrt(weightedSqErr)),
+    brierScore: round(sumBrier / N),
+    logLoss: round(sumLogLoss / N),
+    bins,
+    currentWeights: baseW.map((v) => round(v, 5)),
+    suggestedWeights: suggested.map((v) => round(v, 5)),
+  };
 }

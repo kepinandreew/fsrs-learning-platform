@@ -32,6 +32,7 @@ import type {
   AnalyticsSummaryResponse,
   ClientApp,
   Deck,
+  FsrsCalibrationResponse,
   FsrsRating,
   FsrsSimulateInitialCard,
   FsrsSimulateResponse,
@@ -113,6 +114,9 @@ export function AnalyticsPage() {
 
   const [data, setData] = useState<AnalyticsSummaryResponse | null>(null);
   const [monitoring, setMonitoring] = useState<MonitoringResponse | null>(null);
+  const [calibration, setCalibration] = useState<FsrsCalibrationResponse | null>(null);
+  const [applyingCalibration, setApplyingCalibration] = useState(false);
+  const [calibrationNotice, setCalibrationNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -157,7 +161,7 @@ export function AnalyticsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [sumRes, monRes] = await Promise.all([
+      const [sumRes, monRes, calRes] = await Promise.all([
         analyticsApi.summary({
           appId: resolvedAppId || undefined,
           deckId: deckId || undefined,
@@ -170,9 +174,17 @@ export function AnalyticsPage() {
           externalUserId: userFilter,
           limit: 25,
         }),
+        analyticsApi
+          .calibration({
+            appId: resolvedAppId || undefined,
+            deckId: deckId || undefined,
+            externalUserId: userFilter,
+          })
+          .catch(() => null),
       ]);
       setData(sumRes);
       setMonitoring(monRes);
+      setCalibration(calRes);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat analitik');
       setData(null);
@@ -193,7 +205,9 @@ export function AnalyticsPage() {
     if (stepsToRun.length === 0) return;
     setSimLoading(true);
     try {
+      const activeAppId = selectedAppId || monitoring?.app?.id || undefined;
       const res = await analyticsApi.simulateFsrs({
+        appId: activeAppId,
         requestRetention: retToRun,
         initialCard: initCard,
         steps: stepsToRun,
@@ -321,6 +335,27 @@ export function AnalyticsPage() {
     const def = preset ?? [{ rating: 'GOOD' }];
     setSimSteps(def);
     runSimulation(def, simRetention, simInitialCard);
+  }
+
+  async function handleApplySuggestedWeights() {
+    if (!calibration) return;
+    setApplyingCalibration(true);
+    setError(null);
+    setCalibrationNotice(null);
+    try {
+      await appsApi.update(calibration.appId, { fsrsParams: calibration.suggestedWeights });
+      setCalibrationNotice(
+        `19 bobot kalibrasi empiris berhasil diterapkan pada aplikasi "${calibration.appName}".`,
+      );
+      await Promise.all([
+        loadAll(selectedDeckId, externalUserId, selectedAppId),
+        runSimulation(simSteps, simRetention, simInitialCard),
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menerapkan kalibrasi bobot');
+    } finally {
+      setApplyingCalibration(false);
+    }
   }
 
   const pct = (v: number | null | undefined) =>
@@ -2006,6 +2041,110 @@ export function AnalyticsPage() {
               </div>
             </div>
           )}
+
+          {/* Panel Validasi Akurasi Model & Kalibrasi Bobot Empiris FSRS-5 */}
+          {calibration && (
+            <div className="bg-white rounded-2xl border border-indigo-200/90 p-5 shadow-sm space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <FlaskConical className="w-4 h-4 text-indigo-600" />
+                    Validasi Akurasi Prediktif &amp; Kalibrasi Bobot Empiris FSRS-5
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Membandingkan probabilitas ingat prediksi FSRS-5 terhadap kenyataan ingatan siswa pada{' '}
+                    <strong>{calibration.evaluatedReviews}</strong> ulasan lanjutan (total{' '}
+                    {calibration.totalReviewLogs} log).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={applyingCalibration || calibration.totalReviewLogs === 0}
+                  onClick={handleApplySuggestedWeights}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold shadow-sm"
+                >
+                  {applyingCalibration ? 'Mengkalibrasi...' : '⚡ Terapkan Kalibrasi Bobot ke Aplikasi'}
+                </button>
+              </div>
+
+              {calibrationNotice && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+                  {calibrationNotice}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <p className="text-[10px] font-bold uppercase text-slate-400">Prediksi R Rata-rata</p>
+                  <p className="text-lg font-extrabold text-indigo-700 mt-0.5">
+                    {pct(calibration.meanPredicted)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <p className="text-[10px] font-bold uppercase text-slate-400">Retensi Aktual Nyata</p>
+                  <p className="text-lg font-extrabold text-emerald-700 mt-0.5">
+                    {pct(calibration.actualRecallRate)}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100">
+                  <p className="text-[10px] font-bold uppercase text-indigo-500">RMSE Kalibrasi</p>
+                  <p className="text-lg font-extrabold text-slate-900 mt-0.5 font-mono">
+                    {calibration.rmse !== null ? calibration.rmse.toFixed(4) : '—'}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100">
+                  <p className="text-[10px] font-bold uppercase text-indigo-500">Brier Score</p>
+                  <p className="text-lg font-extrabold text-slate-900 mt-0.5 font-mono">
+                    {calibration.brierScore !== null ? calibration.brierScore.toFixed(4) : '—'}
+                  </p>
+                </div>
+                <div className="p-3 rounded-xl bg-indigo-50/60 border border-indigo-100">
+                  <p className="text-[10px] font-bold uppercase text-indigo-500">Binary Log-Loss</p>
+                  <p className="text-lg font-extrabold text-slate-900 mt-0.5 font-mono">
+                    {calibration.logLoss !== null ? calibration.logLoss.toFixed(4) : '—'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs">
+                <div className="lg:col-span-7 rounded-xl border border-slate-200/80 p-3.5 space-y-2">
+                  <p className="font-bold text-slate-800">
+                    Tabel Kalibrasi Rentang Probabilitas (Prediksi FSRS vs Aktual)
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {calibration.bins.map((b) => (
+                      <div key={b.label} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <p className="text-[10px] font-bold text-slate-500">{b.label} ({b.count}x)</p>
+                        <p className="text-xs font-semibold text-slate-700 mt-1">
+                          Prediksi: <strong className="text-indigo-700">{pct(b.predictedAvg)}</strong>
+                        </p>
+                        <p className="text-xs font-semibold text-slate-700">
+                          Aktual: <strong className="text-emerald-700">{pct(b.actualRate)}</strong>
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="lg:col-span-5 rounded-xl border border-slate-200/80 p-3.5 space-y-1.5">
+                  <p className="font-bold text-slate-800">
+                    Rekomendasi Bobot Stabilitas Awal (w0..w3)
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Saat ini ({calibration.usingCustomWeights ? 'Kustom' : 'Standar'}):{' '}
+                    <code className="font-mono text-slate-700">
+                      [{calibration.currentWeights.slice(0, 4).join(', ')}]
+                    </code>
+                  </p>
+                  <p className="text-[11px] text-indigo-700 font-semibold">
+                    Saran Empiris:{' '}
+                    <code className="font-mono bg-indigo-50 px-1.5 py-0.5 rounded">
+                      [{calibration.suggestedWeights.slice(0, 4).join(', ')}]
+                    </code>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -2203,10 +2342,21 @@ export function AnalyticsPage() {
                       Menunjukkan perubahan State, Stability (S), Difficulty (D), dan Interval di setiap langkah.
                     </p>
                   </div>
-                  <span className="text-xs font-mono text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg font-bold">
-                    S akhir = {simData.finalCard.stability.toFixed(2)}d · D akhir ={' '}
-                    {simData.finalCard.difficulty.toFixed(2)}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${
+                        simData.usingCustomWeights
+                          ? 'bg-amber-50 text-amber-800 border-amber-200'
+                          : 'bg-slate-100 text-slate-600 border-slate-200'
+                      }`}
+                    >
+                      {simData.usingCustomWeights ? '⚙️ Bobot Kustom 19w Aktif' : '📐 Bobot Standar 19w'}
+                    </span>
+                    <span className="text-xs font-mono text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg font-bold">
+                      S akhir = {simData.finalCard.stability.toFixed(2)}d · D akhir ={' '}
+                      {simData.finalCard.difficulty.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">

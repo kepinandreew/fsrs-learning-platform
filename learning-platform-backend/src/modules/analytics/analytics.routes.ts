@@ -83,12 +83,27 @@ router.get(
   }),
 );
 
+// GET /calibration - evaluasi akurasi prediksi FSRS-5 (RMSE, Brier, Log-Loss) & rekomendasi bobot empiris.
+router.get(
+  '/calibration',
+  validate({ query: analyticsQuerySchema }),
+  asyncHandler(async (req, res) => {
+    res.json({ success: true, data: await service.getCalibration(req.developer!.id, req.query as never) });
+  }),
+);
+
 // POST /fsrs-simulate - simulator interaktif transisi parameter memori & kurva lupa FSRS-5.
 router.post(
   '/fsrs-simulate',
   validate({ body: fsrsSimulateSchema }),
   asyncHandler(async (req, res) => {
-    res.json({ success: true, data: service.simulateFsrs(req.body) });
+    const customW =
+      req.body.fsrsParams ??
+      (req.body.appId ? await service.resolveAppCustomWeights(req.developer!.id, req.body.appId) : undefined);
+    res.json({
+      success: true,
+      data: service.simulateFsrs({ ...req.body, ...(customW ? { fsrsParams: customW } : {}) }),
+    });
   }),
 );
 

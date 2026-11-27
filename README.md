@@ -23,7 +23,7 @@ Arsitektur layanan terpusat (*multi-tenant backend*) yang menyediakan penjadwala
 │   │       ├── progress/           # Sinkronisasi poin, EXP, streak harian, bintang resep, & klasemen lintas-gim
 │   │       └── analytics/          # 4 metrik analitik, proyeksi beban 14 hari, rapor PDF siswa, & Simulator FSRS-5
 │   ├── scripts/                    # Otomasi benchmark-report.ts & validator sintaks gim check-games-syntax.mjs
-│   ├── tests/                      # 44 pengujian unit & integrasi rute HTTP otomatis (Vitest)
+│   ├── tests/                      # 46 pengujian unit & integrasi rute HTTP otomatis (Vitest)
 │   └── docs/                       # Dokumentasi kontrak API.md & laporan BENCHMARK_REPORT.md
 │
 ├── learning-platform-dashboard/    # Konsol Pengajar / Pengembang (React 18, TypeScript, Tailwind CSS, Vite)
@@ -61,7 +61,7 @@ Arsitektur layanan terpusat (*multi-tenant backend*) yang menyediakan penjadwala
 cd learning-platform-backend
 npm install
 npx prisma migrate deploy
-npm test             # Menjalankan 44 unit & HTTP route test FSRS, AI, Evaluasi, Progress, & Analitik
+npm test             # Menjalankan 46 unit & HTTP route test FSRS, AI, Evaluasi, Progress, & Analitik
 npm run check:games  # Memvalidasi seluruh skrip inline HTML gim, Service Worker, & Manifest PWA
 npm run benchmark    # Menjalankan benchmark FSRS-5 & REST API live -> docs/BENCHMARK_REPORT.md
 npm run dev          # Berjalan di http://localhost:3000 (OpenAPI Docs di /api/docs)

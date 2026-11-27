@@ -75,7 +75,8 @@ Semua respons JSON memakai amplop standar:
 | `GET` | `/api/dashboard/analytics/mastery` | Indikator 2: *Mastery Prediction* ($S \ge 7$ hari) |
 | `GET` | `/api/dashboard/analytics/difficult-topics` | Indikator 3: Kartu & tag tersulit |
 | `GET` | `/api/dashboard/analytics/completion-time` | Indikator 4: Estimasi waktu penguasaan materi |
-| `GET` | `/api/dashboard/analytics/monitoring` | Data terpadu *live*: daftar siswa, antrean prioritas `CardState` FSRS, `ReviewLog`, & `QuizAttempt` |
+| `GET` | `/api/dashboard/analytics/monitoring` | Data terpadu *live*: daftar siswa, antrean prioritas `CardState` FSRS, proyeksi 14 hari, & riwayat |
+| `GET` | `/api/dashboard/analytics/calibration` | Evaluasi akurasi empiris FSRS-5 (*RMSE*, *Brier Score*, *Log-Loss*) & rekomendasi kalibrasi 19 bobot |
 | `POST` | `/api/dashboard/analytics/fsrs-simulate` | Simulator matematis FSRS-5 (mendukung kartu baru maupun proyeksi dari `initialCard` nyata siswa) |
 | `POST` | `/api/dashboard/analytics/shift-due` | Simulasi geser hari (*Time-Travel Demo* jadwal jatuh tempo `Due` yang dapat dikembalikan *lossless*) |
 | `GET` | `/api/dashboard/analytics/export-csv` | Ekspor laporan evaluasi lengkap berformat CSV UTF-8 BOM siap buka di Microsoft Excel |
@@ -88,6 +89,7 @@ Semua respons JSON memakai amplop standar:
 | :--- | :--- | :--- |
 | `GET` | `/api/decks` | Daftar deck aktif milik aplikasi klien |
 | `GET` | `/api/items` | Ambil materi Flashcard & Pilihan Ganda (mendukung header caching `ETag` / `If-None-Match` → `304`) |
+| `GET` | `/api/assets/manifest` | Manifest *delta preloading* aset gambar & audio (`manifestVersion` + `cacheKey` SHA-256 + `ETag 304`) |
 | `GET` | `/api/evaluation/due` | Antrean kartu prioritas FSRS-5 siswa (`Again` → `Hard` → `Due` → `Good` → `Easy`) |
 | `POST` | `/api/evaluation/review` | Catat penilaian kartu FSRS-5 (`AGAIN`/`HARD`/`GOOD`/`EASY`) secara idempoten |
 | `POST` | `/api/evaluation/quiz` | Evaluasi jawaban kuis pilihan ganda, hitung skor, waktu respons, & korelasi FSRS |

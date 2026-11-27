@@ -16,6 +16,7 @@ import type {
   DeveloperProfile,
   DraftFlashcard,
   DraftQuiz,
+  FsrsCalibrationResponse,
   FsrsSimulateInitialCard,
   FsrsSimulateResponse,
   FsrsSimulateStepInput,
@@ -223,9 +224,12 @@ export const appsApi = {
 // =============================================================================
 
 export const decksApi = {
-  async list(appId?: string): Promise<Deck[]> {
-    const qs = appId ? `?appId=${encodeURIComponent(appId)}` : '';
-    const { data } = await request<Deck[]>(`/api/dashboard/decks${qs}`);
+  async list(appId?: string, includeInactive?: boolean): Promise<Deck[]> {
+    const qs = new URLSearchParams();
+    if (appId) qs.set('appId', appId);
+    if (includeInactive) qs.set('includeInactive', 'true');
+    const qStr = qs.toString();
+    const { data } = await request<Deck[]>(`/api/dashboard/decks${qStr ? `?${qStr}` : ''}`);
     return data;
   },
 
@@ -282,6 +286,7 @@ export const itemsApi = {
     appId?: string;
     type?: ItemType;
     search?: string;
+    includeInactive?: boolean;
     page?: number;
     pageSize?: number;
   }): Promise<{ items: LearningItem[]; meta: PaginationMeta }> {
@@ -290,6 +295,7 @@ export const itemsApi = {
     if (params.appId) searchParams.set('appId', params.appId);
     if (params.type) searchParams.set('type', params.type);
     if (params.search) searchParams.set('search', params.search);
+    if (params.includeInactive) searchParams.set('includeInactive', 'true');
     if (params.page) searchParams.set('page', String(params.page));
     if (params.pageSize) searchParams.set('pageSize', String(params.pageSize));
 
@@ -468,7 +474,25 @@ export const analyticsApi = {
     return data;
   },
 
+  async calibration(params: {
+    appId?: string;
+    deckId?: string;
+    externalUserId?: string;
+  }): Promise<FsrsCalibrationResponse> {
+    const qs = new URLSearchParams();
+    if (params.appId) qs.set('appId', params.appId);
+    if (params.deckId) qs.set('deckId', params.deckId);
+    if (params.externalUserId?.trim()) qs.set('externalUserId', params.externalUserId.trim());
+
+    const { data } = await request<FsrsCalibrationResponse>(
+      `/api/dashboard/analytics/calibration?${qs.toString()}`,
+    );
+    return data;
+  },
+
   async simulateFsrs(payload: {
+    appId?: string;
+    fsrsParams?: number[];
     requestRetention: number;
     initialCard?: FsrsSimulateInitialCard;
     steps: FsrsSimulateStepInput[];

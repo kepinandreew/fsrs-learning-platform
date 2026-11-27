@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   computeCompletion,
   computeDifficultTopics,
+  computeFsrsCalibration,
   computeMastery,
   computeRetention,
   smoothRate,
@@ -99,5 +100,70 @@ describe('FSRS Simulator (Kartu Baru vs Kartu Nyata Siswa)', async () => {
     expect(res.trace[0]?.stabilityBefore).toBeCloseTo(12.5, 2);
     expect(res.trace[0]?.stabilityAfter).toBeGreaterThan(12.5);
     expect(res.finalCard.reps).toBe(6);
+  });
+
+  it('menghormati 19 bobot fsrsParams kustom pada simulator FSRS-5', () => {
+    const customW = [
+      0.25, 0.75, 1.8, 6.5, 7.1949, 0.5345, 1.4604, 0.0046, 1.35, 0.14, 0.98, 1.9395, 0.11, 0.29605,
+      2.2698, 0.2315, 2.5, 0.51655, 0.6621,
+    ];
+    const res = simulateFsrs({
+      requestRetention: 0.9,
+      fsrsParams: customW,
+      steps: [{ rating: 'GOOD' }],
+    });
+    expect(res.usingCustomWeights).toBe(true);
+    expect(res.trace[0]?.stabilityAfter).toBeCloseTo(1.8, 3);
+  });
+
+  it('menghitung RMSE, Brier Score, Log-Loss, dan kalibrasi bobot empiris yang monoton dari ReviewLog', () => {
+    const baseTime = new Date('2026-11-01T08:00:00Z');
+    const cal = computeFsrsCalibration([
+      {
+        userId: 'u1',
+        itemId: 'c1',
+        rating: 'GOOD',
+        stateBefore: 'NEW',
+        retrievability: null,
+        elapsedDays: 0,
+        reviewedAt: baseTime,
+      },
+      {
+        userId: 'u1',
+        itemId: 'c1',
+        rating: 'GOOD',
+        stateBefore: 'REVIEW',
+        retrievability: 0.9,
+        elapsedDays: 3,
+        reviewedAt: new Date(baseTime.getTime() + 3 * 86_400_000),
+      },
+      {
+        userId: 'u1',
+        itemId: 'c2',
+        rating: 'AGAIN',
+        stateBefore: 'REVIEW',
+        retrievability: 0.65,
+        elapsedDays: 8,
+        reviewedAt: new Date(baseTime.getTime() + 8 * 86_400_000),
+      },
+      {
+        userId: 'u1',
+        itemId: 'c3',
+        rating: 'EASY',
+        stateBefore: 'REVIEW',
+        retrievability: 0.92,
+        elapsedDays: 4,
+        reviewedAt: new Date(baseTime.getTime() + 4 * 86_400_000),
+      },
+    ]);
+
+    expect(cal.evaluatedReviews).toBe(3);
+    expect(cal.brierScore).not.toBeNull();
+    expect(cal.rmse).not.toBeNull();
+    expect(cal.logLoss).toBeGreaterThan(0);
+    expect(cal.suggestedWeights).toHaveLength(19);
+    expect(cal.suggestedWeights[0]!).toBeLessThan(cal.suggestedWeights[1]!);
+    expect(cal.suggestedWeights[1]!).toBeLessThan(cal.suggestedWeights[2]!);
+    expect(cal.suggestedWeights[2]!).toBeLessThan(cal.suggestedWeights[3]!);
   });
 });

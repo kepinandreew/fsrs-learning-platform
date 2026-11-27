@@ -165,6 +165,26 @@ export function buildOpenApiSpec(baseUrl: string) {
           responses: { '200': { description: 'Data monitoring real-time' } },
         },
       },
+      '/api/dashboard/analytics/calibration': {
+        get: {
+          tags: ['6. Learning Analytics & FSRS Simulator'],
+          summary: 'Evaluasi akurasi prediktif FSRS-5 (RMSE, Brier Score, Log-Loss) & kalibrasi bobot empiris',
+          security: [{ BearerAuth: [] }],
+          responses: { '200': { description: 'Metrik kalibrasi & rekomendasi 19 bobot FSRS-5' } },
+        },
+      },
+      '/api/assets/manifest': {
+        get: {
+          tags: ['7. Game Client API (X-API-Key)'],
+          summary: 'Manifest aset multimedia (imageUrl/audioUrl) deterministik dengan cacheKey SHA-256 & dukungan HTTP 304',
+          security: [{ ApiKeyAuth: [] }],
+          parameters: [{ name: 'deckId', in: 'query', schema: { type: 'string', format: 'uuid' } }],
+          responses: {
+            '200': { description: 'Daftar aset multimedia beserta manifestVersion' },
+            '304': { description: 'Aset belum berubah sejak sinkronisasi terakhir' },
+          },
+        },
+      },
       '/api/decks': {
         get: {
           tags: ['7. Game Client API (X-API-Key)'],

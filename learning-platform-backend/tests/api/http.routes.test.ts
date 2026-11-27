@@ -62,6 +62,8 @@ describe('Express HTTP Routes, OpenAPI 3.0 Docs, & Multi-Tenant Auth Middleware'
     const spec = await specRes.json();
     expect(spec.openapi).toBe('3.0.3');
     expect(spec.paths['/api/evaluation/due']).toBeDefined();
+    expect(spec.paths['/api/assets/manifest']).toBeDefined();
+    expect(spec.paths['/api/dashboard/analytics/calibration']).toBeDefined();
     expect(spec.paths['/api/dashboard/decks/{id}/import']).toBeDefined();
 
     const docsRes = await fetch(`${baseUrl}/api/docs`);

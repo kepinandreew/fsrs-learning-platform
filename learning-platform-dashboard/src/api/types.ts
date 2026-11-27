@@ -433,8 +433,33 @@ export interface FsrsSimulatePreviewOption {
   due: string;
 }
 
+export interface FsrsCalibrationBin {
+  label: string;
+  count: number;
+  predictedAvg: number | null;
+  actualRate: number | null;
+}
+
+export interface FsrsCalibrationResponse {
+  meta: AnalyticsMeta;
+  appId: string;
+  appName: string;
+  usingCustomWeights: boolean;
+  totalReviewLogs: number;
+  evaluatedReviews: number;
+  meanPredicted: number | null;
+  actualRecallRate: number | null;
+  rmse: number | null;
+  brierScore: number | null;
+  logLoss: number | null;
+  bins: FsrsCalibrationBin[];
+  currentWeights: number[];
+  suggestedWeights: number[];
+}
+
 export interface FsrsSimulateResponse {
   requestRetention: number;
+  usingCustomWeights?: boolean;
   initialCard?: FsrsSimulateInitialCard | null;
   finalCard: {
     state: string;

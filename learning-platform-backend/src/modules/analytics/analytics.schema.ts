@@ -25,6 +25,8 @@ export const monitoringQuerySchema = z.object({
 
 // Skema input simulator interaktif FSRS-5.
 export const fsrsSimulateSchema = z.object({
+  appId: z.string().uuid().optional(),
+  fsrsParams: z.array(z.number().finite().min(0).max(100)).length(19).optional(),
   requestRetention: z.number().min(0.7).max(0.99).default(0.9),
   // Opsional: gunakan state kartu nyata milik siswa sebagai titik awal simulasi.
   initialCard: z
