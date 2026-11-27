@@ -63,6 +63,7 @@ describe('Express HTTP Routes, OpenAPI 3.0 Docs, & Multi-Tenant Auth Middleware'
     expect(spec.openapi).toBe('3.0.3');
     expect(spec.paths['/api/evaluation/due']).toBeDefined();
     expect(spec.paths['/api/assets/manifest']).toBeDefined();
+    expect(spec.paths['/api/assets/illustration/{slug}']).toBeDefined();
     expect(spec.paths['/api/dashboard/analytics/calibration']).toBeDefined();
     expect(spec.paths['/api/dashboard/decks/{id}/import']).toBeDefined();
 
@@ -70,6 +71,16 @@ describe('Express HTTP Routes, OpenAPI 3.0 Docs, & Multi-Tenant Auth Middleware'
     expect(docsRes.status).toBe(200);
     const html = await docsRes.text();
     expect(html).toContain('OpenAPI 3.0.3');
+  });
+
+  it('menyajikan ilustrasi kartu SVG publik lintas-origin tanpa X-API-Key pada GET /api/assets/illustration/:slug', async () => {
+    const svgRes = await fetch(`${baseUrl}/api/assets/illustration/banana.svg`);
+    expect(svgRes.status).toBe(200);
+    expect(svgRes.headers.get('content-type')).toContain('image/svg+xml');
+    expect(svgRes.headers.get('cross-origin-resource-policy')).toBe('cross-origin');
+    const svg = await svgRes.text();
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('aria-label="banana"');
   });
 
   it('menolak akses endpoint klien tanpa X-API-Key maupun dengan X-API-Key tidak sah (HTTP 401)', async () => {

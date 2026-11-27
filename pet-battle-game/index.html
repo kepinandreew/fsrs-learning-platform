@@ -1622,6 +1622,53 @@
           : '🟡 Mode Offline Aktif';
     }
 
+    // Sanitasi & pemulihan URL media: konversi placeholder lama cdn.example.com ke endpoint SVG nyata, tolak domain dummy lain.
+    function normalizeMediaUrl(rawUrl, kind = 'image') {
+      if (!rawUrl || typeof rawUrl !== 'string') return null;
+      const u = rawUrl.trim();
+      if (!/^https?:\/\//i.test(u)) return null;
+      const legacyImg = u.match(/\/\/(?:[^/]+\.)?example\.(?:com|org|net)\/assets\/[^/]+\/([a-z0-9_-]+)\.png$/i);
+      if (legacyImg) {
+        if (kind === 'image') {
+          const base = (state.apiConfig?.baseUrl || DEFAULT_API_CONFIG.baseUrl).replace(/\/+$/, '');
+          return `${base}/api/assets/illustration/${legacyImg[1].toLowerCase()}.svg`;
+        }
+        return null;
+      }
+      if (/\/\/(?:[^/]+\.)?example\.(?:com|org|net)(?:\/|$)/i.test(u)) return null;
+      return u;
+    }
+
+    // Pasang gambar ke elemen <img> secara defensif: tetap tersembunyi sampai onload sukses, otomatis sembunyi bila gagal (onerror).
+    function bindSafeCardImage(imgEl, rawUrl) {
+      if (!imgEl) return;
+      const cleanUrl = normalizeMediaUrl(rawUrl, 'image');
+      imgEl.classList.add('hidden');
+      if (!cleanUrl) {
+        imgEl.dataset.reqUrl = '';
+        imgEl.removeAttribute('src');
+        return;
+      }
+      imgEl.dataset.reqUrl = cleanUrl;
+      imgEl.onload = () => {
+        if (imgEl.dataset.reqUrl === cleanUrl && imgEl.naturalWidth > 0) {
+          imgEl.classList.remove('hidden');
+        }
+      };
+      imgEl.onerror = () => {
+        if (imgEl.dataset.reqUrl === cleanUrl) {
+          imgEl.dataset.reqUrl = '';
+          imgEl.removeAttribute('src');
+          imgEl.classList.add('hidden');
+        }
+      };
+      if (imgEl.getAttribute('src') === cleanUrl && imgEl.complete && imgEl.naturalWidth > 0) {
+        imgEl.classList.remove('hidden');
+      } else {
+        imgEl.src = cleanUrl;
+      }
+    }
+
     function normalizeApiOrLocalItem(raw, isServerOrigin = false) {
       if (!raw || typeof raw !== 'object') return null;
       const rawType = String(raw.type || '').toUpperCase();
@@ -1639,8 +1686,8 @@
           type: 'flashcard',
           isServerItem: Boolean(isServerOrigin),
           isNew: typeof raw.isNew === 'boolean' ? raw.isNew : true,
-          imageUrl: raw.imageUrl || null,
-          audioUrl: raw.audioUrl || null,
+          imageUrl: normalizeMediaUrl(raw.imageUrl, 'image'),
+          audioUrl: normalizeMediaUrl(raw.audioUrl, 'audio'),
           content: { front, back },
         };
       }
@@ -1657,8 +1704,8 @@
           type: 'multiple_choice',
           isServerItem: Boolean(isServerOrigin),
           sourceFlashcardId: raw.sourceFlashcardId ?? raw.content?.sourceFlashcardId ?? null,
-          imageUrl: raw.imageUrl || null,
-          audioUrl: raw.audioUrl || null,
+          imageUrl: normalizeMediaUrl(raw.imageUrl, 'image'),
+          audioUrl: normalizeMediaUrl(raw.audioUrl, 'audio'),
           content: { question, choices, correctIndex, explanation: raw.explanation ?? raw.content?.explanation ?? null },
         };
       }
@@ -1790,11 +1837,13 @@
         const verKey = `${STORAGE_PREFIX}_asset_manifest_${deckId || 'all'}`;
         if (localStorage.getItem(verKey) === ver) return;
         assets.slice(0, 25).forEach((a) => {
-          if (a.kind === 'image' && a.url) {
+          const clean = normalizeMediaUrl(a.url, a.kind === 'audio' ? 'audio' : 'image');
+          if (!clean) return;
+          if (a.kind === 'image') {
             const img = new Image();
-            img.src = a.url;
-          } else if (a.kind === 'audio' && a.url) {
-            fetch(a.url, { mode: 'no-cors' }).catch(() => {});
+            img.src = clean;
+          } else if (a.kind === 'audio') {
+            fetch(clean, { mode: 'no-cors' }).catch(() => {});
           }
         });
         try { localStorage.setItem(verKey, ver); } catch {}
@@ -1832,10 +1881,11 @@
 
     let activeCustomAudio = null;
     function speakWord(rawText, deckTitle = '', audioUrl = null) {
-      if (audioUrl && /^https?:\/\//i.test(audioUrl)) {
+      const cleanAudio = normalizeMediaUrl(audioUrl, 'audio');
+      if (cleanAudio) {
         try {
           if (activeCustomAudio) { activeCustomAudio.pause(); activeCustomAudio = null; }
-          activeCustomAudio = new Audio(audioUrl);
+          activeCustomAudio = new Audio(cleanAudio);
           activeCustomAudio.play().catch(() => speakWord(rawText, deckTitle, null));
           return;
         } catch {}
@@ -4164,16 +4214,7 @@
       document.getElementById('study-card-tag').textContent = badgeLabel;
       document.getElementById('study-card-front').textContent = card.content?.front || '-';
       document.getElementById('study-card-back').textContent = card.content?.back || '-';
-      const studyImg = document.getElementById('study-card-img');
-      if (studyImg) {
-        if (card.imageUrl) {
-          studyImg.src = card.imageUrl;
-          studyImg.classList.remove('hidden');
-        } else {
-          studyImg.removeAttribute('src');
-          studyImg.classList.add('hidden');
-        }
-      }
+      bindSafeCardImage(document.getElementById('study-card-img'), card.imageUrl);
 
       // Tampilkan interval FSRS-5 asli per kartu secara ringkas & jelas pada keempat tombol 3D
       const pv = card._preview;
@@ -4440,16 +4481,7 @@
       recordRecentProfileItem('recentBattleIds', qObj.id, Math.max(8, Math.floor((qObj.totalPoolSize || 24) * 0.6)));
       document.getElementById('question-tag').textContent = `GILIRAN #${state.battleRound}`;
       document.getElementById('question-text').textContent = qObj.question;
-      const bImg = document.getElementById('battle-question-img');
-      if (bImg) {
-        if (qObj.imageUrl) {
-          bImg.src = qObj.imageUrl;
-          bImg.classList.remove('hidden');
-        } else {
-          bImg.removeAttribute('src');
-          bImg.classList.add('hidden');
-        }
-      }
+      bindSafeCardImage(document.getElementById('battle-question-img'), qObj.imageUrl);
       document.getElementById('battle-feedback').classList.add('hidden');
       document.getElementById('btn-next-turn').classList.add('hidden');
 

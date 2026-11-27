@@ -5,9 +5,19 @@ import { apiKeyAuth } from '../../middlewares/apiKeyAuth';
 import { validate } from '../../middlewares/validate';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { sha256 } from '../../utils/hash';
+import { renderVocabularyIllustrationSvg } from './illustrations';
 
-// Manifest aset untuk resource caching di sisi client (dimount di /api/assets).
+// Manifest & ilustrasi aset untuk aplikasi klien (dimount di /api/assets).
 const router = Router();
+
+// GET /api/assets/illustration/:slug - ilustrasi vektor SVG kartu kosakata (publik untuk tag <img> lintas-origin).
+router.get('/illustration/:slug', (req, res) => {
+  const svg = renderVocabularyIllustrationSvg(req.params.slug || 'card');
+  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.type('image/svg+xml; charset=utf-8').send(svg);
+});
+
 router.use(apiKeyAuth);
 
 const manifestQuerySchema = z.object({ deckId: z.string().uuid().optional() });

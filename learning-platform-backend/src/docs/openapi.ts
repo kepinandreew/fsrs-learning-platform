@@ -173,6 +173,14 @@ export function buildOpenApiSpec(baseUrl: string) {
           responses: { '200': { description: 'Metrik kalibrasi & rekomendasi 19 bobot FSRS-5' } },
         },
       },
+      '/api/assets/illustration/{slug}': {
+        get: {
+          tags: ['7. Game Client API (X-API-Key)'],
+          summary: 'Ilustrasi vektor SVG kartu kosakata siap muat untuk elemen <img> lintas-origin',
+          parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string', example: 'banana.svg' } }],
+          responses: { '200': { description: 'Berkas image/svg+xml' } },
+        },
+      },
       '/api/assets/manifest': {
         get: {
           tags: ['7. Game Client API (X-API-Key)'],
