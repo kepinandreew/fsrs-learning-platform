@@ -1,0 +1,50 @@
+name: FSRS-5 Learning Platform CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify-platform:
+    name: Backend Tests, Dashboard Build, & Game Syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Backend Dependencies & Generate Prisma Client
+        working-directory: learning-platform-backend
+        run: npm install
+
+      - name: Backend TypeScript Check
+        working-directory: learning-platform-backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fsrs_ci_test
+          JWT_SECRET: ci_test_jwt_secret_minimum_32_characters_long_2026
+        run: npm run typecheck
+
+      - name: Run Backend Unit & HTTP Integration Tests (Vitest)
+        working-directory: learning-platform-backend
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fsrs_ci_test
+          JWT_SECRET: ci_test_jwt_secret_minimum_32_characters_long_2026
+        run: npm test
+
+      - name: Validate Game Clients HTML/JS & PWA Manifests
+        working-directory: learning-platform-backend
+        run: node scripts/check-games-syntax.mjs
+
+      - name: Install & Build Developer Dashboard
+        working-directory: learning-platform-dashboard
+        run: |
+          npm install
+          npm run build

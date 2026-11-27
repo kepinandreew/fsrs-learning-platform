@@ -361,6 +361,7 @@
               <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
                 <span id="menu-species-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/15 border border-white/30">🔥 Api</span>
                 <span id="menu-stage-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">Lv.1</span>
+                <span id="menu-streak-badge" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-orange-500/25 border border-orange-300/50 text-amber-200">🔥 1 Hari</span>
                 <span id="menu-student-name" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-400/25 border border-sky-200/40 text-white">Siswa 01</span>
               </div>
               <div>
@@ -401,6 +402,15 @@
 
           <!-- Jalur 4 Evolusi (Terkunci tetap terlihat keren dengan siluet bercahaya) -->
           <div id="evo-path-menu" class="relative grid grid-cols-4 gap-2"></div>
+
+          <!-- Galeri 6 Lencana Prestasi Anak -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-indigo-200">
+              <span>🏅 Koleksi Lencana Juara</span>
+              <span id="menu-badges-count" class="text-amber-300">1 / 6 Terbuka</span>
+            </div>
+            <div id="menu-achievements-strip" class="grid grid-cols-3 sm:grid-cols-6 gap-1.5"></div>
+          </div>
 
           <div class="relative grid grid-cols-2 gap-2 pt-1">
             <button id="btn-open-rename" type="button" class="touch-btn rounded-2xl text-xs font-bold bg-indigo-950/85 hover:bg-indigo-900 border border-indigo-300/25">✏️ Ubah Nama</button>
@@ -492,6 +502,7 @@
         <div id="study-card-box" class="relative rounded-3xl p-6 sm:p-9 text-center bg-gradient-to-br from-indigo-900/90 via-[#1d1856] to-violet-900/90 border-2 border-cyan-300/40 shadow-inner min-h-[200px] sm:min-h-[235px] flex flex-col justify-center gap-3 cursor-pointer hover:border-amber-300 transition">
           <button id="btn-speak-card" type="button" class="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-cyan-400/25 hover:bg-cyan-400/40 border border-cyan-300/50 text-cyan-100 flex items-center gap-1">🔊 Dengar</button>
           <span id="study-card-tag" class="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-300/20 border border-amber-300/40 text-amber-200">✨ Kata Baru</span>
+          <img id="study-card-img" alt="Ilustrasi kartu" class="hidden mx-auto max-h-28 rounded-2xl border-2 border-white/25 object-contain shadow-md mt-4" />
           <div id="study-card-front" class="text-3xl sm:text-5xl font-bold tracking-wide pt-3 text-white">-</div>
           <div id="study-card-back-wrap" class="hidden pt-4 mt-2 border-t-2 border-dashed border-indigo-300/30">
             <div id="study-card-back" class="text-2xl sm:text-3xl font-bold text-emerald-300">-</div>
@@ -570,12 +581,16 @@
             </div>
           </div>
 
-          <!-- Kotak Pertanyaan Jelas -->
-          <div class="rounded-2xl bg-gradient-to-br from-indigo-900/95 to-violet-950/95 border-2 border-indigo-300/35 p-3 sm:p-4 space-y-1">
+          <!-- Kotak Pertanyaan Jelas + Pelafalan Audio & Gambar Opsional -->
+          <div class="rounded-2xl bg-gradient-to-br from-indigo-900/95 to-violet-950/95 border-2 border-indigo-300/35 p-3 sm:p-4 space-y-1.5">
             <div class="flex items-center justify-between gap-2">
-              <span id="question-tag" class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-cyan-300">GILIRAN #1</span>
+              <div class="flex items-center gap-1.5">
+                <span id="question-tag" class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-cyan-300">GILIRAN #1</span>
+                <button id="btn-speak-battle-question" type="button" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-cyan-400/25 hover:bg-cyan-400/40 border border-cyan-300/50 text-cyan-100">🔊 Dengar</button>
+              </div>
               <span id="question-mult-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-300/20 text-amber-200 border border-amber-300/40">Bonus x1</span>
             </div>
+            <img id="battle-question-img" alt="Ilustrasi soal" class="hidden mx-auto max-h-24 rounded-xl border border-white/20 object-contain" />
             <h2 id="question-text" class="text-base sm:text-xl font-bold leading-snug text-white">Memuat soal...</h2>
           </div>
 
@@ -1580,7 +1595,17 @@
         const front = String(raw.front ?? raw.content?.front ?? '').trim();
         const back = String(raw.back ?? raw.content?.back ?? '').trim();
         if (!front || !back) return null;
-        return { id, deckId: raw.deckId || state.selectedDeckId, deckTitle, type: 'flashcard', isServerItem: Boolean(isServerOrigin), isNew: typeof raw.isNew === 'boolean' ? raw.isNew : true, content: { front, back } };
+        return {
+          id,
+          deckId: raw.deckId || state.selectedDeckId,
+          deckTitle,
+          type: 'flashcard',
+          isServerItem: Boolean(isServerOrigin),
+          isNew: typeof raw.isNew === 'boolean' ? raw.isNew : true,
+          imageUrl: raw.imageUrl || null,
+          audioUrl: raw.audioUrl || null,
+          content: { front, back },
+        };
       }
       if (rawType === 'MULTIPLE_CHOICE') {
         const question = String(raw.question ?? raw.content?.question ?? '').trim();
@@ -1589,8 +1614,14 @@
         if (!question || choices.length < 2) return null;
         const correctIndex = typeof raw.correctIndex === 'number' ? raw.correctIndex : typeof raw.content?.correctIndex === 'number' ? raw.content.correctIndex : null;
         return {
-          id, deckId: raw.deckId || state.selectedDeckId, deckTitle, type: 'multiple_choice', isServerItem: Boolean(isServerOrigin),
+          id,
+          deckId: raw.deckId || state.selectedDeckId,
+          deckTitle,
+          type: 'multiple_choice',
+          isServerItem: Boolean(isServerOrigin),
           sourceFlashcardId: raw.sourceFlashcardId ?? raw.content?.sourceFlashcardId ?? null,
+          imageUrl: raw.imageUrl || null,
+          audioUrl: raw.audioUrl || null,
           content: { question, choices, correctIndex, explanation: raw.explanation ?? raw.content?.explanation ?? null },
         };
       }
@@ -1722,7 +1753,16 @@
       return null;
     }
 
-    function speakWord(rawText, deckTitle = '') {
+    let activeCustomAudio = null;
+    function speakWord(rawText, deckTitle = '', audioUrl = null) {
+      if (audioUrl && /^https?:\/\//i.test(audioUrl)) {
+        try {
+          if (activeCustomAudio) { activeCustomAudio.pause(); activeCustomAudio = null; }
+          activeCustomAudio = new Audio(audioUrl);
+          activeCustomAudio.play().catch(() => speakWord(rawText, deckTitle, null));
+          return;
+        } catch {}
+      }
       if (!('speechSynthesis' in window) || !rawText) return;
       try {
         window.speechSynthesis.cancel();
@@ -1733,6 +1773,16 @@
         utter.rate = 0.9;
         window.speechSynthesis.speak(utter);
       } catch {}
+    }
+
+    function touchLocalDailyStreak(profile) {
+      if (!profile) return;
+      const today = new Date().toISOString().slice(0, 10);
+      if (profile.lastStudyDate === today) return;
+      const yday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      profile.currentStreak = profile.lastStudyDate === yday ? (Number(profile.currentStreak) || 1) + 1 : Math.max(1, Number(profile.currentStreak) || 1);
+      profile.longestStreak = Math.max(Number(profile.longestStreak) || 1, profile.currentStreak);
+      profile.lastStudyDate = today;
     }
 
     // Prioritas kartu di dalam deck: 0=AGAIN (Paling Depan), 1=HARD (Agak Depan), 2=DUE, 3=NEW, 4=GOOD (Tengah), 5=EASY (Paling Belakang).
@@ -1899,9 +1949,14 @@
         const frenchChoices = it.content.choices.filter((c) => /^(le |la |l'|l’|les |un |une |des )/i.test(String(c).trim())).length >= 2;
         const qText = frenchChoices ? it.content.question.replace(/bahasa inggris/gi, 'Bahasa Prancis') : it.content.question;
 
+        const quotedMatch = String(qText).match(/"([^"]{1,45})"/);
         allCandidates.push({
           id: it.id, isServerMc: Boolean(it.isServerItem),
           linkedFcId: it.sourceFlashcardId || null,
+          deckTitle: it.deckTitle || linkedFc?.deckTitle || deckTitleMap.get(it.deckId) || '',
+          speakText: linkedFc?.content?.front || (quotedMatch ? quotedMatch[1] : qText),
+          imageUrl: it.imageUrl || linkedFc?.imageUrl || null,
+          audioUrl: it.audioUrl || linkedFc?.audioUrl || null,
           hasKnownKey: typeof it.content.correctIndex === 'number' || typeof loc?.content?.correctIndex === 'number' || inferred !== null,
           question: qText, choices: it.content.choices,
           explanation: it.content.explanation || (linkedFc ? `"${linkedFc.content.front}" artinya "${linkedFc.content.back}".` : null),
@@ -1923,7 +1978,7 @@
           if (!seenQ.has(q1.toLowerCase())) {
             const dist = shuffleArray(pool.map((o) => o.content.back.split('(')[0].trim()).filter((v) => v && v.toLowerCase() !== back.toLowerCase())).slice(0, 3);
             if (dist.length === 3) {
-              allCandidates.push({ id: `${fc.id}_g1_${idx}`, linkedFcId: fc.id, isServerMc: false, hasKnownKey: true, question: q1, choices: [back, ...dist], explanation: `Ingat: "${front}" artinya "${fc.content.back}".`, correctIndex: 0 });
+              allCandidates.push({ id: `${fc.id}_g1_${idx}`, linkedFcId: fc.id, deckTitle: fc.deckTitle || deckTitleMap.get(fc.deckId) || '', speakText: front, imageUrl: fc.imageUrl || null, audioUrl: fc.audioUrl || null, isServerMc: false, hasKnownKey: true, question: q1, choices: [back, ...dist], explanation: `Ingat: "${front}" artinya "${fc.content.back}".`, correctIndex: 0 });
               seenQ.add(q1.toLowerCase());
             }
           }
@@ -1931,7 +1986,7 @@
           if (!seenQ.has(q2.toLowerCase())) {
             const dist2 = shuffleArray(pool.map((o) => o.content.front.trim()).filter((v) => v && v.toLowerCase() !== front.toLowerCase())).slice(0, 3);
             if (dist2.length === 3) {
-              allCandidates.push({ id: `${fc.id}_g2_${idx}`, linkedFcId: fc.id, isServerMc: false, hasKnownKey: true, question: q2, choices: [front, ...dist2], explanation: `Ingat: "${back}" adalah "${front}".`, correctIndex: 0 });
+              allCandidates.push({ id: `${fc.id}_g2_${idx}`, linkedFcId: fc.id, deckTitle: 'Bahasa Indonesia', speakText: q2, imageUrl: fc.imageUrl || null, audioUrl: null, isServerMc: false, hasKnownKey: true, question: q2, choices: [front, ...dist2], explanation: `Ingat: "${back}" adalah "${front}".`, correctIndex: 0 });
               seenQ.add(q2.toLowerCase());
             }
           }
@@ -2075,17 +2130,21 @@
         }
         if (rows.length === 0) return local;
 
-        let maxPts = 0, maxExp = 0, totCorrect = 0, totAns = 0, bestCs = null;
+        let maxPts = 0, maxExp = 0, maxStreak = 0, maxLongestStreak = 0, totCorrect = 0, totAns = 0, bestCs = null;
         for (const r of rows) {
           if ((r.points || 0) >= maxPts) {
             maxPts = r.points || 0;
             if (r.clientState && typeof r.clientState === 'object') bestCs = r.clientState;
           }
           if ((r.exp || 0) > maxExp) maxExp = r.exp;
+          if ((r.currentStreak || 0) > maxStreak) maxStreak = r.currentStreak;
+          if ((r.longestStreak || 0) > maxLongestStreak) maxLongestStreak = r.longestStreak;
           totCorrect += Number(r.correctAnswers) || 0;
           totAns += (Number(r.correctAnswers) || 0) + (Number(r.wrongAnswers) || 0);
         }
-        if (maxPts > local.points || maxExp > local.exp || (!local.hasChosenPet && bestCs?.speciesId)) {
+        local.currentStreak = Math.max(Number(local.currentStreak) || 0, maxStreak);
+        local.longestStreak = Math.max(Number(local.longestStreak) || 0, maxLongestStreak);
+        if (maxPts > local.points || maxExp > local.exp || maxStreak > 0 || (!local.hasChosenPet && bestCs?.speciesId)) {
           local.points = Math.max(local.points, maxPts);
           local.exp = Math.max(local.exp, maxExp);
           local.wins = Math.max(local.wins, Number(bestCs?.wins) || 0);
@@ -3810,9 +3869,12 @@
         badgeEl.className = 'text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow animate-pulse';
         if (subEl) subEl.textContent = `${dueCount} kata jatuh tempo • Ulangi biar Power naik!`;
       } else {
-        badgeEl.textContent = newCount > 0 ? `✨ ${newCount} Baru` : '✅ Siap!';
-        badgeEl.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white';
-        if (subEl) subEl.textContent = 'Suara kata + tambah Power ⚡';
+        const learnedCount = Object.keys(state.profile?.fsrsCards || {}).length;
+        badgeEl.textContent = learnedCount > 0 ? '🎉 0 Ulang • Tuntas!' : newCount > 0 ? `✨ ${newCount} Baru` : '✅ Siap!';
+        badgeEl.className = learnedCount > 0
+          ? 'text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 shadow'
+          : 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/25 text-white';
+        if (subEl) subEl.textContent = learnedCount > 0 ? 'Target ulangan hari ini beres! Tambah kata baru ⚡' : 'Suara kata + tambah Power ⚡';
       }
     }
 
@@ -3844,6 +3906,35 @@
       document.getElementById('menu-stat-points').textContent = state.profile.points;
       document.getElementById('menu-stat-wins').textContent = state.profile.wins;
       document.getElementById('menu-stat-acc').textContent = state.profile.totalAnswered > 0 ? `${Math.round((state.profile.totalCorrect / state.profile.totalAnswered) * 100)}%` : '-';
+
+      const srvMe = (state.serverLeaderboard || []).find((r) => r.externalUserId === state.profile.externalUserId);
+      const streakDays = Math.max(Number(state.profile.currentStreak) || 0, Number(srvMe?.currentStreak) || 0, state.profile.exp > 0 ? 1 : 0);
+      const streakEl = document.getElementById('menu-streak-badge');
+      if (streakEl) streakEl.textContent = `🔥 ${streakDays} Hari`;
+
+      const learnedCardsCount = Object.keys(state.profile.fsrsCards || {}).length;
+      const achievements = [
+        { icon: '🐣', label: 'Partner', desc: 'Pilih monster pertamamu', unlocked: Boolean(state.profile.hasChosenPet) },
+        { icon: '🔥', label: 'Streak 3h', desc: 'Belajar 3 hari beruntun', unlocked: streakDays >= 3 },
+        { icon: '📚', label: '10 Kata', desc: 'Latih minimal 10 kartu FSRS', unlocked: learnedCardsCount >= 10 },
+        { icon: '⚔️', label: 'Juara Boss', desc: 'Kalahkan Boss pertama', unlocked: (state.profile.wins || 0) >= 1 },
+        { icon: '🦋', label: 'Evolusi Lv.3', desc: 'Capai wujud Penjaga Sayap', unlocked: stInfo.stage >= 3 },
+        { icon: '👑', label: 'Legenda', desc: 'Raih 5 Trofi atau Raja Naga Lv.4', unlocked: (state.profile.wins || 0) >= 5 || stInfo.stage >= 4 },
+      ];
+      const badgeStrip = document.getElementById('menu-achievements-strip');
+      const badgeCountEl = document.getElementById('menu-badges-count');
+      if (badgeCountEl) badgeCountEl.textContent = `${achievements.filter((a) => a.unlocked).length} / ${achievements.length} Terbuka`;
+      if (badgeStrip) {
+        badgeStrip.innerHTML = achievements.map((a) => `
+          <div title="${a.desc}" class="rounded-2xl px-1.5 py-2 text-center border transition ${
+            a.unlocked
+              ? 'bg-gradient-to-b from-amber-300/25 to-indigo-900/80 border-amber-300/60 shadow-sm'
+              : 'bg-indigo-950/60 border-white/10 opacity-45 grayscale'
+          }">
+            <div class="text-base sm:text-lg leading-none">${a.icon}</div>
+            <div class="text-[10px] font-bold text-amber-100 mt-1 truncate">${a.label}</div>
+          </div>`).join('');
+      }
 
       const qText = document.getElementById('menu-quest-text');
       const qPill = document.getElementById('menu-quest-pill');
@@ -3942,6 +4033,16 @@
       document.getElementById('study-card-tag').textContent = badgeLabel;
       document.getElementById('study-card-front').textContent = card.content?.front || '-';
       document.getElementById('study-card-back').textContent = card.content?.back || '-';
+      const studyImg = document.getElementById('study-card-img');
+      if (studyImg) {
+        if (card.imageUrl) {
+          studyImg.src = card.imageUrl;
+          studyImg.classList.remove('hidden');
+        } else {
+          studyImg.removeAttribute('src');
+          studyImg.classList.add('hidden');
+        }
+      }
 
       // Tampilkan interval FSRS-5 asli per kartu secara ringkas & jelas pada keempat tombol 3D
       const pv = card._preview;
@@ -4000,6 +4101,7 @@
       const prevStage = getStageInfo(state.profile.exp).stage;
       state.profile.exp += rw.exp;
       state.profile.points += rw.pts;
+      touchLocalDailyStreak(state.profile);
       state.attackBuff = Math.min(24, state.attackBuff + rw.buff);
       saveStudentProfile(state.profile);
       const newStage = getStageInfo(state.profile.exp).stage;
@@ -4205,6 +4307,16 @@
       recordRecentProfileItem('recentBattleIds', qObj.id, Math.max(8, Math.floor((qObj.totalPoolSize || 24) * 0.6)));
       document.getElementById('question-tag').textContent = `GILIRAN #${state.battleRound}`;
       document.getElementById('question-text').textContent = qObj.question;
+      const bImg = document.getElementById('battle-question-img');
+      if (bImg) {
+        if (qObj.imageUrl) {
+          bImg.src = qObj.imageUrl;
+          bImg.classList.remove('hidden');
+        } else {
+          bImg.removeAttribute('src');
+          bImg.classList.add('hidden');
+        }
+      }
       document.getElementById('battle-feedback').classList.add('hidden');
       document.getElementById('btn-next-turn').classList.add('hidden');
 
@@ -4499,7 +4611,11 @@
         e.stopPropagation();
         const card = state.studyQueue[state.studyIndex];
         const deckObj = state.decks.find((d) => d.id === (card?.deckId || state.selectedDeckId));
-        if (card?.content?.front) speakWord(card.content.front, card.deckTitle || deckObj?.rawTitle || deckObj?.title || '');
+        if (card?.content?.front) speakWord(card.content.front, card.deckTitle || deckObj?.rawTitle || deckObj?.title || '', card.audioUrl);
+      });
+      document.getElementById('btn-speak-battle-question')?.addEventListener('click', () => {
+        const qObj = state.battleQuestions[state.battleIndex];
+        if (qObj) speakWord(qObj.speakText || qObj.question, qObj.deckTitle || '', qObj.audioUrl);
       });
       document.getElementById('study-card-box').addEventListener('click', revealStudyCard);
       document.getElementById('btn-study-reveal').addEventListener('click', revealStudyCard);

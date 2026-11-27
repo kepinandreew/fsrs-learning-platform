@@ -30,6 +30,21 @@ import type { ClientApp, Deck } from '../api/types';
 
 const DEMO_SEEDED_API_KEY = 'lp_live_demo_pet_battle_sd_2026_secret_key';
 
+const DEFAULT_FSRS_WEIGHTS = [
+  0.40255, 1.18385, 3.173, 15.69105, 7.1949, 0.5345, 1.4604, 0.0046, 1.54575, 0.1192, 1.01925,
+  1.9395, 0.11, 0.29605, 2.2698, 0.2315, 2.9898, 0.51655, 0.6621,
+];
+
+const KIDS_SHORT_WEIGHTS = [
+  0.3, 0.9, 2.2, 8.5, 7.1949, 0.5345, 1.4604, 0.0046, 1.42, 0.14, 0.98, 1.9395, 0.11, 0.29605,
+  2.2698, 0.2315, 2.65, 0.51655, 0.6621,
+];
+
+const EXAM_INTENSIVE_WEIGHTS = [
+  0.25, 0.75, 1.8, 6.5, 7.35, 0.5345, 1.4604, 0.0046, 1.35, 0.15, 0.95, 1.9395, 0.11, 0.29605,
+  2.2698, 0.22, 2.4, 0.51655, 0.6621,
+];
+
 const INSPECTOR_ENDPOINTS = [
   { label: 'GET /health (Status Server)', path: '/health', needsKey: false },
   { label: 'GET /api/decks (Daftar Deck Klien)', path: '/api/decks', needsKey: true },
@@ -331,11 +346,13 @@ export function AppsPage() {
   const [copied, setCopied] = useState(false);
   const [copiedAppId, setCopiedAppId] = useState<string | null>(null);
 
-  // State Edit Aplikasi & Target Retensi FSRS
+  // State Edit Aplikasi, Target Retensi, & 19 Bobot Kustom FSRS-5
   const [editingApp, setEditingApp] = useState<ClientApp | null>(null);
   const [editName, setEditName] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editRetention, setEditRetention] = useState('0.9');
+  const [editUseCustomWeights, setEditUseCustomWeights] = useState(false);
+  const [editWeightsText, setEditWeightsText] = useState(DEFAULT_FSRS_WEIGHTS.join(', '));
   const [editActive, setEditActive] = useState(true);
   const [savingEdit, setSavingEdit] = useState(false);
 
@@ -344,6 +361,9 @@ export function AppsPage() {
     setEditName(app.name);
     setEditDesc(app.description ?? '');
     setEditRetention(String(app.requestRetention));
+    const hasCustom = Array.isArray(app.fsrsParams) && app.fsrsParams.length === 19;
+    setEditUseCustomWeights(hasCustom);
+    setEditWeightsText((hasCustom ? app.fsrsParams! : DEFAULT_FSRS_WEIGHTS).join(', '));
     setEditActive(app.isActive);
   }
 
@@ -353,10 +373,25 @@ export function AppsPage() {
     setSavingEdit(true);
     setError(null);
     try {
+      let parsedParams: number[] | null = null;
+      if (editUseCustomWeights) {
+        const nums = editWeightsText
+          .split(/[\s,;]+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map(Number);
+        if (nums.length !== 19 || nums.some((n) => !Number.isFinite(n) || n < 0 || n > 100)) {
+          throw new Error(
+            `Bobot FSRS-5 wajib berisi tepat 19 angka positif (saat ini terdeteksi ${nums.length} angka).`,
+          );
+        }
+        parsedParams = nums;
+      }
       await appsApi.update(editingApp.id, {
         name: editName.trim(),
         description: editDesc.trim() || null,
         requestRetention: Number(editRetention),
+        fsrsParams: parsedParams,
         isActive: editActive,
       });
       setEditingApp(null);
@@ -723,6 +758,69 @@ export function AppsPage() {
             </div>
           </div>
 
+          <div className="rounded-xl bg-white/90 border border-indigo-200/80 p-3.5 space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold text-slate-800">
+                  Parameter Bobot Algoritma FSRS-5 (<code className="text-indigo-700">w0..w18</code>)
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Gunakan bobot standar FSRS-5 atau terapkan profil interval khusus untuk karakteristik pembelajar.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditUseCustomWeights(false);
+                    setEditWeightsText(DEFAULT_FSRS_WEIGHTS.join(', '));
+                  }}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border ${
+                    !editUseCustomWeights
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  Standar FSRS-5 (Default)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditUseCustomWeights(true);
+                    setEditWeightsText(KIDS_SHORT_WEIGHTS.join(', '));
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold border bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
+                >
+                  Preset Anak SD (Interval Rapat)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditUseCustomWeights(true);
+                    setEditWeightsText(EXAM_INTENSIVE_WEIGHTS.join(', '));
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold border bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                >
+                  Preset Intensif Ujian
+                </button>
+              </div>
+            </div>
+            {editUseCustomWeights && (
+              <div>
+                <textarea
+                  rows={2}
+                  value={editWeightsText}
+                  onChange={(e) => setEditWeightsText(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 font-mono text-xs text-slate-800"
+                  placeholder="19 bobot FSRS-5 dipisahkan koma (w0..w18)"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Format: 19 angka desimal untuk w0..w18. Klik &quot;Standar FSRS-5 (Default)&quot; untuk mengembalikan bobot bawaan.
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center justify-between flex-wrap gap-3 pt-1">
             <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
               <input
@@ -787,9 +885,22 @@ export function AppsPage() {
                       </code>
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
-                        {Math.round(app.requestRetention * 100)}%
-                      </span>
+                      <div className="inline-flex flex-col items-center gap-1">
+                        <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
+                          {Math.round(app.requestRetention * 100)}%
+                        </span>
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                            Array.isArray(app.fsrsParams) && app.fsrsParams.length === 19
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'text-slate-400'
+                          }`}
+                        >
+                          {Array.isArray(app.fsrsParams) && app.fsrsParams.length === 19
+                            ? 'Kustom 19w'
+                            : 'Standar 19w'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-4 text-center text-xs text-slate-700 font-medium">
                       {app._count?.decks ?? 0} deck · {app._count?.learningItems ?? 0} item

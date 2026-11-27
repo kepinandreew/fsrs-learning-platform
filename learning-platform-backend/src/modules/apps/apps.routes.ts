@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Router } from 'express';
 import { prisma } from '../../config/prisma';
 import { clearAppKeyCache } from '../../middlewares/apiKeyAuth';
@@ -18,6 +19,7 @@ const appSelect = {
   apiKeyPrefix: true,
   isActive: true,
   requestRetention: true,
+  fsrsParams: true,
   lastUsedAt: true,
   revokedAt: true,
   createdAt: true,
@@ -49,23 +51,36 @@ router.post(
   validate({ body: createAppSchema }),
   asyncHandler(async (req, res) => {
     const key = generateApiKey();
+    const { fsrsParams, ...restBody } = req.body;
     const app = await prisma.app.create({
-      data: { ...req.body, developerId: req.developer!.id, apiKeyHash: key.hash, apiKeyPrefix: key.prefix },
+      data: {
+        ...restBody,
+        ...(fsrsParams !== undefined
+          ? { fsrsParams: fsrsParams === null ? Prisma.DbNull : fsrsParams }
+          : {}),
+        developerId: req.developer!.id,
+        apiKeyHash: key.hash,
+        apiKeyPrefix: key.prefix,
+      },
       select: appSelect,
     });
     res.status(201).json({ success: true, data: { app, apiKey: key.plain } });
   }),
 );
 
-// Perbarui profil aplikasi & target retensi FSRS
+// Perbarui profil aplikasi, target retensi, & 19 bobot kustom FSRS-5
 router.patch(
   '/:id',
   validate({ params: appIdParamSchema, body: updateAppSchema }),
   asyncHandler(async (req, res) => {
     const found = await prisma.app.findFirst({ where: { id: req.params.id!, developerId: req.developer!.id } });
     if (!found) throw ApiError.notFound('Aplikasi tidak ditemukan');
-    const data = {
-      ...req.body,
+    const { fsrsParams, ...restBody } = req.body;
+    const data: Prisma.AppUpdateInput = {
+      ...restBody,
+      ...(fsrsParams !== undefined
+        ? { fsrsParams: fsrsParams === null ? Prisma.DbNull : fsrsParams }
+        : {}),
       ...(req.body.isActive === true ? { revokedAt: null } : {}),
     };
     const app = await prisma.app.update({

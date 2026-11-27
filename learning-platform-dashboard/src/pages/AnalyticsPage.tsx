@@ -23,6 +23,9 @@ import {
   Download,
   FastForward,
   Trash2,
+  FileText,
+  Printer,
+  CalendarDays,
 } from 'lucide-react';
 import { analyticsApi, appsApi, clearApiCache, decksApi } from '../api/client';
 import type {
@@ -35,6 +38,7 @@ import type {
   FsrsSimulateStepInput,
   MonitoringCardState,
   MonitoringResponse,
+  MonitoringUser,
 } from '../api/types';
 
 type TabMode = 'monitoring' | 'analytics' | 'simulator';
@@ -112,9 +116,10 @@ export function AnalyticsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter lokal tabel CardState
+  // Filter lokal tabel CardState & Rapor Siswa Individual
   const [cardSearch, setCardSearch] = useState('');
   const [cardFilter, setCardFilter] = useState<'ALL' | 'DUE' | 'SHORT_TERM' | 'REVIEW'>('ALL');
+  const [reportStudent, setReportStudent] = useState<MonitoringUser | null>(null);
 
   // State Export CSV & Simulasi Geser Hari (Time-Travel Demo Due)
   const [csvLoading, setCsvLoading] = useState(false);
@@ -320,6 +325,62 @@ export function AnalyticsPage() {
 
   const pct = (v: number | null | undefined) =>
     v === null || v === undefined ? '—' : `${(v * 100).toFixed(1)}%`;
+
+  function handlePrintStudentReport(student: MonitoringUser) {
+    if (!monitoring) return;
+    const sCards = monitoring.cardStates.filter((c) => c.externalUserId === student.externalUserId);
+    const avgR =
+      sCards.length > 0 ? sCards.reduce((acc, c) => acc + c.retrievability, 0) / sCards.length : null;
+    const mastered = sCards.filter((c) => c.stability >= 7 || c.retrievability >= 0.9);
+    const struggling = sCards.filter((c) => c.lapses > 0 || c.lastRating === 'AGAIN' || c.lastRating === 'HARD');
+    const win = window.open('', '_blank', 'width=860,height=920');
+    if (!win) return;
+    const esc = (t: string | null | undefined) =>
+      String(t ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    win.document.write(`<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8" />
+<title>Rapor Evaluasi FSRS-5 — ${esc(student.displayName || student.externalUserId)}</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; color: #0f172a; margin: 32px; line-height: 1.5; }
+  h1 { margin: 0 0 4px; font-size: 20px; }
+  .sub { color: #475569; font-size: 12px; margin-bottom: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .box { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; }
+  .lbl { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 700; }
+  .val { font-size: 18px; font-weight: 800; margin-top: 2px; }
+  h2 { font-size: 14px; margin: 18px 0 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }
+  th { background: #f8fafc; font-weight: 700; }
+  @media print { body { margin: 14mm; } }
+</style></head><body>
+  <h1>Laporan Evaluasi Belajar Adaptif (FSRS-5)</h1>
+  <div class="sub">
+    Siswa: <strong>${esc(student.displayName || student.externalUserId)}</strong> (${esc(student.email || student.externalUserId)}) •
+    Aplikasi: <strong>${esc(monitoring.app?.name || '-')}</strong> •
+    Tanggal Cetak: ${new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })}
+  </div>
+  <div class="grid">
+    <div class="box"><div class="lbl">Level &amp; Poin</div><div class="val">Lv.${student.level} • ${student.points} pts</div></div>
+    <div class="box"><div class="lbl">Daya Ingat FSRS</div><div class="val">${avgR !== null ? `${(avgR * 100).toFixed(1)}%` : '—'}</div></div>
+    <div class="box"><div class="lbl">Akurasi Kuis MC</div><div class="val">${student.quizAccuracy !== null ? `${(student.quizAccuracy * 100).toFixed(1)}%` : '—'}</div></div>
+    <div class="box"><div class="lbl">Streak Belajar</div><div class="val">${student.currentStreak} hari (Rekor ${student.longestStreak}h)</div></div>
+  </div>
+  <h2>Kosakata yang Sudah Dikuasai Kuat (${mastered.length} kartu)</h2>
+  <table><thead><tr><th>Kosakata / Istilah</th><th>Arti</th><th>Stabilitas (Hari)</th><th>Daya Ingat</th></tr></thead><tbody>
+    ${mastered.length === 0 ? '<tr><td colspan="4">Belum ada kartu pada kategori ini.</td></tr>' : mastered.slice(0, 20).map((c) => `<tr><td><strong>${esc(c.front)}</strong></td><td>${esc(c.back)}</td><td>${c.stability.toFixed(2)} hari</td><td>${Math.round(c.retrievability * 100)}%</td></tr>`).join('')}
+  </tbody></table>
+  <h2>Kosakata yang Perlu Pendampingan Ulang (${struggling.length} kartu)</h2>
+  <table><thead><tr><th>Kosakata / Istilah</th><th>Arti</th><th>Lapses (Lupa)</th><th>Kesulitan (D)</th></tr></thead><tbody>
+    ${struggling.length === 0 ? '<tr><td colspan="4">Tidak ada kosakata bermasalah — seluruh kartu terkendali baik.</td></tr>' : struggling.slice(0, 20).map((c) => `<tr><td><strong>${esc(c.front)}</strong></td><td>${esc(c.back)}</td><td>${c.lapses}x</td><td>${c.difficulty.toFixed(2)} / 10</td></tr>`).join('')}
+  </tbody></table>
+  <script>window.onload = () => { window.print(); };</script>
+</body></html>`);
+    win.document.close();
+  }
 
   const filteredCardStates = (monitoring?.cardStates ?? []).filter((cs) => {
     if (cardFilter === 'DUE' && !cs.isDue) return false;
@@ -561,6 +622,126 @@ export function AnalyticsPage() {
       {error && (
         <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
           {error}
+        </div>
+      )}
+
+      {reportStudent && monitoring && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-y-auto p-6 space-y-4">
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold">
+                  Kartu Rapor Evaluasi Siswa
+                </span>
+                <h2 className="text-lg font-extrabold text-slate-900 mt-1">
+                  {reportStudent.displayName || reportStudent.externalUserId}
+                </h2>
+                <p className="text-xs text-slate-500 font-mono">
+                  {reportStudent.email || reportStudent.externalUserId}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handlePrintStudentReport(reportStudent)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Cetak / Simpan PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReportStudent(null)}
+                  className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {(() => {
+              const sCards = monitoring.cardStates.filter(
+                (c) => c.externalUserId === reportStudent.externalUserId,
+              );
+              const avgR =
+                sCards.length > 0
+                  ? sCards.reduce((acc, c) => acc + c.retrievability, 0) / sCards.length
+                  : null;
+              const mastered = sCards.filter((c) => c.stability >= 7 || c.retrievability >= 0.9);
+              const struggling = sCards.filter(
+                (c) => c.lapses > 0 || c.lastRating === 'AGAIN' || c.lastRating === 'HARD',
+              );
+              return (
+                <div className="space-y-4 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Level &amp; Poin</p>
+                      <p className="text-base font-extrabold text-slate-900 mt-0.5">
+                        Lv.{reportStudent.level} · {reportStudent.points}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+                      <p className="text-[10px] font-bold uppercase text-indigo-500">Daya Ingat FSRS</p>
+                      <p className="text-base font-extrabold text-indigo-900 mt-0.5">{pct(avgR)}</p>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+                      <p className="text-[10px] font-bold uppercase text-emerald-600">Akurasi Kuis</p>
+                      <p className="text-base font-extrabold text-emerald-900 mt-0.5">
+                        {pct(reportStudent.quizAccuracy)}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-100">
+                      <p className="text-[10px] font-bold uppercase text-amber-600">Streak Harian</p>
+                      <p className="text-base font-extrabold text-amber-900 mt-0.5">
+                        🔥 {reportStudent.currentStreak}h (Max {reportStudent.longestStreak}h)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="p-3.5 rounded-2xl bg-emerald-50/50 border border-emerald-200/70 space-y-1.5">
+                      <p className="font-bold text-emerald-900">
+                        ✅ Kosakata Hafal Kuat ({mastered.length})
+                      </p>
+                      {mastered.length === 0 ? (
+                        <p className="text-slate-500">Belum ada kosakata stabil.</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {mastered.slice(0, 12).map((c) => (
+                            <span
+                              key={c.id}
+                              className="px-2 py-0.5 rounded-lg bg-white border border-emerald-200 text-emerald-800 font-semibold"
+                            >
+                              {c.front} ({Math.round(c.stability)}h)
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3.5 rounded-2xl bg-rose-50/50 border border-rose-200/70 space-y-1.5">
+                      <p className="font-bold text-rose-900">
+                        🎯 Perlu Pendampingan Ulang ({struggling.length})
+                      </p>
+                      {struggling.length === 0 ? (
+                        <p className="text-slate-500">Seluruh kosakata terkendali dengan baik.</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {struggling.slice(0, 12).map((c) => (
+                            <span
+                              key={c.id}
+                              className="px-2 py-0.5 rounded-lg bg-white border border-rose-200 text-rose-800 font-semibold"
+                            >
+                              {c.front} → {c.back}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
         </div>
       )}
 
@@ -1082,6 +1263,79 @@ export function AnalyticsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* GRAFIK 4: Kalender Proyeksi Beban Ulasan 14 Hari ke Depan (Upcoming Due Forecast) */}
+                {monitoring.dueForecast14d && monitoring.dueForecast14d.length > 0 && (
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                          <CalendarDays className="w-4 h-4 text-indigo-600" />
+                          4. Proyeksi Beban Ulasan 14 Hari ke Depan (Upcoming Due Forecast)
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Distribusi jadwal jatuh tempo kartu aktif dari Hari Ini hingga H+13 untuk memprediksi beban belajar harian siswa.
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+                        Total 14 Hari:{' '}
+                        <strong>
+                          {monitoring.dueForecast14d.reduce((s, b) => s + b.count, 0)} kartu
+                        </strong>
+                      </span>
+                    </div>
+
+                    {(() => {
+                      const maxCount = Math.max(1, ...monitoring.dueForecast14d.map((b) => b.count));
+                      return (
+                        <div className="grid grid-cols-7 sm:grid-cols-14 gap-2 pt-2 items-end">
+                          {monitoring.dueForecast14d.map((b) => {
+                            const barHeightPct = b.count === 0 ? 6 : Math.max(14, Math.round((b.count / maxCount) * 100));
+                            const isToday = b.dayOffset === 0;
+                            return (
+                              <div
+                                key={b.dayOffset}
+                                title={`${b.label} (${b.date}): ${b.count} kartu terjadwal`}
+                                className="flex flex-col items-center gap-1"
+                              >
+                                <span
+                                  className={`text-[11px] font-extrabold ${
+                                    b.count === 0
+                                      ? 'text-slate-300'
+                                      : isToday
+                                        ? 'text-amber-700'
+                                        : 'text-indigo-700'
+                                  }`}
+                                >
+                                  {b.count}
+                                </span>
+                                <div className="w-full h-24 rounded-xl bg-slate-100/90 flex items-end p-1">
+                                  <div
+                                    style={{ height: `${barHeightPct}%` }}
+                                    className={`w-full rounded-lg transition-all ${
+                                      b.count === 0
+                                        ? 'bg-slate-200'
+                                        : isToday
+                                          ? 'bg-gradient-to-t from-amber-500 to-rose-500'
+                                          : 'bg-gradient-to-t from-indigo-600 to-sky-400'
+                                    }`}
+                                  />
+                                </div>
+                                <span
+                                  className={`text-[10px] font-bold truncate max-w-full ${
+                                    isToday ? 'text-amber-700' : 'text-slate-500'
+                                  }`}
+                                >
+                                  {b.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -1194,18 +1448,32 @@ export function AnalyticsPage() {
                               : 'Belum mulai'}
                           </td>
                           <td className="px-6 py-3.5 text-right">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteStudent(u.externalUserId, u.displayName);
-                              }}
-                              title="Hapus akun siswa uji coba ini"
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-[11px] font-semibold text-rose-700"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                              Hapus
-                            </button>
+                            <div className="inline-flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReportStudent(u);
+                                }}
+                                title="Lihat & cetak rapor evaluasi individual siswa"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-[11px] font-semibold text-indigo-700"
+                              >
+                                <FileText className="w-3 h-3" />
+                                Rapor
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteStudent(u.externalUserId, u.displayName);
+                                }}
+                                title="Hapus akun siswa uji coba ini"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-[11px] font-semibold text-rose-700"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Hapus
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );

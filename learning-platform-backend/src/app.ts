@@ -11,6 +11,7 @@ import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { env } from './config/env';
+import { buildOpenApiSpec, renderApiDocsHtml } from './docs/openapi';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 import { apiLimiter } from './middlewares/rateLimit';
 import aiRoutes from './modules/ai/ai.routes';
@@ -59,7 +60,7 @@ export function createApp() {
       data: {
         service: 'FSRS-5 Learning Platform Backend API',
         status: 'ok',
-        endpoints: ['/health', '/api/decks', '/api/dashboard/analytics/summary'],
+        endpoints: ['/health', '/api/docs', '/api/openapi.json', '/api/decks', '/api/dashboard/analytics/summary'],
       },
     });
   });
@@ -69,7 +70,17 @@ export function createApp() {
   });
 
   app.get('/api', (_req, res) => {
-    res.json({ success: true, data: { service: 'FSRS-5 Learning Platform API', status: 'ok' } });
+    res.json({ success: true, data: { service: 'FSRS-5 Learning Platform API', status: 'ok', docs: '/api/docs' } });
+  });
+
+  app.get('/api/openapi.json', (req, res) => {
+    const proto = (req.headers['x-forwarded-proto'] as string)?.split(',')[0]?.trim() || req.protocol || 'http';
+    const host = req.get('host') || 'localhost:3000';
+    res.json(buildOpenApiSpec(`${proto}://${host}`));
+  });
+
+  app.get('/api/docs', (_req, res) => {
+    res.type('html').send(renderApiDocsHtml('/api/openapi.json'));
   });
 
   app.use('/api', apiLimiter);

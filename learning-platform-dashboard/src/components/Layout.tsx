@@ -264,6 +264,16 @@ export function Layout() {
             >
               API v1 · {API_BASE_URL.replace(/^https?:\/\//, '')}
             </span>
+            <a
+              href={`${API_BASE_URL}/api/docs`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Buka Dokumentasi Kontrak OpenAPI 3.0 Interaktif"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors"
+            >
+              OpenAPI
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </header>
 

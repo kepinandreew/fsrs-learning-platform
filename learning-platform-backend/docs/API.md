@@ -10,11 +10,13 @@ Semua respons JSON memakai amplop standar:
 
 ---
 
-## 1. Publik
+## 1. Publik & Dokumentasi Interaktif OpenAPI
 | Method | Rute | Keterangan |
 | :--- | :--- | :--- |
 | `GET` | `/` | Informasi status layanan API |
 | `GET` | `/health` | Pemeriksaan kesehatan server & *uptime* |
+| `GET` | `/api/openapi.json` | Spesifikasi kontrak REST API berformat OpenAPI 3.0.3 |
+| `GET` | `/api/docs` | Antarmuka dokumentasi interaktif OpenAPI Explorer (*Live Try-It-Out*) |
 
 ---
 
@@ -37,7 +39,7 @@ Semua respons JSON memakai amplop standar:
 | :--- | :--- | :--- |
 | `GET` | `/api/apps` | Daftar aplikasi milik developer beserta statistik deck, materi, & siswa |
 | `POST` | `/api/apps` | Daftarkan aplikasi baru & terbitkan `X-API-Key` (tampil sekali, disimpan hash SHA-256) |
-| `PATCH` | `/api/apps/:id` | Ubah profil aplikasi, status aktif, atau `requestRetention` FSRS (0.70–0.97) |
+| `PATCH` | `/api/apps/:id` | Ubah profil aplikasi, status aktif, `requestRetention` (0.70–0.99), atau 19 bobot `fsrsParams` ($w_0 \dots w_{18}$) |
 | `POST` | `/api/apps/:id/rotate-key` | Rotasi kunci `X-API-Key` baru |
 | `POST` | `/api/apps/:id/revoke` | Nonaktifkan / cabut kunci `X-API-Key` |
 | `DELETE` | `/api/apps/:id` | Hapus permanen aplikasi kosong (ditolak `409` bila sudah memiliki materi/riwayat) |
@@ -50,6 +52,8 @@ Semua respons JSON memakai amplop standar:
 | `GET` | `/api/dashboard/decks/:id` | Detail satu deck |
 | `PATCH` | `/api/dashboard/decks/:id` | Perbarui judul/deskripsi/status deck |
 | `DELETE` | `/api/dashboard/decks/:id` | *Soft-delete* deck (`isActive = false`) |
+| `GET` | `/api/dashboard/decks/:id/export` | Ekspor seluruh Flashcard & Pilihan Ganda dalam deck ke paket JSON portabel |
+| `POST` | `/api/dashboard/decks/:id/import` | Impor massal Flashcard & Pilihan Ganda ke deck (otomatis menautkan relasi `sourceFlashcardId`) |
 | `GET` | `/api/dashboard/items` | Daftar item Flashcard & Pilihan Ganda (mendukung filter `deckId`, `type`, `search`, paginasi) |
 | `POST` | `/api/dashboard/items` | Buat item Flashcard atau Multiple Choice baru |
 | `PATCH` | `/api/dashboard/items/:id` | Edit item materi (otomatis menaikkan `contentVersion` untuk invalidasi cache `ETag`) |

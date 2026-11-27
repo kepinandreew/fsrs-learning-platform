@@ -299,6 +299,7 @@ export async function getMonitoring(developerId: string, q: MonitoringQuery) {
       },
       users: [],
       cardStates: [],
+      dueForecast14d: [],
       recentReviews: [],
       recentQuizzes: [],
       generatedAt: now.toISOString(),
@@ -335,6 +336,7 @@ export async function getMonitoring(developerId: string, q: MonitoringQuery) {
     quizAttempts,
     totalReviewCount,
     quizGroupCounts,
+    allTrackedDues,
   ] = await Promise.all([
     prisma.learningItem.count({ where: { ...itemScope, type: ItemType.FLASHCARD } }),
     prisma.learningItem.count({ where: { ...itemScope, type: ItemType.MULTIPLE_CHOICE } }),
@@ -437,6 +439,16 @@ export async function getMonitoring(developerId: string, q: MonitoringQuery) {
             ...(filterUserId ? { userId: filterUserId } : {}),
           },
           _count: { _all: true },
+        }),
+    userMissing
+      ? Promise.resolve([])
+      : prisma.cardState.findMany({
+          where: {
+            item: itemScope,
+            state: { not: CardStateType.NEW },
+            ...(filterUserId ? { userId: filterUserId } : {}),
+          },
+          select: { due: true },
         }),
   ]);
 
@@ -606,6 +618,31 @@ export async function getMonitoring(developerId: string, q: MonitoringQuery) {
     };
   });
 
+  // Proyeksi beban ulasan 14 hari ke depan (Hari Ini/Due s.d. H+13) untuk kalender perencanaan pengajar.
+  const startOfToday = new Date(now);
+  startOfToday.setUTCHours(0, 0, 0, 0);
+  const dueForecast14d = Array.from({ length: 14 }, (_, dayOffset) => {
+    const d = new Date(startOfToday.getTime() + dayOffset * 86_400_000);
+    return {
+      dayOffset,
+      date: d.toISOString().slice(0, 10),
+      label: dayOffset === 0 ? 'Hari Ini' : dayOffset === 1 ? 'Besok' : `H+${dayOffset}`,
+      count: 0,
+      overdueCount: 0,
+    };
+  });
+  for (const row of allTrackedDues) {
+    if (row.due.getTime() <= now.getTime()) {
+      dueForecast14d[0]!.count += 1;
+      dueForecast14d[0]!.overdueCount += 1;
+    } else {
+      const diffDays = Math.max(0, Math.floor((row.due.getTime() - startOfToday.getTime()) / 86_400_000));
+      if (diffDays < 14) {
+        dueForecast14d[diffDays]!.count += 1;
+      }
+    }
+  }
+
   return {
     app,
     deck,
@@ -621,6 +658,7 @@ export async function getMonitoring(developerId: string, q: MonitoringQuery) {
     },
     users,
     cardStates,
+    dueForecast14d,
     recentReviews,
     recentQuizzes,
     generatedAt: now.toISOString(),

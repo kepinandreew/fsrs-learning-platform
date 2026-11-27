@@ -3,7 +3,7 @@
  * @description Halaman pengelolaan Deck dan Bank Materi (Flashcard & Pilihan Ganda),
  * dilengkapi pencarian cepat, pembaruan versi konten otomatis (`contentVersion`), serta audit kualitas AI.
  */
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, useRef, FormEvent, ChangeEvent } from 'react';
 import {
   Plus,
   Trash2,
@@ -15,9 +15,49 @@ import {
   Link2,
   Pencil,
   Search,
+  Download,
+  Upload,
+  Image as ImageIcon,
+  Volume2,
 } from 'lucide-react';
 import { appsApi, decksApi, itemsApi, aiApi } from '../api/client';
-import type { ClientApp, Deck, LearningItem, ItemType, AiVerifyDeckResponse } from '../api/types';
+import type {
+  ClientApp,
+  Deck,
+  LearningItem,
+  ItemType,
+  AiVerifyDeckResponse,
+  PortableDeckItem,
+} from '../api/types';
+
+function parseCsvLine(line: string, delimiter: string): string[] {
+  const out: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]!;
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        cur += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === delimiter && !inQuotes) {
+      out.push(cur.trim());
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur.trim());
+  return out;
+}
+
+function escapeCsvCell(val: string | null | undefined): string {
+  const s = String(val ?? '');
+  return /[",\r\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
 
 export function QuestionBankPage() {
   const [apps, setApps] = useState<ClientApp[]>([]);
@@ -42,11 +82,16 @@ export function QuestionBankPage() {
   const [explanation, setExplanation] = useState('');
   const [sourceFlashcardId, setSourceFlashcardId] = useState('');
   const [tagsInput, setTagsInput] = useState('');
+  const [imageUrlInput, setImageUrlInput] = useState('');
+  const [audioUrlInput, setAudioUrlInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const [verifyingDeck, setVerifyingDeck] = useState(false);
   const [verifyReport, setVerifyReport] = useState<AiVerifyDeckResponse | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [bulkNotice, setBulkNotice] = useState<string | null>(null);
+  const [importingBulk, setImportingBulk] = useState(false);
+  const fileImportRef = useRef<HTMLInputElement | null>(null);
 
   // State Edit Deck & Edit Soal (menaikkan contentVersion otomatis di server)
   const [editingDeck, setEditingDeck] = useState(false);
@@ -151,11 +196,19 @@ export function QuestionBankPage() {
       .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
+    const cleanImg = imageUrlInput.trim() || null;
+    const cleanAudio = audioUrlInput.trim() || null;
 
     try {
       if (editingItem) {
         if (itemType === 'FLASHCARD') {
-          await itemsApi.update(editingItem.id, { front, back, tags });
+          await itemsApi.update(editingItem.id, {
+            front,
+            back,
+            tags,
+            imageUrl: cleanImg,
+            audioUrl: cleanAudio,
+          });
         } else {
           const cleanChoices = choices.map((c) => c.trim()).filter(Boolean);
           await itemsApi.update(editingItem.id, {
@@ -165,6 +218,8 @@ export function QuestionBankPage() {
             explanation: explanation.trim() || null,
             sourceFlashcardId: sourceFlashcardId || null,
             tags,
+            imageUrl: cleanImg,
+            audioUrl: cleanAudio,
           });
         }
         setEditingItem(null);
@@ -174,6 +229,8 @@ export function QuestionBankPage() {
           front,
           back,
           tags,
+          imageUrl: cleanImg,
+          audioUrl: cleanAudio,
         });
       } else {
         const cleanChoices = choices.map((c) => c.trim()).filter(Boolean);
@@ -185,6 +242,8 @@ export function QuestionBankPage() {
           explanation: explanation.trim() || undefined,
           sourceFlashcardId: sourceFlashcardId || undefined,
           tags,
+          imageUrl: cleanImg,
+          audioUrl: cleanAudio,
         });
       }
       setFront('');
@@ -195,6 +254,8 @@ export function QuestionBankPage() {
       setExplanation('');
       setSourceFlashcardId('');
       setTagsInput('');
+      setImageUrlInput('');
+      setAudioUrlInput('');
       await loadItems(selectedDeckId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menyimpan materi');
@@ -207,6 +268,8 @@ export function QuestionBankPage() {
     setEditingItem(item);
     setItemType(item.type);
     setTagsInput(item.tags.join(', '));
+    setImageUrlInput(item.imageUrl ?? '');
+    setAudioUrlInput(item.audioUrl ?? '');
     if (item.type === 'FLASHCARD') {
       setFront(item.front ?? '');
       setBack(item.back ?? '');
@@ -231,6 +294,173 @@ export function QuestionBankPage() {
     setExplanation('');
     setSourceFlashcardId('');
     setTagsInput('');
+    setImageUrlInput('');
+    setAudioUrlInput('');
+  }
+
+  async function handleExportDeckJson() {
+    if (!selectedDeckId || !currentDeck) return;
+    setError(null);
+    try {
+      const pkg = await decksApi.exportDeck(selectedDeckId);
+      const slug = currentDeck.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'deck';
+      const blob = new Blob([JSON.stringify(pkg, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `paket-deck-${slug}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal mengekspor deck');
+    }
+  }
+
+  async function handleExportDeckCsv() {
+    if (!selectedDeckId || !currentDeck) return;
+    setError(null);
+    try {
+      const pkg = await decksApi.exportDeck(selectedDeckId);
+      const header = [
+        'type',
+        'front',
+        'back',
+        'question',
+        'choiceA',
+        'choiceB',
+        'choiceC',
+        'choiceD',
+        'correctLetter',
+        'sourceFront',
+        'explanation',
+        'tags',
+        'imageUrl',
+        'audioUrl',
+      ].join(',');
+      const lines = pkg.items.map((it) => {
+        if (it.type === 'FLASHCARD') {
+          return [
+            'FLASHCARD',
+            escapeCsvCell(it.front),
+            escapeCsvCell(it.back),
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            escapeCsvCell((it.tags ?? []).join('|')),
+            escapeCsvCell(it.imageUrl),
+            escapeCsvCell(it.audioUrl),
+          ].join(',');
+        }
+        const ch = it.choices ?? [];
+        const letter = String.fromCharCode(65 + Math.max(0, Math.min(3, it.correctIndex ?? 0)));
+        return [
+          'MULTIPLE_CHOICE',
+          '',
+          '',
+          escapeCsvCell(it.question),
+          escapeCsvCell(ch[0]),
+          escapeCsvCell(ch[1]),
+          escapeCsvCell(ch[2]),
+          escapeCsvCell(ch[3]),
+          letter,
+          escapeCsvCell(it.sourceFront),
+          escapeCsvCell(it.explanation),
+          escapeCsvCell((it.tags ?? []).join('|')),
+          escapeCsvCell(it.imageUrl),
+          escapeCsvCell(it.audioUrl),
+        ].join(',');
+      });
+      const csv = `\uFEFF${[header, ...lines].join('\r\n')}`;
+      const slug = currentDeck.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'deck';
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bank-soal-${slug}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal mengekspor CSV');
+    }
+  }
+
+  async function handleImportDeckFile(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f || !selectedDeckId) return;
+    setImportingBulk(true);
+    setError(null);
+    setBulkNotice(null);
+    try {
+      const rawText = (await f.text()).replace(/^\uFEFF/, '').trim();
+      let parsedItems: PortableDeckItem[] = [];
+      if (f.name.toLowerCase().endsWith('.json') || rawText.startsWith('{') || rawText.startsWith('[')) {
+        const json = JSON.parse(rawText);
+        parsedItems = Array.isArray(json) ? json : Array.isArray(json?.items) ? json.items : [];
+      } else {
+        const rawLines = rawText.split(/\r?\n/).filter((l) => l.trim().length > 0);
+        if (rawLines.length < 2) throw new Error('Berkas CSV kosong atau belum memiliki baris data.');
+        const delim = rawLines[0]!.includes(';') && !rawLines[0]!.includes(',') ? ';' : ',';
+        const cols = parseCsvLine(rawLines[0]!, delim).map((c) => c.toLowerCase());
+        const idxOf = (name: string) => cols.indexOf(name.toLowerCase());
+        for (let r = 1; r < rawLines.length; r++) {
+          const cells = parseCsvLine(rawLines[r]!, delim);
+          const get = (col: string) => {
+            const idx = idxOf(col);
+            return idx >= 0 ? (cells[idx] ?? '').trim() : '';
+          };
+          const rowType = (get('type') || (get('question') ? 'MULTIPLE_CHOICE' : 'FLASHCARD')).toUpperCase();
+          const tags = get('tags')
+            .split(/[|,]/)
+            .map((t) => t.trim())
+            .filter(Boolean);
+          const imageUrl = get('imageurl') || null;
+          const audioUrl = get('audiourl') || null;
+          if (rowType === 'FLASHCARD') {
+            const fVal = get('front');
+            const bVal = get('back');
+            if (fVal && bVal) {
+              parsedItems.push({ type: 'FLASHCARD', front: fVal, back: bVal, tags, imageUrl, audioUrl });
+            }
+          } else if (rowType === 'MULTIPLE_CHOICE') {
+            const qVal = get('question');
+            const ch = [get('choicea'), get('choiceb'), get('choicec'), get('choiced')].filter(Boolean);
+            const letter = (get('correctletter') || 'A').toUpperCase();
+            const cIdx = Math.max(0, Math.min(ch.length - 1, 'ABCDEF'.indexOf(letter)));
+            if (qVal && ch.length >= 2) {
+              parsedItems.push({
+                type: 'MULTIPLE_CHOICE',
+                question: qVal,
+                choices: ch,
+                correctIndex: cIdx,
+                sourceFront: get('sourcefront') || null,
+                explanation: get('explanation') || null,
+                tags,
+                imageUrl,
+                audioUrl,
+              });
+            }
+          }
+        }
+      }
+      if (parsedItems.length === 0) {
+        throw new Error('Tidak ada item valid yang ditemukan pada berkas impor.');
+      }
+      const res = await decksApi.importDeck(selectedDeckId, parsedItems);
+      setBulkNotice(
+        `Berhasil mengimpor ${res.counts.flashcards} Flashcard & ${res.counts.quizzes} Pilihan Ganda ke deck aktif.`,
+      );
+      await Promise.all([loadItems(selectedDeckId), loadInitial()]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal mengimpor berkas soal');
+    } finally {
+      setImportingBulk(false);
+    }
   }
 
   async function handleSaveDeckEdit(e: FormEvent) {
@@ -324,6 +554,15 @@ export function QuestionBankPage() {
         </div>
       )}
 
+      {bulkNotice && (
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between">
+          <span>{bulkNotice}</span>
+          <button type="button" onClick={() => setBulkNotice(null)} className="text-emerald-700 font-bold">
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Form Tambah Deck */}
       {showDeckForm && (
         <form
@@ -412,6 +651,43 @@ export function QuestionBankPage() {
 
           {currentDeck && (
             <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileImportRef}
+                type="file"
+                accept=".json,.csv"
+                onChange={handleImportDeckFile}
+                className="hidden"
+              />
+              <button
+                type="button"
+                disabled={importingBulk}
+                onClick={() => fileImportRef.current?.click()}
+                title="Impor massal soal dari berkas CSV (Excel) atau JSON"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 text-xs font-semibold text-emerald-800"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                {importingBulk ? 'Mengimpor...' : 'Import CSV/JSON'}
+              </button>
+              <button
+                type="button"
+                disabled={items.length === 0}
+                onClick={handleExportDeckCsv}
+                title="Unduh bank soal deck ini dalam format CSV (siap diedit di Excel)"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 disabled:opacity-50 text-xs font-semibold text-slate-700"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export CSV
+              </button>
+              <button
+                type="button"
+                disabled={items.length === 0}
+                onClick={handleExportDeckJson}
+                title="Unduh paket deck portabel berformat JSON"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 disabled:opacity-50 text-xs font-semibold text-slate-700"
+              >
+                <Download className="w-3.5 h-3.5" />
+                JSON
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -731,6 +1007,33 @@ export function QuestionBankPage() {
               />
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  URL Gambar Ilustrasi (Opsional)
+                </label>
+                <input
+                  type="url"
+                  value={imageUrlInput}
+                  onChange={(e) => setImageUrlInput(e.target.value)}
+                  placeholder="https://.../gambar.png"
+                  className="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  URL Audio Pelafalan (Opsional)
+                </label>
+                <input
+                  type="url"
+                  value={audioUrlInput}
+                  onChange={(e) => setAudioUrlInput(e.target.value)}
+                  placeholder="https://.../suara.mp3"
+                  className="w-full px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-mono"
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={submitting}
@@ -825,6 +1128,28 @@ export function QuestionBankPage() {
                               <Link2 className="w-3 h-3" />
                               FSRS: {linkedFc.front?.slice(0, 24)}
                             </span>
+                          )}
+                          {item.imageUrl && (
+                            <a
+                              href={item.imageUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-semibold"
+                            >
+                              <ImageIcon className="w-3 h-3" />
+                              Gambar
+                            </a>
+                          )}
+                          {item.audioUrl && (
+                            <a
+                              href={item.audioUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 border border-violet-200 text-[10px] font-semibold"
+                            >
+                              <Volume2 className="w-3 h-3" />
+                              Audio
+                            </a>
                           )}
                           {item.tags.map((tag) => (
                             <span

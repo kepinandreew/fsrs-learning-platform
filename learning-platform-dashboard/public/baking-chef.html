@@ -304,6 +304,7 @@
             <div class="flex-1 w-full space-y-2 text-center sm:text-left">
               <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
                 <span id="menu-rank-pill" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-300 text-slate-950 shadow">Lv.1</span>
+                <span id="menu-streak-pill" class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-orange-500/30 border border-orange-300/55 text-amber-200">🔥 1 Hari</span>
                 <span id="menu-student-id-badge" class="text-xs font-mono px-2 py-0.5 rounded-full bg-white/15 border border-white/25 text-amber-100">siswa_01</span>
                 <span id="menu-api-pill" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-400/25 border border-emerald-300/45 text-emerald-100">Memuat...</span>
               </div>
@@ -332,6 +333,15 @@
           <div class="space-y-1.5">
             <div class="text-[11px] font-bold uppercase tracking-wider text-amber-200/70">Jenjang Karir Patisserie</div>
             <div id="chef-ranks-strip" class="grid grid-cols-4 gap-1.5"></div>
+          </div>
+
+          <!-- Galeri 6 Lencana Prestasi Koki -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-amber-200/80">
+              <span>🏅 Lencana Prestasi Koki</span>
+              <span id="chef-badges-count" class="text-amber-300">0 / 6 Terbuka</span>
+            </div>
+            <div id="chef-achievements-strip" class="grid grid-cols-3 sm:grid-cols-6 gap-1.5"></div>
           </div>
 
           <div class="grid grid-cols-3 gap-2 pt-2 border-t border-amber-200/15">
@@ -429,6 +439,7 @@
         <div id="study-card-box" class="relative rounded-3xl p-6 sm:p-8 text-center bg-gradient-to-br from-rose-950/90 via-purple-950/85 to-amber-950/80 border-2 border-amber-300/35 min-h-[210px] sm:min-h-[240px] flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-amber-300/70 transition">
           <button id="btn-speak-card" type="button" class="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-amber-400/25 hover:bg-amber-400/40 border border-amber-300/45 text-amber-100 flex items-center gap-1" title="Dengarkan pengucapan Bahasa Inggris">🔊 Dengar</button>
           <span id="study-card-tag" class="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-black/45 border border-white/10 text-pink-200">Kosakata</span>
+          <img id="study-card-img" alt="Ilustrasi bahan" class="hidden mx-auto max-h-24 rounded-2xl border-2 border-amber-200/35 object-contain shadow-md mt-3" />
           <div id="study-card-icon" class="text-5xl sm:text-6xl pt-2" aria-hidden="true">🌾</div>
           <div id="study-card-front" class="text-3xl sm:text-5xl font-bold tracking-wide text-white" lang="en">Flour</div>
           <div id="study-card-back-wrap" class="hidden w-full pt-3 mt-2 border-t-2 border-dashed border-amber-300/30">
@@ -778,7 +789,16 @@
       },
     };
 
-    function speakEnglish(word) {
+    let activeChefAudio = null;
+    function speakEnglish(word, audioUrl = null) {
+      if (audioUrl && /^https?:\/\//i.test(audioUrl)) {
+        try {
+          if (activeChefAudio) { activeChefAudio.pause(); activeChefAudio = null; }
+          activeChefAudio = new Audio(audioUrl);
+          activeChefAudio.play().catch(() => speakEnglish(word, null));
+          return;
+        } catch {}
+      }
       if (!('speechSynthesis' in window) || !word) return;
       try {
         window.speechSynthesis.cancel();
@@ -1376,6 +1396,8 @@
                 icon: baseRef?.icon || pickIconForWord(cleanFront, cleanBack),
                 color: baseRef?.color || 0xfde68a,
                 flashcardId: it.id,
+                imageUrl: it.imageUrl || null,
+                audioUrl: it.audioUrl || null,
                 isServerItem: true,
               };
             }
@@ -1404,6 +1426,8 @@
           state.points = Math.max(state.points, Number(srv.points) || 0);
           state.exp = Math.max(state.exp, Number(srv.exp) || 0);
           state.level = getChefRank(state.exp).level;
+          state.currentStreak = Math.max(Number(state.currentStreak) || 0, Number(srv.currentStreak) || 0);
+          state.longestStreak = Math.max(Number(state.longestStreak) || 0, Number(srv.longestStreak) || 0);
           const cs = srv.clientState && typeof srv.clientState === 'object' ? srv.clientState : null;
           if (cs?.completedRecipes) state.completedRecipes = Math.max(state.completedRecipes, Number(cs.completedRecipes) || 0);
           const mergedStars = { ...loadRecipeStars(targetUserId) };
@@ -2668,7 +2692,16 @@
       document.getElementById('study-source-badge').textContent = state.isOnline ? '🟢 FSRS Server Aktif' : '🟡 Latihan Offline';
       document.getElementById('study-progress-bar').style.setProperty('--study-pct', `${Math.round(((num - 1) / Math.max(1, total)) * 100)}%`);
       document.getElementById('study-card-tag').textContent = tagLabel;
-      document.getElementById('study-card-icon').textContent = item.icon || '🥣';
+      const studyImg = document.getElementById('study-card-img');
+      const studyIcon = document.getElementById('study-card-icon');
+      if (studyImg && item.imageUrl) {
+        studyImg.src = item.imageUrl;
+        studyImg.classList.remove('hidden');
+        if (studyIcon) studyIcon.classList.add('hidden');
+      } else {
+        if (studyImg) { studyImg.removeAttribute('src'); studyImg.classList.add('hidden'); }
+        if (studyIcon) { studyIcon.textContent = item.icon || '🥣'; studyIcon.classList.remove('hidden'); }
+      }
       document.getElementById('study-card-front').textContent = item.en;
       document.getElementById('study-card-back').textContent = item.id;
 
@@ -3003,11 +3036,23 @@
       choicesEl.innerHTML = step.options.map((k, idx) => {
         const ing = state.dynamicIngredients[k] || BASE_INGREDIENTS.Flour;
         return `
-          <button type="button" data-k="${idx}" data-key="${ing.key}" lang="en" class="ing-choice-btn touch-btn rounded-2xl p-3 sm:p-4 flex items-center gap-2.5 text-left font-bold">
-            <span class="w-8 h-8 rounded-xl bg-black/25 grid place-items-center text-sm font-bold text-white shrink-0">${labels[idx]}</span>
-            <span class="text-sm sm:text-lg text-white leading-tight break-words">${ing.en}</span>
+          <button type="button" data-k="${idx}" data-key="${ing.key}" lang="en" class="ing-choice-btn touch-btn rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 text-left font-bold">
+            <span class="flex items-center gap-2.5 min-w-0">
+              <span class="w-8 h-8 rounded-xl bg-black/25 grid place-items-center text-sm font-bold text-white shrink-0">${labels[idx]}</span>
+              <span class="text-sm sm:text-lg text-white leading-tight break-words">${ing.en}</span>
+            </span>
+            <span role="button" tabindex="0" data-speak-key="${ing.key}" title="Dengarkan pelafalan" class="speak-choice-pill w-7 h-7 rounded-lg bg-black/25 hover:bg-black/45 grid place-items-center text-xs shrink-0">🔊</span>
           </button>`;
       }).join('');
+
+      choicesEl.querySelectorAll('.speak-choice-pill').forEach((spBtn) => {
+        spBtn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const k = spBtn.getAttribute('data-speak-key');
+          const ing = state.dynamicIngredients[k];
+          if (ing) speakEnglish(ing.en, ing.audioUrl);
+        });
+      });
 
       choicesEl.querySelectorAll('.ing-choice-btn').forEach((btn) => {
         btn.addEventListener('click', () => handleSelectIngredient(btn.getAttribute('data-key'), btn));
@@ -3551,6 +3596,40 @@
         : '-';
       document.getElementById('menu-item-count').textContent = `${Object.keys(state.dynamicIngredients).length} bahan siap dimasak!`;
 
+      const srvMe = (state.serverLeaderboard || []).find((r) => r.externalUserId === appConfig.externalUserId);
+      const streakDays = Math.max(Number(state.currentStreak) || 0, Number(srvMe?.currentStreak) || 0, state.exp > 0 ? 1 : 0);
+      const streakPill = document.getElementById('menu-streak-pill');
+      if (streakPill) streakPill.textContent = `🔥 ${streakDays} Hari`;
+
+      const starsMap = loadRecipeStars();
+      const totalStars = RECIPES.reduce((s, r) => s + (Number(starsMap[r.id]) || 0), 0);
+      let vocabCount = 0;
+      try {
+        vocabCount = Object.keys(JSON.parse(localStorage.getItem(`baking_chef_vocab_progress_${appConfig.externalUserId}`) || '{}')).length;
+      } catch {}
+      const chefBadges = [
+        { icon: '🧁', label: 'Kue Perdana', desc: 'Panggang kue pertamamu', unlocked: state.completedRecipes >= 1 },
+        { icon: '🔥', label: 'Streak 3h', desc: 'Belajar 3 hari beruntun', unlocked: streakDays >= 3 },
+        { icon: '📖', label: '8 Bahan', desc: 'Latih minimal 8 bahan kue', unlocked: vocabCount >= 8 || Object.keys(state.fsrsPriorityByKey || {}).length >= 8 },
+        { icon: '⭐', label: '6 Bintang', desc: 'Kumpulkan minimal 6 bintang resep', unlocked: totalStars >= 6 },
+        { icon: '👨‍🍳', label: 'Head Chef', desc: 'Capai pangkat Lv.3 Head Patissier', unlocked: rank.level >= 3 },
+        { icon: '👑', label: 'Master 18⭐', desc: 'Raih 18 bintang sempurna atau Lv.4', unlocked: totalStars >= 18 || rank.level >= 4 },
+      ];
+      const chefBadgeStrip = document.getElementById('chef-achievements-strip');
+      const chefBadgeCount = document.getElementById('chef-badges-count');
+      if (chefBadgeCount) chefBadgeCount.textContent = `${chefBadges.filter((b) => b.unlocked).length} / ${chefBadges.length} Terbuka`;
+      if (chefBadgeStrip) {
+        chefBadgeStrip.innerHTML = chefBadges.map((b) => `
+          <div title="${b.desc}" class="rounded-2xl px-1.5 py-2 text-center border transition ${
+            b.unlocked
+              ? 'bg-gradient-to-b from-amber-300/25 to-rose-950/80 border-amber-300/60 shadow-sm'
+              : 'bg-black/30 border-white/10 opacity-45 grayscale'
+          }">
+            <div class="text-base sm:text-lg leading-none">${b.icon}</div>
+            <div class="text-[10px] font-bold text-amber-100 mt-1 truncate">${b.label}</div>
+          </div>`).join('');
+      }
+
       const strip = document.getElementById('chef-ranks-strip');
       if (strip) {
         strip.innerHTML = CHEF_RANKS.map((r) => {
@@ -3905,7 +3984,7 @@
       document.getElementById('btn-speak-card').addEventListener('click', (e) => {
         e.stopPropagation();
         const cur = state.studyCards[state.studyIndex];
-        if (cur) speakEnglish(cur.en);
+        if (cur) speakEnglish(cur.en, cur.audioUrl);
       });
       document.getElementById('study-card-box').addEventListener('click', () => {
         if (!document.getElementById('btn-study-reveal').classList.contains('hidden')) revealStudyAnswer();

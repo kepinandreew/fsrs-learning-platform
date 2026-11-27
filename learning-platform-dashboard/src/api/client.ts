@@ -12,6 +12,7 @@ import type {
   ClientApp,
   CreatedAppKeyResponse,
   Deck,
+  DeckExportPackage,
   DeveloperProfile,
   DraftFlashcard,
   DraftQuiz,
@@ -22,6 +23,7 @@ import type {
   LearningItem,
   MonitoringResponse,
   PaginationMeta,
+  PortableDeckItem,
   ShiftDueResponse,
 } from './types';
 
@@ -170,6 +172,7 @@ export const appsApi = {
     name: string;
     description?: string;
     requestRetention?: number;
+    fsrsParams?: number[] | null;
   }): Promise<CreatedAppKeyResponse> {
     const { data } = await request<CreatedAppKeyResponse>('/api/apps', {
       method: 'POST',
@@ -184,6 +187,7 @@ export const appsApi = {
       name?: string;
       description?: string | null;
       requestRetention?: number;
+      fsrsParams?: number[] | null;
       isActive?: boolean;
     },
   ): Promise<ClientApp> {
@@ -246,6 +250,25 @@ export const decksApi = {
 
   async remove(deckId: string): Promise<void> {
     await request<void>(`/api/dashboard/decks/${deckId}`, { method: 'DELETE' });
+  },
+
+  async exportDeck(deckId: string): Promise<DeckExportPackage> {
+    const { data } = await request<DeckExportPackage>(`/api/dashboard/decks/${deckId}/export`);
+    return data;
+  },
+
+  async importDeck(
+    deckId: string,
+    items: PortableDeckItem[],
+  ): Promise<{ counts: { flashcards: number; quizzes: number; total: number } }> {
+    const { data } = await request<{ counts: { flashcards: number; quizzes: number; total: number } }>(
+      `/api/dashboard/decks/${deckId}/import`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ items }),
+      },
+    );
+    return data;
   },
 };
 

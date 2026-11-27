@@ -22,6 +22,7 @@ export interface ClientApp {
   apiKeyPrefix: string;
   isActive: boolean;
   requestRetention: number;
+  fsrsParams?: number[] | null;
   lastUsedAt: string | null;
   revokedAt: string | null;
   createdAt: string;
@@ -81,6 +82,37 @@ export interface PaginationMeta {
   pageSize: number;
   total: number;
   totalPages: number;
+}
+
+export type PortableDeckItem =
+  | {
+      type: 'FLASHCARD';
+      tempId?: string;
+      front: string;
+      back: string;
+      tags?: string[];
+      imageUrl?: string | null;
+      audioUrl?: string | null;
+    }
+  | {
+      type: 'MULTIPLE_CHOICE';
+      sourceTempId?: string | null;
+      sourceFront?: string | null;
+      question: string;
+      choices: string[];
+      correctIndex: number;
+      explanation?: string | null;
+      tags?: string[];
+      imageUrl?: string | null;
+      audioUrl?: string | null;
+    };
+
+export interface DeckExportPackage {
+  version: number;
+  exportedAt: string;
+  deck: { id: string; title: string; description: string | null };
+  counts: { flashcards: number; quizzes: number; total: number };
+  items: PortableDeckItem[];
 }
 
 // Entitas AI Generator.
@@ -326,6 +358,14 @@ export interface MonitoringQuizAttempt {
   answeredAt: string;
 }
 
+export interface MonitoringForecastBucket {
+  dayOffset: number;
+  date: string;
+  label: string;
+  count: number;
+  overdueCount: number;
+}
+
 export interface MonitoringResponse {
   app: { id: string; name: string; requestRetention: number } | null;
   deck: { id: string; title: string; appId: string } | null;
@@ -341,6 +381,7 @@ export interface MonitoringResponse {
   };
   users: MonitoringUser[];
   cardStates: MonitoringCardState[];
+  dueForecast14d?: MonitoringForecastBucket[];
   recentReviews: MonitoringReviewLog[];
   recentQuizzes: MonitoringQuizAttempt[];
   generatedAt: string;

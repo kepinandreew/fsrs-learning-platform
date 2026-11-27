@@ -7,21 +7,23 @@ Arsitektur layanan terpusat (*multi-tenant backend*) yang menyediakan penjadwala
 ## Struktur Direktori Utama
 
 ```text
+├── .github/workflows/ci.yml        # Otomasi GitHub Actions CI (TypeScript, Vitest, Game Syntax, Vite Build)
 ├── learning-platform-backend/      # REST API Server (Node.js, Express, TypeScript, Prisma, PostgreSQL)
 │   ├── prisma/schema.prisma        # Skema basis data multi-tenant, FSRS CardState, ReviewLog, & Progress
 │   ├── src/
+│   │   ├── docs/openapi.ts         # Spesifikasi kontrak OpenAPI 3.0.3 & Explorer interaktif (/api/docs)
 │   │   ├── fsrs/                   # Implementasi murni algoritma FSRS-5 (19 parameter w0..w18)
 │   │   ├── middlewares/            # Isolasi autentikasi ganda: JWT (Developer) & X-API-Key (Client App)
 │   │   └── modules/
 │   │       ├── auth/               # Registrasi & login Developer maupun Pemain (End-User)
-│   │       ├── apps/               # Manajemen tenant aplikasi klien, rotasi API Key, & target retensi
-│   │       ├── decks/ & items/     # Manajemen deck, bank soal, versi konten, & caching ETag (HTTP 304)
+│   │       ├── apps/               # Manajemen tenant aplikasi, API Key, target retensi, & 19 bobot fsrsParams
+│   │       ├── decks/ & items/     # CRUD deck/soal, Export/Import CSV & JSON, media URL, & caching ETag (304)
 │   │       ├── ai/                 # Ekstraksi Flashcard & Kuis dari teks/PDF + 2nd-Pass AI Verifier
 │   │       ├── evaluation/         # Evaluasi review FSRS, antrean prioritas due, & skor kuis idempoten
-│   │       ├── progress/           # Sinkronisasi poin, EXP, streak, & klasemen lintas-gim
-│   │       └── analytics/          # 4 metrik analitik pembelajaran, simulator kurva lupa, & ekspor CSV
-│   ├── scripts/benchmark-report.ts # Otomasi benchmark FSRS-5, latensi REST API, ETag, & keamanan
-│   ├── tests/                      # 39 pengujian unit otomatis (Vitest)
+│   │       ├── progress/           # Sinkronisasi poin, EXP, streak harian, bintang resep, & klasemen lintas-gim
+│   │       └── analytics/          # 4 metrik analitik, proyeksi beban 14 hari, rapor PDF siswa, & Simulator FSRS-5
+│   ├── scripts/                    # Otomasi benchmark-report.ts & validator sintaks gim check-games-syntax.mjs
+│   ├── tests/                      # 44 pengujian unit & integrasi rute HTTP otomatis (Vitest)
 │   └── docs/                       # Dokumentasi kontrak API.md & laporan BENCHMARK_REPORT.md
 │
 ├── learning-platform-dashboard/    # Konsol Pengajar / Pengembang (React 18, TypeScript, Tailwind CSS, Vite)
@@ -59,9 +61,10 @@ Arsitektur layanan terpusat (*multi-tenant backend*) yang menyediakan penjadwala
 cd learning-platform-backend
 npm install
 npx prisma migrate deploy
-npm test          # Menjalankan 39 unit test FSRS, AI, Evaluasi, Progress, & Analitik
-npm run benchmark # Menjalankan benchmark FSRS-5 & REST API live -> docs/BENCHMARK_REPORT.md
-npm run dev       # Berjalan di http://localhost:3000
+npm test             # Menjalankan 44 unit & HTTP route test FSRS, AI, Evaluasi, Progress, & Analitik
+npm run check:games  # Memvalidasi seluruh skrip inline HTML gim, Service Worker, & Manifest PWA
+npm run benchmark    # Menjalankan benchmark FSRS-5 & REST API live -> docs/BENCHMARK_REPORT.md
+npm run dev          # Berjalan di http://localhost:3000 (OpenAPI Docs di /api/docs)
 
 # 2. Developer Dashboard & Game Clients
 cd ../learning-platform-dashboard
